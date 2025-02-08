@@ -1,0 +1,21 @@
+{{- if .Values.nginx.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "nextcloud.fullname" . }}-nginxconfig
+  labels:
+    app.kubernetes.io/name: {{ include "nextcloud.name" . }}
+    helm.sh/chart: {{ include "nextcloud.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  {{- if .Values.nginx.config.default }}
+  default.conf: |-
+    {{- tpl (.Files.Get "files/nginx.config.tpl") . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.nginx.config.custom }}
+  zz-custom.conf: |-
+    {{- . | nindent 4 }}
+  {{- end }}
+{{- end }}

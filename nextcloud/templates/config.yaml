@@ -1,0 +1,22 @@
+{{- if .Values.nextcloud.configs -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "nextcloud.fullname" . }}-config
+  labels:
+    app.kubernetes.io/name: {{ include "nextcloud.name" . }}
+    helm.sh/chart: {{ include "nextcloud.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  {{- range $filename, $content := .Values.nextcloud.configs }}
+  {{ $filename }}: |-
+    {{- $content | nindent 4 }}
+  {{- end }}
+  {{- range $filename, $enabled := .Values.nextcloud.defaultConfigs }}
+  {{- if $enabled }}
+  {{ $filename }}: |-
+    {{- tpl ($.Files.Get (printf "files/defaultConfigs/%s.tpl" $filename)) $ | nindent 4 }}
+  {{- end }}
+  {{- end }}
+{{- end }}{{/* end-if configs */}}
