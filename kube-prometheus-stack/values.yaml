@@ -391,21 +391,13 @@ alertmanager:
   #       {{ end }}
 
   ingress:
-    enabled: true
+    enabled: false
 
     # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
     # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
-    #ingressClassName: traefik
-    ingressClassName: nginx
+    # ingressClassName: nginx
 
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
-      traefik.ingress.kubernetes.io/router.middlewares: monitoring-redirect-https@kubernetescrd
-      traefik.ingress.kubernetes.io/router.middlewares: monitoring-prometheus-auth@kubernetescrd
-      cert-manager.io/cluster-issuer: mkcert-issuer
-      spec.ingressClassName: nginx
-      #cert-manager.io/cluster-issuer: letsencrypt-production
-      #spec.ingressClassName: traefik
+    annotations: {}
 
     labels: {}
 
@@ -417,8 +409,8 @@ alertmanager:
 
     ## Hosts must be provided if Ingress is enabled.
     ##
-    hosts:
-      - alertmanager.example.com
+    hosts: []
+      # - alertmanager.domain.com
 
     ## Paths to use for ingress rules - one path should match the alertmanagerSpec.routePrefix
     ##
@@ -432,10 +424,10 @@ alertmanager:
     ## TLS configuration for Alertmanager Ingress
     ## Secret must be manually created in the namespace
     ##
-    tls:
-      - secretName: alertmanager-example-general-tls
-        hosts:
-        - alertmanager.example.com
+    tls: []
+    # - secretName: alertmanager-general-tls
+    #   hosts:
+    #   - alertmanager.example.com
 
   # -- BETA: Configure the gateway routes for the chart here.
   # More routes can be added by adding a dictionary key like the 'main' route.
@@ -813,20 +805,20 @@ alertmanager:
     ## Storage is the definition of how storage will be used by the Alertmanager instances.
     ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/user-guides/storage.md
     ##
-    storage:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: example-hostpath
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 50Gi
-        # selector: {}
+    storage: {}
+    # volumeClaimTemplate:
+    #   spec:
+    #     storageClassName: gluster
+    #     accessModes: ["ReadWriteOnce"]
+    #     resources:
+    #       requests:
+    #         storage: 50Gi
+    #   selector: {}
 
 
     ## The external URL the Alertmanager instances will be available under. This is necessary to generate correct URLs. This is necessary if Alertmanager is not served from root of a DNS name. string  false
     ##
-    externalUrl: https://alertmanager.example.com
+    externalUrl:
 
     ## The route prefix Alertmanager registers HTTP handlers for. This is useful, if using ExternalURL and a proxy is rewriting HTTP routes of a request, and the actual ExternalURL is still true,
     ## but the server serves requests under a different route prefix. For example for use with kubectl proxy.
@@ -1044,22 +1036,17 @@ grafana:
   ingress:
     ## If true, Grafana Ingress will be created
     ##
-    enabled: true
+    enabled: false
 
     ## IngressClassName for Grafana Ingress.
     ## Should be provided if Ingress is enable.
     ##
-    #ingressClassName: traefik
-    ingressClassName: nginx
+    # ingressClassName: nginx
 
     ## Annotations for Grafana Ingress
     ##
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
-      traefik.ingress.kubernetes.io/router.middlewares: monitoring-redirect-https@kubernetescrd
-      cert-manager.io/cluster-issuer: mkcert-issuer
-      kubernetes.io/ingress.class: nginx
-      #spec.ingressClassName: traefik
+    annotations: {}
+      # kubernetes.io/ingress.class: nginx
       # kubernetes.io/tls-acme: "true"
 
     ## Labels to be added to the Ingress
@@ -1069,8 +1056,9 @@ grafana:
     ## Hostnames.
     ## Must be provided if Ingress is enable.
     ##
-    hosts:
-      - grafana.example.com
+    # hosts:
+    #   - grafana.domain.com
+    hosts: []
 
     ## Path for grafana ingress
     path: /
@@ -1078,22 +1066,22 @@ grafana:
     ## TLS configuration for grafana Ingress
     ## Secret must be manually created in the namespace
     ##
-    tls:
-      - secretName: grafana-example-general-tls
-        hosts:
-        - grafana.example.com
+    tls: []
+    # - secretName: grafana-general-tls
+    #   hosts:
+    #   - grafana.example.com
 
   # # To make Grafana persistent (Using Statefulset)
   # #
-    persistence:
-      enabled: true
-      type: sts
-      storageClassName: "example-hostpath"
-      accessModes:
-        - ReadWriteOnce
-      size: 20Gi
-      finalizers:
-        - kubernetes.io/pvc-protection
+  # persistence:
+  #   enabled: true
+  #   type: sts
+  #   storageClassName: "storageClassName"
+  #   accessModes:
+  #     - ReadWriteOnce
+  #   size: 20Gi
+  #   finalizers:
+  #     - kubernetes.io/pvc-protection
 
   serviceAccount:
     create: true
@@ -3384,22 +3372,13 @@ prometheus:
   #     someoneelse:$apr1$DMZX2Z4q$6SbQIfyuLQd.xmo/P0m2c.
 
   ingress:
-    enabled: true
+    enabled: false
 
     # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
     # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
-    #ingressClassName: traefik
-    ingressClassName: nginx
+    # ingressClassName: nginx
 
-    annotations:
-      nginx.ingress.kubernetes.io/rewrite-target: /
-      traefik.ingress.kubernetes.io/router.middlewares: monitoring-redirect-https@kubernetescrd
-      cert-manager.io/cluster-issuer: mkcert-issuer
-      spec.ingressClassName: nginx
-      #cert-manager.io/cluster-issuer: letsencrypt-production
-      #spec.ingressClassName: traefik
-      #traefik.ingress.kubernetes.io/router.middlewares: monitoring-prometheus-auth@kubernetescrd
-
+    annotations: {}
     labels: {}
 
     ## Redirect ingress to an additional defined port on the service
@@ -3408,8 +3387,9 @@ prometheus:
     ## Hostnames.
     ## Must be provided if Ingress is enabled.
     ##
-    hosts:
-      - prometheus.example.com
+    # hosts:
+    #   - prometheus.domain.com
+    hosts: []
 
     ## Paths to use for ingress rules - one path should match the prometheusSpec.routePrefix
     ##
@@ -3423,10 +3403,10 @@ prometheus:
     ## TLS configuration for Prometheus Ingress
     ## Secret must be manually created in the namespace
     ##
-    tls:
-      - secretName: prometheus-example-general-tls
-        hosts:
-          - prometheus.example.com
+    tls: []
+      # - secretName: prometheus-general-tls
+      #   hosts:
+      #     - prometheus.example.com
 
   # -- BETA: Configure the gateway routes for the chart here.
   # More routes can be added by adding a dictionary key like the 'main' route.
@@ -3736,7 +3716,7 @@ prometheus:
 
     ## External URL at which Prometheus will be reachable.
     ##
-    externalUrl: https://prometheus.example.com
+    externalUrl: ""
 
     ## Define which Nodes the Pods are scheduled on.
     ## ref: https://kubernetes.io/docs/user-guide/node-selection/
@@ -3992,16 +3972,16 @@ prometheus:
     ## Prometheus StorageSpec for persistent data
     ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/user-guides/storage.md
     ##
-    storageSpec:
+    storageSpec: {}
     ## Using PersistentVolumeClaim
     ##
-      volumeClaimTemplate:
-        spec:
-          storageClassName: "example-hostpath"
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 50Gi
+    #  volumeClaimTemplate:
+    #    spec:
+    #      storageClassName: gluster
+    #      accessModes: ["ReadWriteOnce"]
+    #      resources:
+    #        requests:
+    #          storage: 50Gi
     #    selector: {}
 
     ## Using tmpfs volume
