@@ -3,7 +3,7 @@
 Expand the name of the chart.
 */}}
 {{- define "ltb-passwd.name" -}}
-{{ default (printf "%s-ltb" .Release.Name) .Values.nameOverride }}
+{{ default .Release.Name .Values.existingSecret }}
 {{- end -}}
 
 {{/*
@@ -43,24 +43,9 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
-
 {{/*
 Generate chart secret name
 */}}
 {{- define "ltb-passwd.secretName" -}}
-{{ default (include "ltb-passwd.fullname" .) .Values.global.existingSecret  }}
-{{- end -}}
-
-{{/*
-Return the proper Openldap image name
-*/}}
-{{- define "ltb-passwd.image" -}}
-{{- include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) -}}
-{{- end -}}
-
-{{/*
-Return the proper Docker Image Registry Secret Names
-*/}}
-{{- define "ltb-passwd.imagePullSecrets" -}}
-{{ include "common.images.pullSecrets" (dict "images" (list .Values.image ) "global" .Values.global) }}
+{{ default (include "ltb-passwd.fullname" .) .Values.existingSecret }}
 {{- end -}}

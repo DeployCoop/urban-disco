@@ -21,16 +21,9 @@ spec:
         app: {{ template "phpldapadmin.name" . }}
         release: {{ .Release.Name }}
     spec:
-      {{- include "phpldapadmin.imagePullSecrets" . | nindent 6 }}
-      {{- if .Values.initContainers }}
-      initContainers:
-      {{- with .Values.initContainers }}
-        {{- tpl (toYaml .) $ | nindent 6 }}
-      {{- end }}
-      {{- end }}
       containers:
       - name: {{ .Chart.Name }}
-        image: {{ include "phpldapadmin.image" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - name: http
@@ -39,21 +32,13 @@ spec:
         envFrom:
         - configMapRef:
             name: {{ template "phpldapadmin.fullname" . }}
-        {{- if .Values.volumeMounts }}
-        volumeMounts:
-          {{- toYaml .Values.volumeMounts | nindent 8 }}
-        {{- end }}
         livenessProbe:
 {{ toYaml .Values.livenessProbe | indent 12 }}
         readinessProbe:
 {{ toYaml .Values.readinessProbe | indent 12 }}
         resources:
 {{ toYaml .Values.resources | indent 12 }}
-      {{- with .Values.volumes }}
-      volumes:
-        {{- toYaml . | nindent 6 }}
-      {{- end }}
-      {{- with .Values.nodeSelector }}
+    {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
     {{- end }}

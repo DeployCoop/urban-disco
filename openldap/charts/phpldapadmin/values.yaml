@@ -3,6 +3,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+## TODO: add this in the deployment.yaml
 env:
   # PHPLDAPADMIN_LDAP_HOSTS: ...
   PHPLDAPADMIN_HTTPS: "false"
@@ -17,28 +18,13 @@ image:
   repository: osixia/phpldapadmin
   tag: 0.9.0
   pullPolicy: IfNotPresent
-  pullSecrets: []
 
 
 ## Enable persistence using Persistent Volume Claims
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
 ##
 
-# -- Init containers to add to the pod
-## Note: Supports use of custom Helm templates
-initContainers: []
-
-# -- Additional volumeMounts to the application main container
-volumeMounts: []
-#  - mountPath: /usr/local/bin/my_tool
-#    name: xxxxxx
-#    subPath: foo
-
-# -- Additional volumes to the application pod
-volumes: []
-#  - name: xxxxx
-#    emptyDir: {}
-
+## TODO persistence
 
 ## Expose the pgAdmin service to be accessed from outside the cluster (LoadBalancer service).
 ## or access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.
@@ -66,8 +52,6 @@ service:
 ingress:
   enabled: false
   annotations: {}
-  ## See https://kubernetes.io/docs/concepts/services-networking/ingress/#ingressclass-scope
-  # ingressClassName: nginx
   path: /
   ## Ingress Host
   # hosts:

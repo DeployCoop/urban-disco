@@ -16,29 +16,28 @@ spec:
         app.kubernetes.io/name: {{ include "ltb-passwd.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      {{- include "ltb-passwd.imagePullSecrets" . | nindent 6 }}
-      {{- if .Values.initContainers }}
-      initContainers:
-      {{- with .Values.initContainers }}
-        {{- tpl (toYaml .) $ | nindent 6 }}
-      {{- end }}
-      {{- end }}
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: {{ include "ltb-passwd.image" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
           - name: LDAP_SERVER
-            value: ldaps://{{ include "global.server" . }}:{{ .Values.global.sslLdapPort }}
+            value: {{ .Values.ldap.server | quote }}
           - name: LDAP_BINDDN
-            value: {{ default (include "global.bindDN" .) (.Values.ldap.bindDN) }}
+            value: {{ .Values.ldap.bindDN | quote }}
           - name: LDAP_BINDPASS
             valueFrom:
               secretKeyRef:
                 name: {{ template "ltb-passwd.secretName" . }}
-                key: {{ default "LDAP_ADMIN_PASSWORD" (.Values.ldap.passKey) }}
+                key: {{ .Values.ldap.bindPWKey }} 
+          - name: LDAP_STARTTLS
+            value: "false"
           - name: LDAP_BASE_SEARCH
-            value: {{ default (include "global.baseDomain" . | quote) (.Values.ldap.searchBase | quote) }}
+            value: {{ .Values.ldap.searchBase | quote }}
           {{- with .Values.env }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
@@ -56,27 +55,6 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if or (.Values.ldap.custom) (.Values.volumeMounts) }}
-          volumeMounts:
-          {{- if .Values.ldap.custom }}
-            - mountPath: /etc/openldap
-              name: ldap-conf
-          {{- end }}
-          {{- if .Values.volumeMounts }}
-            {{- toYaml .Values.volumeMounts | nindent 12 }}
-          {{- end }}
-          {{- end }}
-      {{- if or (.Values.ldap.custom) (.Values.volumes) }}
-      volumes:
-      {{- if .Values.ldap.custom }}
-      - name: ldap-conf
-        configMap:
-          name: {{ include "ltb-passwd.fullname" . }}-ldap-cm
-      {{- end }}
-      {{- with .Values.volumes }}
-        {{- toYaml . | nindent 6 }}
-      {{- end }}
-      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

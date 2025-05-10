@@ -8,7 +8,7 @@ metadata:
   name: {{ template "openldap.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/component: {{ template "openldap.fullname" . }}
+    app: {{ template "openldap.fullname" . }}
     chart: {{ template "openldap.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -26,23 +26,22 @@ spec:
   ports:
     - name: ldap-port
       protocol: TCP
-      port: {{ .Values.global.ldapPort }}
+      port: {{ .Values.service.ldapPort }}
       targetPort: ldap-port
-      {{- if and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (not (empty .Values.service.ldapPortNodePort)) }}
+      {{- if and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (not (empty .Values.service.nodePort)) }}
       nodePort: {{ .Values.service.ldapPortNodePort }}
       {{- else if eq .Values.service.type "ClusterIP" }}
       nodePort: null
       {{- end }}
     - name: ssl-ldap-port
       protocol: TCP
-      port: {{ .Values.global.sslLdapPort }}
+      port: {{ .Values.service.sslLdapPort }}
       targetPort: ssl-ldap-port
-      {{- if and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (not (empty .Values.service.sslLdapPortNodePort)) }}
+      {{- if and (or (eq .Values.service.type "NodePort") (eq .Values.service.type "LoadBalancer")) (not (empty .Values.service.nodePort)) }}
       nodePort: {{ .Values.service.sslLdapPortNodePort }}
       {{- else if eq .Values.service.type "ClusterIP" }}
       nodePort: null
       {{- end }}
-  sessionAffinity: {{ .Values.service.sessionAffinity }}
   selector:
-    app.kubernetes.io/component: {{ template "openldap.fullname" . }}
+    app: {{ template "openldap.fullname" . }}
     release: {{ .Release.Name }}
