@@ -5,9 +5,9 @@ metadata:
     katenary.v3/compose-hash: 9d9192a237ae1cc3996db0750cec787cbc6f027a
     katenary.v3/version: release-3.0.0-rc2
   labels:
-    {{- include "fossbilling_katernary.labels" . | nindent 4 }}
+    {{- include "fossbilling.labels" . | nindent 4 }}
     katenary.v3/component: fossbilling
-  name: '{{ include "fossbilling_katernary.fullname" . }}-fossbilling'
+  name: '{{ include "fossbilling.fullname" . }}-fossbilling'
 spec:
   ports:
   - name: http
@@ -15,5 +15,5 @@ spec:
     protocol: TCP
     targetPort: http
   selector:
-    {{- include "fossbilling_katernary.selectorLabels" . | nindent 4 }}
+    {{- include "fossbilling.selectorLabels" . | nindent 4 }}
     katenary.v3/component: fossbilling

@@ -1,4 +1,4 @@
-{{- define "fossbilling_katernary.fullname" -}}
+{{- define "fossbilling.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -11,7 +11,7 @@
 {{- end -}}
 {{- end -}}
 
-{{- define "fossbilling_katernary.name" -}}
+{{- define "fossbilling.name" -}}
 {{- if .Values.nameOverride -}}
 {{- .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -19,8 +19,8 @@
 {{- end -}}
 {{- end -}}
 
-{{- define "fossbilling_katernary.labels" -}}
-{{ include "fossbilling_katernary.selectorLabels" .}}
+{{- define "fossbilling.labels" -}}
+{{ include "fossbilling.selectorLabels" .}}
 {{ if .Chart.Version -}}
 {{ printf "katenary.v3/chart-version: '%s'" .Chart.Version }}
 {{- end }}
@@ -29,7 +29,7 @@
 {{- end }}
 {{- end -}}
 
-{{- define "fossbilling_katernary.selectorLabels" -}}
+{{- define "fossbilling.selectorLabels" -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{ printf "katenary.v3/name: %s" $name }}
 {{ printf "katenary.v3/instance: %s" .Release.Name }}

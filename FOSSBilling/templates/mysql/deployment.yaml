@@ -5,26 +5,26 @@ metadata:
     katenary.v3/compose-hash: 9d9192a237ae1cc3996db0750cec787cbc6f027a
     katenary.v3/version: release-3.0.0-rc2
   labels:
-    {{- include "fossbilling_katernary.labels" . | nindent 4 }}
+    {{- include "fossbilling.labels" . | nindent 4 }}
     katenary.v3/component: mysql
-  name: '{{ include "fossbilling_katernary.fullname" . }}-mysql'
+  name: '{{ include "fossbilling.fullname" . }}-mysql'
 spec:
   replicas: {{ .Values.mysql.replicas }}
   selector:
     matchLabels:
-      {{- include "fossbilling_katernary.selectorLabels" . | nindent 6 }}
+      {{- include "fossbilling.selectorLabels" . | nindent 6 }}
       katenary.v3/component: mysql
   strategy: {}
   template:
     metadata:
       labels:
-        {{- include "fossbilling_katernary.selectorLabels" . | nindent 8 }}
+        {{- include "fossbilling.selectorLabels" . | nindent 8 }}
         katenary.v3/component: mysql
     spec:
       containers:
       - envFrom:
         - configMapRef:
-            name: '{{ include "fossbilling_katernary.fullname" . }}-mysql'
+            name: '{{ include "fossbilling.fullname" . }}-mysql'
         image: '{{ tpl .Values.mysql.repository.image $ }}:{{ tpl .Values.mysql.repository.tag $ | default "latest" }}'
         imagePullPolicy: {{ .Values.mysql.imagePullPolicy }}
         name: mysql
@@ -52,5 +52,5 @@ spec:
       {{- if .Values.mysql.persistence.mysql.enabled }}
       - name: mysql
         persistentVolumeClaim:
-          claimName: '{{ include "fossbilling_katernary.fullname" . }}-mysql-mysql'
+          claimName: '{{ include "fossbilling.fullname" . }}-mysql-mysql'
       {{- end }}
