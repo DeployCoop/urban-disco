@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    katenary.v3/compose-hash: 9d9192a237ae1cc3996db0750cec787cbc6f027a
+    katenary.v3/version: release-3.0.0-rc2
+  labels:
+    {{- include "fossbilling_katernary.labels" . | nindent 4 }}
+    katenary.v3/component: mysql
+  name: '{{ include "fossbilling_katernary.fullname" . }}-mysql'
+spec:
+  replicas: {{ .Values.mysql.replicas }}
+  selector:
+    matchLabels:
+      {{- include "fossbilling_katernary.selectorLabels" . | nindent 6 }}
+      katenary.v3/component: mysql
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        {{- include "fossbilling_katernary.selectorLabels" . | nindent 8 }}
+        katenary.v3/component: mysql
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: '{{ include "fossbilling_katernary.fullname" . }}-mysql'
+        image: '{{ tpl .Values.mysql.repository.image $ }}:{{ tpl .Values.mysql.repository.tag $ | default "latest" }}'
+        imagePullPolicy: {{ .Values.mysql.imagePullPolicy }}
+        name: mysql
+        {{- if .Values.mysql.resources }}
+        resources:
+          {{ .Values.mysql.resources | toYaml | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.mysql.persistence.mysql.enabled }}
+        - mountPath: /var/lib/mysql
+          name: mysql
+        {{- end }}
+      {{- if .Values.pullSecrets }}
+      imagePullSecrets:
+      {{- .Values.pullSecrets | toYaml | nindent 6 }}
+      {{- end }}
+      {{- if .Values.mysql.nodeSelector }}
+      nodeSelector:
+        {{- .Values.mysql.nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if ne .Values.mysql.serviceAccount "" }}
+      serviceAccountName: {{ .Values.mysql.serviceAccount | quote }}
+      {{- end }}
+      volumes:
+      {{- if .Values.mysql.persistence.mysql.enabled }}
+      - name: mysql
+        persistentVolumeClaim:
+          claimName: '{{ include "fossbilling_katernary.fullname" . }}-mysql-mysql'
+      {{- end }}

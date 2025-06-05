@@ -1,0 +1,22 @@
+{{- if .Values.mysql.persistence.mysql.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    katenary.v3/compose-hash: 9d9192a237ae1cc3996db0750cec787cbc6f027a
+    katenary.v3/version: release-3.0.0-rc2
+  labels:
+    {{- include "fossbilling_katernary.labels" . | nindent 4 }}
+    katenary.v3/component: mysql
+  name: '{{ include "fossbilling_katernary.fullname" . }}-mysql-mysql'
+spec:
+  accessModes:
+  {{- .Values.mysql.persistence.mysql.accessMode | toYaml | nindent 2 }}
+  resources:
+    requests:
+      storage: {{ tpl .Values.mysql.persistence.mysql.size $ }}
+  {{- if ne .Values.mysql.persistence.mysql.storageClass "-" }}
+  storageClassName: '{{ .Values.mysql.persistence.mysql.storageClass }}'
+  {{- end }}
+
+{{- end }}

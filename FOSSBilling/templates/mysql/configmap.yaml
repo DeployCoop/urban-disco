@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  MYSQL_DATABASE: fossbilling
+  MYSQL_PASSWORD: fossbilling
+  MYSQL_RANDOM_ROOT_PASSWORD: "1"
+  MYSQL_USER: fossbilling
+kind: ConfigMap
+metadata:
+  annotations:
+    katenary.v3/compose-hash: 9d9192a237ae1cc3996db0750cec787cbc6f027a
+    katenary.v3/version: release-3.0.0-rc2
+  labels:
+    {{- include "fossbilling_katernary.labels" . | nindent 4 }}
+    katenary.v3/component: mysql
+  name: '{{ include "fossbilling_katernary.fullname" . }}-mysql'

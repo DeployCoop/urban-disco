@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    katenary.v3/compose-hash: 9d9192a237ae1cc3996db0750cec787cbc6f027a
+    katenary.v3/version: release-3.0.0-rc2
+  labels:
+    {{- include "fossbilling_katernary.labels" . | nindent 4 }}
+    katenary.v3/component: fossbilling
+  name: '{{ include "fossbilling_katernary.fullname" . }}-fossbilling'
+spec:
+  replicas: {{ .Values.fossbilling.replicas }}
+  selector:
+    matchLabels:
+      {{- include "fossbilling_katernary.selectorLabels" . | nindent 6 }}
+      katenary.v3/component: fossbilling
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        {{- include "fossbilling_katernary.selectorLabels" . | nindent 8 }}
+        katenary.v3/component: fossbilling
+    spec:
+      containers:
+      - image: '{{ tpl .Values.fossbilling.repository.image $ }}:{{ tpl .Values.fossbilling.repository.tag $ | default "latest" }}'
+        imagePullPolicy: {{ .Values.fossbilling.imagePullPolicy }}
+        name: fossbilling
+        ports:
+        - containerPort: 80
+          name: http
+        {{- if .Values.fossbilling.resources }}
+        resources:
+          {{ .Values.fossbilling.resources | toYaml | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.fossbilling.persistence.fossbilling.enabled }}
+        - mountPath: /var/www/html
+          name: fossbilling
+        {{- end }}
+      {{- if .Values.pullSecrets }}
+      imagePullSecrets:
+      {{- .Values.pullSecrets | toYaml | nindent 6 }}
+      {{- end }}
+      {{- if .Values.fossbilling.nodeSelector }}
+      nodeSelector:
+        {{- .Values.fossbilling.nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if ne .Values.fossbilling.serviceAccount "" }}
+      serviceAccountName: {{ .Values.fossbilling.serviceAccount | quote }}
+      {{- end }}
+      volumes:
+      {{- if .Values.fossbilling.persistence.fossbilling.enabled }}
+      - name: fossbilling
+        persistentVolumeClaim:
+          claimName: '{{ include "fossbilling_katernary.fullname" . }}-fossbilling-fossbilling'
+      {{- end }}

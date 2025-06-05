@@ -1,0 +1,18 @@
+# This is the main values.yaml file for the fossbilling_katernary chart.
+# More information can be found in the chart's README.md file.
+#
+# generated at: 2025-06-05T09:24:21-05:00
+# compose files: docker-compose.yaml
+# compose hash (sha1): 9d9192a237ae1cc3996db0750cec787cbc6f027a
+
+# Name of the chart (required), basically the name of the project.
+name: fossbilling_katernary
+apiVersion: v2
+
+# Version of the chart (required)
+version: 0.1.0
+
+# Version of the application (required).
+# This should be the main application version.
+appVersion: 0.1.0
+description: A Helm chart for fossbilling_katernary
