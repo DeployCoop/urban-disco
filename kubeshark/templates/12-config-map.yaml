@@ -1,0 +1,85 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "kubeshark.configmapName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubeshark.co/app: hub
+    {{- include "kubeshark.labels" . | nindent 4 }}
+data:
+    POD_REGEX: '{{ .Values.tap.regex }}'
+    NAMESPACES: '{{ gt (len .Values.tap.namespaces) 0 | ternary (join "," .Values.tap.namespaces) "" }}'
+    EXCLUDED_NAMESPACES: '{{ gt (len .Values.tap.excludedNamespaces) 0 | ternary (join "," .Values.tap.excludedNamespaces) "" }}'
+    BPF_OVERRIDE: '{{ .Values.tap.bpfOverride }}'
+    STOPPED: '{{ .Values.tap.stopped | ternary "true" "false" }}'
+    SCRIPTING_SCRIPTS: '{}'
+    SCRIPTING_ACTIVE_SCRIPTS: '{{ gt (len .Values.scripting.active) 0 | ternary (join "," .Values.scripting.active) "" }}'
+    INGRESS_ENABLED: '{{ .Values.tap.ingress.enabled }}'
+    INGRESS_HOST: '{{ .Values.tap.ingress.host }}'
+    PROXY_FRONT_PORT: '{{ .Values.tap.proxy.front.port }}'
+    AUTH_ENABLED: '{{- if and .Values.cloudLicenseEnabled (not (empty .Values.license)) -}}
+                      {{ and .Values.tap.auth.enabled (eq .Values.tap.auth.type "dex") | ternary true false }}
+                  {{- else -}}
+                      {{ .Values.cloudLicenseEnabled | ternary "true" (.Values.tap.auth.enabled | ternary "true" "") }}
+                  {{- end }}'
+    AUTH_TYPE: '{{- if and .Values.cloudLicenseEnabled (not (eq .Values.tap.auth.type "dex")) -}}
+                  default
+                {{- else -}}
+                  {{ .Values.tap.auth.type }}
+                {{- end }}'
+    AUTH_SAML_IDP_METADATA_URL: '{{ .Values.tap.auth.saml.idpMetadataUrl }}'
+    AUTH_SAML_ROLE_ATTRIBUTE: '{{ .Values.tap.auth.saml.roleAttribute }}'
+    AUTH_SAML_ROLES: '{{ .Values.tap.auth.saml.roles | toJson }}'
+    AUTH_OIDC_ISSUER: '{{ default "not set" (((.Values.tap).auth).dexOidc).issuer }}'
+    AUTH_OIDC_REFRESH_TOKEN_LIFETIME: '{{ default "3960h" (((.Values.tap).auth).dexOidc).refreshTokenLifetime }}'
+    AUTH_OIDC_STATE_PARAM_EXPIRY: '{{ default "10m" (((.Values.tap).auth).dexOidc).oauth2StateParamExpiry }}'
+    AUTH_OIDC_BYPASS_SSL_CA_CHECK: '{{- if and
+                                      (hasKey .Values.tap "auth")
+                                      (hasKey .Values.tap.auth "dexOidc")
+                                      (hasKey .Values.tap.auth.dexOidc "bypassSslCaCheck")
+                                    -}}
+                                      {{ eq .Values.tap.auth.dexOidc.bypassSslCaCheck true | ternary "true" "false" }}
+                                    {{- else -}}
+                                      false
+                                    {{- end }}'
+    TELEMETRY_DISABLED: '{{ not .Values.internetConnectivity | ternary "true" (not .Values.tap.telemetry.enabled | ternary "true" "false") }}'
+    SCRIPTING_DISABLED: '{{- if .Values.tap.liveConfigMapChangesDisabled -}}
+                           {{- if .Values.demoModeEnabled -}}
+                             {{ .Values.demoModeEnabled | ternary false true }}
+                           {{- else -}}
+                             true
+                           {{- end }}
+                         {{- else -}}
+                           false
+                         {{- end }}'
+    TARGETED_PODS_UPDATE_DISABLED: '{{ .Values.tap.liveConfigMapChangesDisabled | ternary "true" "" }}'
+    PRESET_FILTERS_CHANGING_ENABLED: '{{ .Values.tap.liveConfigMapChangesDisabled | ternary "false" "true" }}'
+    RECORDING_DISABLED: '{{ .Values.tap.liveConfigMapChangesDisabled | ternary "true" "" }}'
+    STOP_TRAFFIC_CAPTURING_DISABLED: '{{- if and .Values.tap.liveConfigMapChangesDisabled .Values.tap.stopped -}}
+                                        false
+                                      {{- else -}}
+                                        {{ .Values.tap.liveConfigMapChangesDisabled | ternary "true" "false" }}
+                                      {{- end }}'
+    GLOBAL_FILTER: {{ include "kubeshark.escapeDoubleQuotes" .Values.tap.globalFilter | quote }}
+    DEFAULT_FILTER: {{ include "kubeshark.escapeDoubleQuotes" .Values.tap.defaultFilter | quote }}
+    TRAFFIC_SAMPLE_RATE: '{{ .Values.tap.misc.trafficSampleRate }}'
+    JSON_TTL: '{{ .Values.tap.misc.jsonTTL }}'
+    PCAP_TTL: '{{ .Values.tap.misc.pcapTTL }}'
+    PCAP_ERROR_TTL: '{{ .Values.tap.misc.pcapErrorTTL }}'
+    TIMEZONE: '{{ not (eq .Values.timezone "") | ternary .Values.timezone " " }}'
+    CLOUD_LICENSE_ENABLED: '{{- if and .Values.cloudLicenseEnabled (not (empty .Values.license)) -}}
+                              false
+                            {{- else -}}
+                              {{ .Values.cloudLicenseEnabled }}
+                            {{- end }}'
+    AI_ASSISTANT_ENABLED: '{{ .Values.aiAssistantEnabled | ternary "true" "false" }}'
+    DUPLICATE_TIMEFRAME: '{{ .Values.tap.misc.duplicateTimeframe }}'
+    ENABLED_DISSECTORS: '{{ gt (len .Values.tap.enabledDissectors) 0 | ternary (join "," .Values.tap.enabledDissectors) "" }}'
+    CUSTOM_MACROS: '{{ toJson .Values.tap.customMacros }}'
+    DISSECTORS_UPDATING_ENABLED: '{{ .Values.tap.liveConfigMapChangesDisabled | ternary "false" "true" }}'
+    DETECT_DUPLICATES: '{{ .Values.tap.misc.detectDuplicates | ternary "true" "false" }}'
+    PCAP_DUMP_ENABLE: '{{ .Values.pcapdump.enabled }}'
+    PCAP_TIME_INTERVAL: '{{ .Values.pcapdump.timeInterval }}'
+    PCAP_MAX_TIME: '{{ .Values.pcapdump.maxTime }}'
+    PCAP_MAX_SIZE: '{{ .Values.pcapdump.maxSize }}'
+    PORT_MAPPING: '{{ toJson .Values.tap.portMapping }}'
