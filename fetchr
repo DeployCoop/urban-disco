@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo add ingress-nginx  https://kubernetes.github.io/ingress-nginx
+helm repo add kubeshark https://helm.kubeshark.co  
+helm repo add openldap  https://jp-gouin.github.io/helm-openldap/
+helm repo add openproject https://charts.openproject.org
+helm repo add opensearch https://opensearch-project.github.io/helm-charts/
+helm repo add opensearch-operator https://opensearch-project.github.io/opensearch-k8s-operator/
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm fetch --untar opensearch-operator/opensearch-operator
+helm fetch --untar opensearch-operator/opensearch-cluster
+helm fetch --untar opensearch-operator/opensearch
+helm fetch --untar opensearch/opensearch-dashboards
+helm fetch --untar opensearch/opensearch
+helm fetch --untar opensearch/data-prepper
+helm fetch --untar traefik/traefik 
+helm fetch --untar ingress-nginx/ingress-nginx
+helm fetch --untar openldap/openldap
+helm fetch --untar prometheus-community/kube-prometheus-stack 
+helm fetch --untar kubeshark/kubeshark 
+helm fetch --untar harbor/harbor
+helm fetch --untar grafana/grafana 
+helm fetch --untar argo/argo-cd 
+helm fetch --untar --prov openproject/openproject 
