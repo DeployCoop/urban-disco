@@ -1,0 +1,32 @@
+{{- $grafanaSidecarDashboardsLabel := index .Values "kube-prometheus-stack" "grafana" "sidecar" "dashboards" "label" }}
+{{- $dashboards := dict -}}
+{{- range $monitoringAddon,$fields := .Values.openebsMonitoringAddon }}
+{{- if (and (hasKey $fields "enabled") ($fields.enabled)) }}
+{{- if (hasKey $fields "dashboards") }}
+{{- if ($fields.dashboards.enabled) }}
+{{ $_ := set $dashboards $monitoringAddon $fields.dashboards.enabled }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- $files := .Files.Glob "dashboards/**.json" }}
+{{- if $files }}
+{{- range $fileName, $fileContents := $files }}
+{{- $dirName := split "/" $fileName }}
+{{- if and (hasKey $dashboards $dirName._1 ) $dashboards }}
+{{- $dashboardName := regexReplaceAll "(^.*/)(.*)\\.json$" $fileName "${2}" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ lower (printf "%s-%s" (include "monitoring.fullname" $) $dashboardName) | trunc 63 | trimSuffix "-" }}
+  namespace: {{ template "monitoring.namespace" $ }}
+  labels:
+    {{ $grafanaSidecarDashboardsLabel }}: "1"
+    app: {{ template "monitoring.name" $ }}-grafana
+{{ include "monitoring.labels" $ | indent 4 }}
+data:
+  {{ $dashboardName }}.json: {{ $.Files.Get $fileName | toPrettyJson }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

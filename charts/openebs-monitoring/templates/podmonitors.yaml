@@ -1,0 +1,31 @@
+{{ if (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") }}
+{{- range $monitoringAddon, $fields := .Values.openebsMonitoringAddon }}
+{{- if (and (hasKey $fields "enabled") ($fields.enabled)) }}
+{{- if (hasKey $fields "podMonitor") }}
+{{- if ($fields.podMonitor.enabled) }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ lower (printf "%s-%s" (include "monitoring.fullname" $) $monitoringAddon) | trunc 63 | trimSuffix "-" }}
+  namespace: {{ template "monitoring.namespace" $ }}
+  labels:
+    app: {{ template "monitoring.name" $ }}-{{ $monitoringAddon }}
+{{ include "monitoring.labels" $ | indent 4 }}
+spec:
+  selector:
+{{ toYaml $fields.podMonitor.selector | indent 4 }}
+  namespaceSelector:
+{{ toYaml $fields.podMonitor.namespaceSelector | indent 4 }}
+  podMetricsEndpoints:
+    - targetPort: {{ $fields.podMonitor.podMetricsEndpoints.targetPort }}
+      path: {{ $fields.podMonitor.podMetricsEndpoints.path }}
+{{- if $fields.podMonitor.podMetricsEndpoints.relabelings }}
+      relabelings:
+{{ toYaml $fields.podMonitor.podMetricsEndpoints.relabelings | indent 8 }}
+{{- end }}
+---
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

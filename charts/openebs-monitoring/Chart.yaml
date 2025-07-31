@@ -1,0 +1,24 @@
+apiVersion: v2
+appVersion: 4.1.0
+dependencies:
+- condition: kube-prometheus-stack.install
+  name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 61.0.*
+- condition: node-problem-detector.install
+  name: node-problem-detector
+  repository: https://charts.deliveryhero.io/
+  version: 2.0.*
+- condition: localpv-provisioner.enabled
+  name: localpv-provisioner
+  repository: https://openebs.github.io/dynamic-localpv-provisioner
+  version: 4.3.0
+description: A Helm chart for monitoring OpenEBS
+keywords:
+- openebs
+- monitoring
+name: monitoring
+sources:
+- https://github.com/openebs/monitoring
+type: application
+version: 4.1.0

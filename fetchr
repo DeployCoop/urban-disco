@@ -26,6 +26,7 @@ helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
 helm repo add openbao https://openbao.github.io/openbao-helm
 helm repo add nextcloud https://nextcloud.github.io/helm/
 helm repo add argo https://argoproj.github.io/argo-helm
+helm repo add openebs-monitoring https://openebs.github.io/monitoring/
 helm repo update
 
 rm -Rf charts
@@ -49,6 +50,8 @@ git checkout nextjs-docker
 git checkout sass-starter
 helm fetch --untar minio-operator/operator
 mv -v operator minio-operator
+helm fetch --untar openebs-monitoring/monitoring
+mv -v monitoring openebs-monitoring
 helm fetch --untar opensearch-operator/opensearch-operator
 helm fetch --untar opensearch-operator/opensearch-cluster
 helm fetch --untar opensearch/opensearch-dashboards
