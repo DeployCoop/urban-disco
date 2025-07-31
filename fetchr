@@ -45,6 +45,8 @@ rm -Rf ${TMP}/FOSSBilling-charts/.git
 mv -v ${TMP}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
 
 cd ${THIS_CWD}/charts
+git checkout nextjs-docker
+git checkout sass-starter
 helm fetch --untar minio-operator/operator
 mv -v operator minio-operator
 helm fetch --untar opensearch-operator/opensearch-operator
