@@ -1,3 +1,0 @@
-# Test Argo CD with optional component "commit-server"
-commitServer:
-  enabled: true

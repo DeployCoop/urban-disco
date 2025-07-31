@@ -1,7 +1,0 @@
-# Test with default values
-crds:
-  keep: false
-
-redis:
-  exporter:
-    enabled: true

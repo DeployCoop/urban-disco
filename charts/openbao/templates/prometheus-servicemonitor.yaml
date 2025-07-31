@@ -23,6 +23,9 @@ metadata:
     release: prometheus
     {{- end }}
 spec:
+  {{- if .Values.serverTelemetry.serviceMonitor.scrapeClass }}
+  scrapeClass: {{ .Values.serverTelemetry.serviceMonitor.scrapeClass }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ template "openbao.name" . }}
@@ -41,8 +44,17 @@ spec:
     params:
       format:
       - prometheus
+    {{- with .Values.serverTelemetry.serviceMonitor.tlsConfig }}
+    tlsConfig:
+    {{- toYaml . | nindent 6 }}
+    {{- else }}
     tlsConfig:
       insecureSkipVerify: true
+    {{- end }}
+    {{- with .Values.serverTelemetry.serviceMonitor.authorization }}
+    authorization:
+    {{- toYaml . | nindent 6 }}
+    {{- end }}
   namespaceSelector:
     matchNames:
       - {{ include "openbao.namespace" . }}

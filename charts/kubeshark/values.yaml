@@ -2,7 +2,7 @@
 tap:
   docker:
     registry: docker.io/kubeshark
-    tag: "v52.7"
+    tag: ""
     tagLocked: true
     imagePullPolicy: Always
     imagePullSecrets: []
@@ -139,6 +139,7 @@ tap:
     host: ks.svc.cluster.local
     tls: []
     annotations: {}
+  priorityClass: ""
   routing:
     front:
       basePath: ""
@@ -250,7 +251,8 @@ license: ""
 cloudLicenseEnabled: true
 aiAssistantEnabled: true
 demoModeEnabled: false
-supportChatEnabled: false
+supportChatEnabled: true
+betaEnabled: false
 internetConnectivity: true
 scripting:
   env: {}

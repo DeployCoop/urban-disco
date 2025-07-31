@@ -1,7 +1,7 @@
 annotations:
   charts.openshift.io/name: Openbao
 apiVersion: v2
-appVersion: v2.1.0
+appVersion: v2.3.1
 description: Official OpenBao Chart
 home: https://github.com/openbao/openbao-helm
 icon: https://github.com/openbao/artwork/blob/main/color/openbao-color.svg
@@ -14,12 +14,12 @@ keywords:
 - management
 - automation
 - infrastructure
-kubeVersion: '>= 1.27.0-0'
+kubeVersion: '>= 1.30.0-0'
 maintainers:
-- email: openbao-security@lists.lfedge.org
+- email: openbao-security@lists.openssf.org
   name: OpenBao
   url: https://openbao.org
 name: openbao
 sources:
 - https://github.com/openbao/openbao-helm
-version: 0.7.0
+version: 0.16.2

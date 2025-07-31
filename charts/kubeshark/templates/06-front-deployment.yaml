@@ -4,8 +4,8 @@ metadata:
   labels:
     app.kubeshark.co/app: front
     {{- include "kubeshark.labels" . | nindent 4 }}
-  annotations:
   {{- if .Values.tap.annotations }}
+  annotations:
     {{- toYaml .Values.tap.annotations | nindent 4 }}
   {{- end }}
   name: {{ include "kubeshark.name" . }}-front
@@ -80,6 +80,8 @@ spec:
               value: '{{ .Values.aiAssistantEnabled | ternary "true" "false" }}'
             - name: REACT_APP_SUPPORT_CHAT_ENABLED
               value: '{{ and .Values.supportChatEnabled .Values.internetConnectivity | ternary "true" "false" }}'
+            - name: REACT_APP_BETA_ENABLED
+              value: '{{ default false .Values.betaEnabled | ternary "true" "false" }}'
             - name: REACT_APP_DISSECTORS_UPDATING_ENABLED
               value: '{{ .Values.tap.liveConfigMapChangesDisabled | ternary "false" "true" }}'
             - name: REACT_APP_SENTRY_ENABLED
@@ -122,12 +124,6 @@ spec:
               mountPath: /etc/nginx/conf.d/default.conf
               subPath: default.conf
               readOnly: true
-    {{- if .Values.tap.docker.imagePullSecrets }}
-      imagePullSecrets:
-        {{- range .Values.tap.docker.imagePullSecrets }}
-        - name: {{ . }}
-        {{- end }}
-    {{- end }}
 {{- if gt (len .Values.tap.nodeSelectorTerms.front) 0}}
       affinity:
         nodeAffinity:
@@ -181,3 +177,6 @@ spec:
             name: kubeshark-nginx-config-map
       dnsPolicy: ClusterFirstWithHostNet
       serviceAccountName: {{ include "kubeshark.serviceAccountName" . }}
+      {{- if .Values.tap.priorityClass }}
+      priorityClassName: {{ .Values.tap.priorityClass | quote }}
+      {{- end }}

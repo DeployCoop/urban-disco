@@ -140,12 +140,26 @@ Add a special case for replicas=1, where it should default to 0 as well.
 {{- end -}}
 
 {{/*
+Resolve the external OpenBao/Vault address by checking global and injector values in order of precedence:
+1. global.externalBaoAddr
+2. global.externalVaultAddr 
+*/}}
+
+{{- define "openbao.externalAddr" -}}
+  {{- if .Values.global.externalBaoAddr -}}
+    {{- .Values.global.externalBaoAddr -}}
+  {{- else -}}
+    {{- .Values.global.externalVaultAddr -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
 Set the variable 'mode' to the server mode requested by the user to simplify
 template logic.
 */}}
 {{- define "openbao.mode" -}}
   {{- template "openbao.serverEnabled" . -}}
-  {{- if or (.Values.injector.externalVaultAddr) (.Values.global.externalVaultAddr) -}}
+  {{- if or (.Values.injector.externalVaultAddr) (.Values.global.externalVaultAddr) (.Values.global.externalBaoAddr) -}}
     {{- $_ := set . "mode" "external" -}}
   {{- else if not .serverEnabled -}}
     {{- $_ := set . "mode" "external" -}}
@@ -275,7 +289,9 @@ storage might be desired by the user.
   {{- if and (ne .mode "dev") (or .Values.server.dataStorage.enabled .Values.server.auditStorage.enabled) }}
   volumeClaimTemplates:
       {{- if and (eq (.Values.server.dataStorage.enabled | toString) "true") (or (eq .mode "standalone") (eq (.Values.server.ha.raft.enabled | toString ) "true" )) }}
-    - metadata:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
         name: data
         {{- include "openbao.dataVolumeClaim.annotations" . | nindent 6 }}
         {{- include "openbao.dataVolumeClaim.labels" . | nindent 6 }}
@@ -290,7 +306,9 @@ storage might be desired by the user.
           {{- end }}
       {{ end }}
       {{- if eq (.Values.server.auditStorage.enabled | toString) "true" }}
-    - metadata:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
         name: audit
         {{- include "openbao.auditVolumeClaim.annotations" . | nindent 6 }}
         {{- include "openbao.auditVolumeClaim.labels" . | nindent 6 }}
@@ -448,7 +466,7 @@ Sets extra pod annotations
 */}}
 {{- define "openbao.annotations" }}
       annotations:
-  {{- if .Values.server.includeConfigAnnotation }}
+  {{- if .Values.server.configAnnotation }}
         openbao.hashicorp.com/config-checksum: {{ include "openbao.config" . | sha256sum }}
   {{- end }}
   {{- if .Values.server.annotations }}
@@ -1075,7 +1093,6 @@ config file from values
   {{- if or (eq .mode "ha") (eq .mode "standalone") }}
   {{- $type := typeOf (index .Values.server .mode).config }}
   {{- if eq $type "string" }}
-    disable_mlock = true
   {{- if eq .mode "standalone" }}
     {{ tpl .Values.server.standalone.config . | nindent 4 | trim }}
   {{- else if and (eq .mode "ha") (eq (.Values.server.ha.raft.enabled | toString) "false") }}
@@ -1085,9 +1102,9 @@ config file from values
   {{ end }}
   {{- else }}
   {{- if and (eq .mode "ha") (eq (.Values.server.ha.raft.enabled | toString) "true") }}
-{{ merge (dict "disable_mlock" true) (index .Values.server .mode).raft.config | toPrettyJson | indent 4 }}
+{{ (index .Values.server .mode).raft.config | toPrettyJson | indent 4 }}
   {{- else }}
-{{ merge (dict "disable_mlock" true) (index .Values.server .mode).config | toPrettyJson | indent 4 }}
+{{ (index .Values.server .mode).config | toPrettyJson | indent 4 }}
   {{- end }}
   {{- end }}
   {{- end }}

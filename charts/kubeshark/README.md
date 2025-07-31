@@ -180,6 +180,7 @@ Example for overriding image names:
 | `tap.nodeSelectorTerms.workers`                   | Node selector terms for workers components                       | `[{"matchExpressions":[{"key":"kubernetes.io/os","operator":"In","values":["linux"]}]}]` |
 | `tap.nodeSelectorTerms.hub`                   | Node selector terms for hub component                 | `[{"matchExpressions":[{"key":"kubernetes.io/os","operator":"In","values":["linux"]}]}]` |
 | `tap.nodeSelectorTerms.front`                   | Node selector terms for front-end component                         | `[{"matchExpressions":[{"key":"kubernetes.io/os","operator":"In","values":["linux"]}]}]` |
+| `tap.priorityClass`                   | Priority class name for Kubeshark components                         | `""`                                                |
 | `tap.tolerations.workers`                  | Tolerations for workers components                         | `[ {"operator": "Exists", "effect": "NoExecute"}` |
 | `tap.tolerations.hub`                  | Tolerations for hub component                         | `[]` |
 | `tap.tolerations.front`                  | Tolerations for front-end component                         | `[]` |
@@ -226,7 +227,7 @@ Example for overriding image names:
 | `scripting.watchScripts`                  | Enable watch mode for the scripts in source directory          | `true`                                                  |
 | `timezone`                                | IANA time zone applied to time shown in the front-end | `""` (local time zone applies) |
 | `supportChatEnabled`                      | Enable real-time support chat channel based on Intercom | `false` |
-| `internetConnectivity`                    | Turns off API requests that are dependant on Internet connectivity such as `telemetry` and `online-support`. | `true` |
+| `internetConnectivity`                    | Turns off API requests that are dependent on Internet connectivity such as `telemetry` and `online-support`. | `true` |
 
 KernelMapping pairs kernel versions with a
                             DriverContainer image. Kernel versions can be matched

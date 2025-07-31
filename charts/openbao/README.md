@@ -1,6 +1,6 @@
 # openbao
 
-![Version: 0.7.0](https://img.shields.io/badge/Version-0.7.0-informational?style=flat-square) ![AppVersion: v2.1.0](https://img.shields.io/badge/AppVersion-v2.1.0-informational?style=flat-square)
+![Version: 0.16.2](https://img.shields.io/badge/Version-0.16.2-informational?style=flat-square) ![AppVersion: v2.3.1](https://img.shields.io/badge/AppVersion-v2.3.1-informational?style=flat-square)
 
 Official OpenBao Chart
 
@@ -10,7 +10,7 @@ Official OpenBao Chart
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| OpenBao | <openbao-security@lists.lfedge.org> | <https://openbao.org> |
+| OpenBao | <openbao-security@lists.openssf.org> | <https://openbao.org> |
 
 ## Source Code
 
@@ -18,7 +18,7 @@ Official OpenBao Chart
 
 ## Requirements
 
-Kubernetes: `>= 1.29.0-0`
+Kubernetes: `>= 1.30.0-0`
 
 ## Values
 
@@ -29,7 +29,7 @@ Kubernetes: `>= 1.29.0-0`
 | csi.agent.image.pullPolicy | string | `"IfNotPresent"` | image pull policy to use for agent image. if tag is "latest", set to "Always" |
 | csi.agent.image.registry | string | `"quay.io"` | image registry to use for agent image |
 | csi.agent.image.repository | string | `"openbao/openbao"` | image repo to use for agent image |
-| csi.agent.image.tag | string | `"2.1.0"` | image tag to use for agent image |
+| csi.agent.image.tag | string | `"2.3.1"` | image tag to use for agent image |
 | csi.agent.logFormat | string | `"standard"` |  |
 | csi.agent.logLevel | string | `"info"` |  |
 | csi.agent.resources | object | `{}` |  |
@@ -46,9 +46,9 @@ Kubernetes: `>= 1.29.0-0`
 | csi.extraArgs | list | `[]` |  |
 | csi.hmacSecretName | string | `""` |  |
 | csi.image.pullPolicy | string | `"IfNotPresent"` | image pull policy to use for csi image. if tag is "latest", set to "Always" |
-| csi.image.registry | string | `"docker.io"` | image registry to use for csi image |
-| csi.image.repository | string | `"hashicorp/vault-csi-provider"` | image repo to use for csi image |
-| csi.image.tag | string | `"1.4.0"` | image tag to use for csi image |
+| csi.image.registry | string | `"quay.io"` | image registry to use for csi image |
+| csi.image.repository | string | `"openbao/openbao-csi-provider"` | image repo to use for csi image |
+| csi.image.tag | string | `"1.5.0"` | image tag to use for csi image |
 | csi.livenessProbe.failureThreshold | int | `2` |  |
 | csi.livenessProbe.initialDelaySeconds | int | `5` |  |
 | csi.livenessProbe.periodSeconds | int | `5` |  |
@@ -71,7 +71,8 @@ Kubernetes: `>= 1.29.0-0`
 | csi.volumeMounts | list | `[]` | volumeMounts is a list of volumeMounts for the main server container. These are rendered via toYaml rather than pre-processed like the extraVolumes value. The purpose is to make it easy to share volumes between containers. |
 | csi.volumes | list | `[]` | volumes is a list of volumes made available to all containers. These are rendered via toYaml rather than pre-processed like the extraVolumes value. The purpose is to make it easy to share volumes between containers. |
 | global.enabled | bool | `true` | enabled is the master enabled switch. Setting this to true or false will enable or disable all the components within this chart by default. |
-| global.externalVaultAddr | string | `""` | External openbao server address for the injector and CSI provider to use. Setting this will disable deployment of a openbao server. |
+| global.externalBaoAddr | string | `""` | External openbao server address for the injector and CSI provider to use. Setting this will disable deployment of a openbao server. |
+| global.externalVaultAddr | string | `""` | Deprecated: Please use global.externalBaoAddr instead. |
 | global.imagePullSecrets | list | `[]` | Image pull secret to use for registry authentication. Alternatively, the value may be specified as an array of strings. |
 | global.namespace | string | `""` | The namespace to deploy to. Defaults to the `helm` installation namespace. |
 | global.openshift | bool | `false` | If deploying to OpenShift |
@@ -87,11 +88,11 @@ Kubernetes: `>= 1.29.0-0`
 | injector.agentDefaults.template | string | `"map"` |  |
 | injector.agentDefaults.templateConfig.exitOnRetryFailure | bool | `true` |  |
 | injector.agentDefaults.templateConfig.staticSecretRenderInterval | string | `""` |  |
-| injector.agentImage | object | `{"pullPolicy":"IfNotPresent","registry":"quay.io","repository":"openbao/openbao","tag":"2.1.0"}` | agentImage sets the repo and tag of the OpenBao image to use for the OpenBao Agent containers.  This should be set to the official OpenBao image.  OpenBao 1.3.1+ is required. |
+| injector.agentImage | object | `{"pullPolicy":"IfNotPresent","registry":"quay.io","repository":"openbao/openbao","tag":"2.3.1"}` | agentImage sets the repo and tag of the OpenBao image to use for the OpenBao Agent containers.  This should be set to the official OpenBao image.  OpenBao 1.3.1+ is required. |
 | injector.agentImage.pullPolicy | string | `"IfNotPresent"` | image pull policy to use for agent image. if tag is "latest", set to "Always" |
 | injector.agentImage.registry | string | `"quay.io"` | image registry to use for agent image |
 | injector.agentImage.repository | string | `"openbao/openbao"` | image repo to use for agent image |
-| injector.agentImage.tag | string | `"2.1.0"` | image tag to use for agent image |
+| injector.agentImage.tag | string | `"2.3.1"` | image tag to use for agent image |
 | injector.annotations | object | `{}` |  |
 | injector.authPath | string | `"auth/kubernetes"` |  |
 | injector.certs.caBundle | string | `""` |  |
@@ -99,7 +100,7 @@ Kubernetes: `>= 1.29.0-0`
 | injector.certs.keyName | string | `"tls.key"` |  |
 | injector.certs.secretName | string | `nil` |  |
 | injector.enabled | string | `"-"` | True if you want to enable openbao agent injection. @default: global.enabled |
-| injector.externalVaultAddr | string | `""` | Deprecated: Please use global.externalVaultAddr instead. |
+| injector.externalVaultAddr | string | `""` | Deprecated: Please use global.externalBaoAddr instead. |
 | injector.extraEnvironmentVars | object | `{}` |  |
 | injector.extraLabels | object | `{}` |  |
 | injector.failurePolicy | string | `"Ignore"` |  |
@@ -194,7 +195,7 @@ Kubernetes: `>= 1.29.0-0`
 | server.image.pullPolicy | string | `"IfNotPresent"` | image pull policy to use for server image. if tag is "latest", set to "Always" |
 | server.image.registry | string | `"quay.io"` | image registry to use for server image |
 | server.image.repository | string | `"openbao/openbao"` | image repo to use for server image |
-| server.image.tag | string | `"2.1.0"` | image tag to use for server image |
+| server.image.tag | string | `"2.3.1"` | image tag to use for server image |
 | server.ingress.activeService | bool | `true` |  |
 | server.ingress.annotations | object | `{}` |  |
 | server.ingress.enabled | bool | `false` |  |
@@ -273,13 +274,20 @@ Kubernetes: `>= 1.29.0-0`
 | server.updateStrategyType | string | `"OnDelete"` |  |
 | server.volumeMounts | string | `nil` |  |
 | server.volumes | string | `nil` |  |
+| serverTelemetry.grafanaDashboard.defaultLabel | bool | `true` |  |
+| serverTelemetry.grafanaDashboard.enabled | bool | `false` |  |
+| serverTelemetry.grafanaDashboard.extraAnnotations | object | `{}` |  |
+| serverTelemetry.grafanaDashboard.extraLabel | object | `{}` |  |
 | serverTelemetry.prometheusRules.enabled | bool | `false` |  |
 | serverTelemetry.prometheusRules.rules | list | `[]` |  |
 | serverTelemetry.prometheusRules.selectors | object | `{}` |  |
+| serverTelemetry.serviceMonitor.authorization | object | `{}` |  |
 | serverTelemetry.serviceMonitor.enabled | bool | `false` |  |
 | serverTelemetry.serviceMonitor.interval | string | `"30s"` |  |
+| serverTelemetry.serviceMonitor.scrapeClass | string | `""` |  |
 | serverTelemetry.serviceMonitor.scrapeTimeout | string | `"10s"` |  |
 | serverTelemetry.serviceMonitor.selectors | object | `{}` |  |
+| serverTelemetry.serviceMonitor.tlsConfig | object | `{}` |  |
 | ui.activeOpenbaoPodOnly | bool | `false` |  |
 | ui.annotations | object | `{}` |  |
 | ui.enabled | bool | `false` |  |
@@ -292,3 +300,5 @@ Kubernetes: `>= 1.29.0-0`
 | ui.serviceType | string | `"ClusterIP"` |  |
 | ui.targetPort | int | `8200` |  |
 
+----------------------------------------------
+Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

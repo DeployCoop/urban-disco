@@ -55,28 +55,6 @@ Return the proper Docker Image Registry Secret Names
 {{- end -}}
 
 {{/*
-Return the appropriate apiVersion for networkpolicy.
-*/}}
-{{- define "networkPolicy.apiVersion" -}}
-{{- if semverCompare ">=1.4-0, <1.7-0" .Capabilities.KubeVersion.GitVersion -}}
-{{- print "extensions/v1beta1" -}}
-{{- else -}}
-{{- print "networking.k8s.io/v1" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Return the appropriate apiGroup for PodSecurityPolicy.
-*/}}
-{{- define "podSecurityPolicy.apiGroup" -}}
-{{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
-{{- print "policy" -}}
-{{- else -}}
-{{- print "extensions" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Return true if a TLS secret object should be created
 */}}
 {{- define "redis.createTlsSecret" -}}
@@ -125,8 +103,8 @@ Return the path to the CA cert file.
 {{- define "redis.tlsCACert" -}}
 {{- if (include "redis.createTlsSecret" . ) -}}
     {{- printf "/opt/bitnami/redis/certs/%s" "ca.crt" -}}
-{{- else -}}
-    {{- required "Certificate CA filename is required when TLS in enabled" .Values.tls.certCAFilename | printf "/opt/bitnami/redis/certs/%s" -}}
+{{- else }}
+    {{- ternary "" (printf "/opt/bitnami/redis/certs/%s" .Values.tls.certCAFilename) (empty .Values.tls.certCAFilename) }}
 {{- end -}}
 {{- end -}}
 
@@ -222,34 +200,26 @@ Get the password key to be retrieved from Redis&reg; secret.
 {{- end -}}
 {{- end -}}
 
-
-{{/*
-Returns the available value for certain key in an existing secret (if it exists),
-otherwise it generates a random value.
-*/}}
-{{- define "getValueFromSecret" }}
-    {{- $len := (default 16 .Length) | int -}}
-    {{- $obj := (lookup "v1" "Secret" .Namespace .Name).data -}}
-    {{- if $obj }}
-        {{- index $obj .Key | b64dec -}}
-    {{- else -}}
-        {{- randAlphaNum $len -}}
-    {{- end -}}
-{{- end }}
-
 {{/*
 Return Redis&reg; password
 */}}
 {{- define "redis.password" -}}
-{{- if or .Values.auth.enabled .Values.global.redis.password }}
-    {{- if not (empty .Values.global.redis.password) }}
-        {{- .Values.global.redis.password -}}
-    {{- else if not (empty .Values.auth.password) -}}
-        {{- .Values.auth.password -}}
-    {{- else -}}
-        {{- include "getValueFromSecret" (dict "Namespace" (include "common.names.namespace" .) "Name" (include "redis.secretName" .) "Length" 10 "Key" (include "redis.secretPasswordKey" .))  -}}
-    {{- end -}}
-{{- end -}}
+{{- if or .Values.auth.enabled .Values.global.redis.password -}}
+    {{- include "common.secrets.passwords.manage" (dict "secret" (include "redis.secretName" .) "key" (include "redis.secretPasswordKey" .) "providedValues" (list "global.redis.password" "auth.password") "length" 10 "skipB64enc" true "skipQuote" true "honorProvidedValues" true "context" $) -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Returns the secret value if found or an empty string otherwise
+Used for fetching Redis ACL user passwords from Kubernetes Secrets
+*/}}
+{{- define "common.secrets.get" -}}
+{{- $secret := (lookup "v1" "Secret" .context.Release.Namespace .secret) -}}
+{{- if and $secret (index $secret.data .key) -}}
+    {{- index $secret.data .key | b64dec -}}
+{{- else -}}
+    {{- "" -}}
+{{- end }}
 {{- end }}
 
 {{/* Check if there are rolling tags in the images */}}
@@ -264,7 +234,6 @@ Compile all warnings into a single message, and call fail.
 */}}
 {{- define "redis.validateValues" -}}
 {{- $messages := list -}}
-{{- $messages := append $messages (include "redis.validateValues.topologySpreadConstraints" .) -}}
 {{- $messages := append $messages (include "redis.validateValues.architecture" .) -}}
 {{- $messages := append $messages (include "redis.validateValues.podSecurityPolicy.create" .) -}}
 {{- $messages := append $messages (include "redis.validateValues.tls" .) -}}
@@ -274,15 +243,6 @@ Compile all warnings into a single message, and call fail.
 
 {{- if $message -}}
 {{-   printf "\nVALUES VALIDATION:\n%s" $message | fail -}}
-{{- end -}}
-{{- end -}}
-
-{{/* Validate values of Redis&reg; - spreadConstrainsts K8s version */}}
-{{- define "redis.validateValues.topologySpreadConstraints" -}}
-{{- if and (semverCompare "<1.16-0" .Capabilities.KubeVersion.GitVersion) .Values.replica.topologySpreadConstraints -}}
-redis: topologySpreadConstraints
-    Pod Topology Spread Constraints are only available on K8s  >= 1.16
-    Find more information at https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
 {{- end -}}
 {{- end -}}
 
