@@ -11,6 +11,8 @@ helm repo add sloth https://slok.github.io/sloth
 helm repo add openebs https://openebs.github.io/openebs
 helm repo add minio-operator https://operator.min.io
 helm repo update
+rm -Rf charts
+mkdir charts
 cd charts
 helm fetch --untar opensearch-operator/opensearch-operator
 helm fetch --untar opensearch-operator/opensearch-cluster
