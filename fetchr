@@ -48,8 +48,11 @@ mv -v ${TMP}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
 cd ${THIS_CWD}/charts
 git checkout nextjs-docker
 git checkout sass-starter
+mkdir minio
+cd minio
 helm fetch --untar minio-operator/operator
-mv -v operator minio-operator
+helm fetch --untar minio-operator/tenant
+cd ${THIS_CWD}/charts
 helm fetch --untar openebs-monitoring/monitoring
 mv -v monitoring openebs-monitoring
 helm fetch --untar opensearch-operator/opensearch-operator
