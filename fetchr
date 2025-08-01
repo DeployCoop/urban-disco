@@ -36,6 +36,7 @@ cd $TMP
 git clone --depth=1 https://github.com/supabase-community/supabase-kubernetes.git
 git clone --depth=1 https://github.com/drupalwxt/helm-drupal.git
 git clone --depth=1 https://github.com/joshuacox/FOSSBilling-charts.git
+git clone --depth=1 https://git.deuxfleurs.fr/Deuxfleurs/garage
 cd ${TMP}/helm-drupal/charts
 mv -v solr ${THIS_CWD}/charts/
 mv -v drupal ${THIS_CWD}/charts/
@@ -44,6 +45,7 @@ cd ${TMP}/supabase-kubernetes/charts
 mv -v supabase ${THIS_CWD}/charts/
 rm -Rf ${TMP}/FOSSBilling-charts/.git
 mv -v ${TMP}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
+mv -v ${TMP}/garage/script/helm/garage ${THIS_CWD}/charts/
 
 cd ${THIS_CWD}/charts
 git checkout nextjs-docker
