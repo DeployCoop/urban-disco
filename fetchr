@@ -77,4 +77,3 @@ helm fetch --untar --prov openproject/openproject
 helm fetch --untar sloth/sloth
 helm fetch --untar openebs/openebs
 helm fetch --untar vmware-tanzu/velero
-
