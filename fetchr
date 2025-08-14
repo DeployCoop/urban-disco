@@ -28,6 +28,7 @@ helm repo add nextcloud https://nextcloud.github.io/helm/
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo add openebs-monitoring https://openebs.github.io/monitoring/
 helm repo add traefik https://traefik.github.io/charts
+helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
 helm repo update
 
 rm -Rf charts
@@ -82,3 +83,4 @@ helm fetch --untar --prov openproject/openproject
 helm fetch --untar sloth/sloth
 helm fetch --untar openebs/openebs
 helm fetch --untar vmware-tanzu/velero
+helm fetch --untar csi-driver-nfs/csi-driver-nfs
