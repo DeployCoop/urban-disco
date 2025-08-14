@@ -1,6 +1,6 @@
 
 
-### Minor Changes
+### Patch Changes
 
-- 4793ea9: Upgrade OpenProject core version to 16.2.0 (minor update)
+- 450d949: Upgrade OpenProject core version to 16.3.1 (patch update)
 
