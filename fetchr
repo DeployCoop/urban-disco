@@ -41,6 +41,8 @@ git clone --depth=1 https://git.deuxfleurs.fr/Deuxfleurs/garage
 git clone --depth=1 https://github.com/cvat-ai/cvat
 cd ${TMP}/cvat
 mv -v helm-chart ${THIS_CWD}/charts/cvat
+rm ${THIS_CWD}/charts/cvat/analytics
+mv -v components/analytics ${THIS_CWD}/charts/cvat/
 cd ${TMP}/helm-drupal/charts
 mv -v solr    ${THIS_CWD}/charts/
 mv -v drupal  ${THIS_CWD}/charts/
