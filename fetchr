@@ -1,88 +1,96 @@
 #!/usr/bin/env bash
 : ${VERBOSITY:=0}
-TMP=$(mktemp -d --suffix .tmp.d )
-cleanup () {
-  if [[ ${VERBOSITY} -gt 10 ]]; then
-    rm -Rvf ${TMP}
-  else
-    rm -Rf ${TMP}
-  fi
+
+main () {
+  TMP=$(mktemp -d --suffix .tmp.d )
+  cleanup () {
+    if [[ ${VERBOSITY} -gt 10 ]]; then
+      rm -Rvf ${TMP}
+    else
+      rm -Rf ${TMP}
+    fi
+  }
+  trap cleanup EXIT
+  THIS_CWD=$(pwd)
+
+  helm repo add grafana https://grafana.github.io/helm-charts
+  helm repo add ingress-nginx  https://kubernetes.github.io/ingress-nginx
+  helm repo add kubeshark https://helm.kubeshark.co  
+  helm repo add openldap  https://jp-gouin.github.io/helm-openldap/
+  helm repo add openproject https://charts.openproject.org
+  helm repo add opensearch https://opensearch-project.github.io/helm-charts/
+  helm repo add opensearch-operator https://opensearch-project.github.io/opensearch-k8s-operator/
+  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+  helm repo add sloth https://slok.github.io/sloth
+  helm repo add openebs https://openebs.github.io/openebs
+  helm repo add minio-operator https://operator.min.io
+  helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
+  helm repo add openbao https://openbao.github.io/openbao-helm
+  helm repo add nextcloud https://nextcloud.github.io/helm/
+  helm repo add argo https://argoproj.github.io/argo-helm
+  helm repo add openebs-monitoring https://openebs.github.io/monitoring/
+  helm repo add traefik https://traefik.github.io/charts
+  helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+  helm repo add fluent https://fluent.github.io/helm-charts
+  helm repo update
+
+  rm -Rf charts
+  mkdir charts
+
+  cd $TMP
+  git clone --depth=1 https://github.com/supabase-community/supabase-kubernetes.git
+  git clone --depth=1 https://github.com/joshuacox/FOSSBilling-charts.git
+  git clone --depth=1 https://github.com/drupalwxt/helm-drupal.git
+  git clone --depth=1 https://git.deuxfleurs.fr/Deuxfleurs/garage
+  git clone --depth=1 https://github.com/cvat-ai/cvat
+  cd ${TMP}/cvat
+  mv -v helm-chart ${THIS_CWD}/charts/cvat
+  rm ${THIS_CWD}/charts/cvat/analytics
+  mv -v components/analytics ${THIS_CWD}/charts/cvat/
+  cd ${TMP}/helm-drupal/charts
+  mv -v solr    ${THIS_CWD}/charts/
+  mv -v drupal  ${THIS_CWD}/charts/
+  mv -v varnish ${THIS_CWD}/charts/
+  cd ${TMP}/supabase-kubernetes/charts
+  mv -v supabase ${THIS_CWD}/charts/
+  rm -Rf ${TMP}/FOSSBilling-charts/.git
+  mv -v ${TMP}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
+  mv -v ${TMP}/garage/script/helm/garage ${THIS_CWD}/charts/
+
+  cd ${THIS_CWD}/charts
+  git checkout nextjs-docker
+  git checkout sass-starter
+  mkdir minio
+  cd minio
+  helm fetch --untar minio-operator/operator
+  helm fetch --untar minio-operator/tenant
+  cd ${THIS_CWD}/charts
+  helm fetch --untar openebs-monitoring/monitoring
+  mv -v monitoring openebs-monitoring
+  helm fetch --untar opensearch-operator/opensearch-operator
+  helm fetch --untar opensearch-operator/opensearch-cluster
+  helm fetch --untar opensearch/opensearch-dashboards
+  helm fetch --untar opensearch/opensearch
+  helm fetch --untar opensearch/data-prepper
+  helm fetch --untar openbao/openbao
+  helm fetch --untar argo/argo-cd
+  helm fetch --untar nextcloud/nextcloud
+  helm fetch --untar traefik/traefik 
+  helm fetch --untar ingress-nginx/ingress-nginx
+  helm fetch --untar openldap/openldap
+  helm fetch --untar prometheus-community/kube-prometheus-stack 
+  helm fetch --untar kubeshark/kubeshark 
+  helm fetch --untar harbor/harbor
+  helm fetch --untar grafana/grafana 
+  helm fetch --untar --prov openproject/openproject 
+  helm fetch --untar sloth/sloth
+  helm fetch --untar openebs/openebs
+  helm fetch --untar vmware-tanzu/velero
+  helm fetch --untar csi-driver-nfs/csi-driver-nfs
+  helm fetch --untar fluent/fluent-bit
+  helm fetch --untar fluent/fluent-operator
+  helm fetch --untar fluent/fluentd
+
 }
-trap cleanup EXIT
-THIS_CWD=$(pwd)
 
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo add ingress-nginx  https://kubernetes.github.io/ingress-nginx
-helm repo add kubeshark https://helm.kubeshark.co  
-helm repo add openldap  https://jp-gouin.github.io/helm-openldap/
-helm repo add openproject https://charts.openproject.org
-helm repo add opensearch https://opensearch-project.github.io/helm-charts/
-helm repo add opensearch-operator https://opensearch-project.github.io/opensearch-k8s-operator/
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add sloth https://slok.github.io/sloth
-helm repo add openebs https://openebs.github.io/openebs
-helm repo add minio-operator https://operator.min.io
-helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
-helm repo add openbao https://openbao.github.io/openbao-helm
-helm repo add nextcloud https://nextcloud.github.io/helm/
-helm repo add argo https://argoproj.github.io/argo-helm
-helm repo add openebs-monitoring https://openebs.github.io/monitoring/
-helm repo add traefik https://traefik.github.io/charts
-helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
-helm repo add fluent https://fluent.github.io/helm-charts
-helm repo update
-
-rm -Rf charts
-mkdir charts
-
-cd $TMP
-git clone --depth=1 https://github.com/supabase-community/supabase-kubernetes.git
-git clone --depth=1 https://github.com/joshuacox/FOSSBilling-charts.git
-git clone --depth=1 https://github.com/drupalwxt/helm-drupal.git
-git clone --depth=1 https://git.deuxfleurs.fr/Deuxfleurs/garage
-git clone --depth=1 https://github.com/cvat-ai/cvat
-cd ${TMP}/cvat
-mv -v helm-chart ${THIS_CWD}/charts/cvat
-rm ${THIS_CWD}/charts/cvat/analytics
-mv -v components/analytics ${THIS_CWD}/charts/cvat/
-cd ${TMP}/helm-drupal/charts
-mv -v solr    ${THIS_CWD}/charts/
-mv -v drupal  ${THIS_CWD}/charts/
-mv -v varnish ${THIS_CWD}/charts/
-cd ${TMP}/supabase-kubernetes/charts
-mv -v supabase ${THIS_CWD}/charts/
-rm -Rf ${TMP}/FOSSBilling-charts/.git
-mv -v ${TMP}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
-mv -v ${TMP}/garage/script/helm/garage ${THIS_CWD}/charts/
-
-cd ${THIS_CWD}/charts
-git checkout nextjs-docker
-git checkout sass-starter
-mkdir minio
-cd minio
-helm fetch --untar minio-operator/operator
-helm fetch --untar minio-operator/tenant
-cd ${THIS_CWD}/charts
-helm fetch --untar openebs-monitoring/monitoring
-mv -v monitoring openebs-monitoring
-helm fetch --untar opensearch-operator/opensearch-operator
-helm fetch --untar opensearch-operator/opensearch-cluster
-helm fetch --untar opensearch/opensearch-dashboards
-helm fetch --untar opensearch/opensearch
-helm fetch --untar opensearch/data-prepper
-helm fetch --untar openbao/openbao
-helm fetch --untar argo/argo-cd
-helm fetch --untar nextcloud/nextcloud
-helm fetch --untar traefik/traefik 
-helm fetch --untar ingress-nginx/ingress-nginx
-helm fetch --untar openldap/openldap
-helm fetch --untar prometheus-community/kube-prometheus-stack 
-helm fetch --untar kubeshark/kubeshark 
-helm fetch --untar harbor/harbor
-helm fetch --untar grafana/grafana 
-helm fetch --untar --prov openproject/openproject 
-helm fetch --untar sloth/sloth
-helm fetch --untar openebs/openebs
-helm fetch --untar vmware-tanzu/velero
-helm fetch --untar csi-driver-nfs/csi-driver-nfs
-helm fetch --untar fluent/fluent-bit
+time main $@
