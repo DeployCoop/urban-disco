@@ -1,7 +1,5 @@
 annotations:
   helm.sh/images: |
-    - name: etcd
-      image: docker.io/bitnami/etcd:3.5.6-debian-11-r10
     - name: alloy
       image: docker.io/grafana/alloy:v1.8.1
     - name: loki
@@ -10,28 +8,30 @@ annotations:
       image: docker.io/openebs/alpine-bash:4.2.0
     - name: alpine-sh
       image: docker.io/openebs/alpine-sh:4.2.0
+    - name: etcd
+      image: docker.io/openebs/etcd:3.5.6-debian-11-r10
     - name: mayastor-agent-core
-      image: docker.io/openebs/mayastor-agent-core:v2.9.1
+      image: docker.io/openebs/mayastor-agent-core:v2.9.2
     - name: mayastor-agent-ha-cluster
-      image: docker.io/openebs/mayastor-agent-ha-cluster:v2.9.1
+      image: docker.io/openebs/mayastor-agent-ha-cluster:v2.9.2
     - name: mayastor-agent-ha-node
-      image: docker.io/openebs/mayastor-agent-ha-node:v2.9.1
+      image: docker.io/openebs/mayastor-agent-ha-node:v2.9.2
     - name: mayastor-api-rest
-      image: docker.io/openebs/mayastor-api-rest:v2.9.1
+      image: docker.io/openebs/mayastor-api-rest:v2.9.2
     - name: mayastor-csi-controller
-      image: docker.io/openebs/mayastor-csi-controller:v2.9.1
+      image: docker.io/openebs/mayastor-csi-controller:v2.9.2
     - name: mayastor-csi-node
-      image: docker.io/openebs/mayastor-csi-node:v2.9.1
+      image: docker.io/openebs/mayastor-csi-node:v2.9.2
     - name: mayastor-io-engine
-      image: docker.io/openebs/mayastor-io-engine:v2.9.1
+      image: docker.io/openebs/mayastor-io-engine:v2.9.2
     - name: mayastor-metrics-exporter-io-engine
-      image: docker.io/openebs/mayastor-metrics-exporter-io-engine:v2.9.1
+      image: docker.io/openebs/mayastor-metrics-exporter-io-engine:v2.9.2
     - name: mayastor-obs-callhome-stats
-      image: docker.io/openebs/mayastor-obs-callhome-stats:v2.9.1
+      image: docker.io/openebs/mayastor-obs-callhome-stats:v2.9.2
     - name: mayastor-obs-callhome
-      image: docker.io/openebs/mayastor-obs-callhome:v2.9.1
+      image: docker.io/openebs/mayastor-obs-callhome:v2.9.2
     - name: mayastor-operator-diskpool
-      image: docker.io/openebs/mayastor-operator-diskpool:v2.9.1
+      image: docker.io/openebs/mayastor-operator-diskpool:v2.9.2
     - name: k8s-sidecar
       image: kiwigrid/k8s-sidecar:1.30.2
     - name: nats
@@ -65,12 +65,12 @@ annotations:
     - name: snapshot-controller
       image: registry.k8s.io/sig-storage/snapshot-controller:v8.2.0
 apiVersion: v2
-appVersion: 2.9.1
+appVersion: 2.9.2
 dependencies:
 - condition: crds.enabled
   name: crds
   repository: ""
-  version: 2.9.1
+  version: 2.9.2
 - condition: etcd.enabled
   name: etcd
   repository: https://charts.bitnami.com/bitnami
@@ -98,4 +98,4 @@ dependencies:
 description: Mayastor Helm chart for Kubernetes
 name: mayastor
 type: application
-version: 2.9.1
+version: 2.9.2

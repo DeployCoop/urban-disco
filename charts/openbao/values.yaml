@@ -85,8 +85,8 @@ injector:
     registry: "quay.io"
     # -- image repo to use for agent image
     repository: "openbao/openbao"
-    # -- image tag to use for agent image
-    tag: "2.3.2"
+    # -- image tag to use for agent image - defaults to chart appVersion
+    tag: ""
     # -- image pull policy to use for agent image. if tag is "latest", set to "Always"
     pullPolicy: IfNotPresent
 
@@ -380,8 +380,8 @@ server:
     registry: "quay.io"
     # -- image repo to use for server image
     repository: "openbao/openbao"
-    # -- image tag to use for server image
-    tag: "2.3.2"
+    # -- image tag to use for server image - defaults to chart appVersion
+    tag: ""
     # -- image pull policy to use for server image. if tag is "latest", set to "Always"
     pullPolicy: IfNotPresent
 
@@ -1140,6 +1140,9 @@ csi:
     providersDir: "/etc/kubernetes/secrets-store-csi-providers"
     # Kubelet host path
     kubeletRootDir: "/var/lib/kubelet"
+    # endpoint path for the provider
+    endpoint: "/provider/openbao.sock"
+
     # Extra labels to attach to the vault-csi-provider daemonSet
     # This should be a YAML map of the labels to apply to the csi provider daemonSet
     extraLabels: {}
@@ -1183,8 +1186,8 @@ csi:
       registry: "quay.io"
       # -- image repo to use for agent image
       repository: "openbao/openbao"
-      # -- image tag to use for agent image
-      tag: "2.3.2"
+      # -- image tag to use for agent image - defaults to chart appVersion
+      tag: ""
       # -- image pull policy to use for agent image. if tag is "latest", set to "Always"
       pullPolicy: IfNotPresent
 
@@ -1339,7 +1342,7 @@ serverTelemetry:
 
   grafanaDashboard:
     # Enable deployment of the OpenBao Grafana dashboard.
-    # https://grafana.com/grafana/dashboards/23554-openbao/
+    # https://grafana.com/grafana/dashboards/23725-openbao
     enabled: false
 
     # Add `grafana_dashboard: "1"` default label

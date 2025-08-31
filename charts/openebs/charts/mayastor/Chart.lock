@@ -1,7 +1,7 @@
 dependencies:
 - name: crds
   repository: ""
-  version: 2.9.1
+  version: 2.9.2
 - name: etcd
   repository: https://charts.bitnami.com/bitnami
   version: 8.6.0
@@ -20,5 +20,5 @@ dependencies:
 - name: localpv-provisioner
   repository: https://openebs.github.io/dynamic-localpv-provisioner
   version: 4.3.0
-digest: sha256:69b84ee20a355ade418bccfdbfa6bfc91ab9dec60d8688eee612b9f55c08ba1c
-generated: "2025-06-23T13:12:47.598503608Z"
+digest: sha256:a76bb12e631fd5c21bef5932c3e68d04e18ab98736ec999a008f2e8e842924ff
+generated: "2025-08-27T08:08:47.285907173Z"

@@ -2,7 +2,7 @@
 
 Mayastor Helm chart for Kubernetes
 
-![Version: 2.9.1](https://img.shields.io/badge/Version-2.9.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.9.1](https://img.shields.io/badge/AppVersion-2.9.1-informational?style=flat-square)
+![Version: 2.9.2](https://img.shields.io/badge/Version-2.9.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.9.2](https://img.shields.io/badge/AppVersion-2.9.2-informational?style=flat-square)
 
 ## Installation Guide
 
@@ -54,7 +54,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 
 | Repository | Name | Version |
 |------------|------|---------|
-|  | crds | 2.9.1 |
+|  | crds | 2.9.2 |
 | https://charts.bitnami.com/bitnami | etcd | 8.6.0 |
 | https://grafana.github.io/helm-charts | alloy | 1.0.1 |
 | https://grafana.github.io/helm-charts | loki | 6.29.0 |
@@ -66,6 +66,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 
 | Key | Description | Default |
 |:----|:------------|:--------|
+| agents.&ZeroWidthSpace;core.&ZeroWidthSpace;allowNonPersistentDevlink | Allow using non-persistent kernel devpaths for pool disks. Enabling this will let users to use the kernel devpaths e.g /dev/sda, for diskpools. However, this comes with associated risks if the devpaths get swapped among disks, resulting in total data loss especially if encryption is being used. | `false` |
 | agents.&ZeroWidthSpace;core.&ZeroWidthSpace;capacity.&ZeroWidthSpace;thin.&ZeroWidthSpace;poolCommitment | The allowed pool commitment limit when dealing with thin provisioned volumes. Example: If the commitment is 250 and the pool is 10GiB we can overcommit the pool up to 25GiB (create 2 10GiB and 1 5GiB volume) but no further. | `"250%"` |
 | agents.&ZeroWidthSpace;core.&ZeroWidthSpace;capacity.&ZeroWidthSpace;thin.&ZeroWidthSpace;snapshotCommitment | When creating snapshots for an existing volume, each replica pool must have at least this much free space percentage of the volume size. Example: if this value is 40, the pool has 40GiB free, then the max volume size allowed to be snapped on the pool is 100GiB. | `"40%"` |
 | agents.&ZeroWidthSpace;core.&ZeroWidthSpace;capacity.&ZeroWidthSpace;thin.&ZeroWidthSpace;volumeCommitment | When creating replicas for an existing volume, each replica pool must have at least this much free space percentage of the volume size. Example: if this value is 40, the pool has 40GiB free, then the max volume size allowed to be created on the pool is 100GiB. | `"40%"` |
@@ -173,7 +174,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | image.&ZeroWidthSpace;pullSecrets | docker-secrets required to pull images if the container registry from image.registry is protected | `[]` |
 | image.&ZeroWidthSpace;registry | Image registry to pull our product images | `"docker.io"` |
 | image.&ZeroWidthSpace;repo | Image registry's namespace | `"openebs"` |
-| image.&ZeroWidthSpace;tag | Release tag for our images | `"v2.9.1"` |
+| image.&ZeroWidthSpace;tag | Release tag for our images | `"v2.9.2"` |
 | io_engine.&ZeroWidthSpace;coreList | If not empty, overrides the cpuCount and explicitly sets the list of cores. Example: --set='io_engine.coreList={30,31}' | `[]` |
 | io_engine.&ZeroWidthSpace;cpuCount | The number of cores that each io-engine instance will bind to. | `"2"` |
 | io_engine.&ZeroWidthSpace;envcontext | Pass additional arguments to the Environment Abstraction Layer. Example: --set {product}.envcontext=iova-mode=pa | `""` |

@@ -1,16 +1,9 @@
 #!/usr/bin/env bash
 : ${VERBOSITY:=0}
+: ${FETCHR_CACHE:=/tmp}
+
 
 main () {
-  TMP=$(mktemp -d --suffix .tmp.d )
-  cleanup () {
-    if [[ ${VERBOSITY} -gt 10 ]]; then
-      rm -Rvf ${TMP}
-    else
-      rm -Rf ${TMP}
-    fi
-  }
-  trap cleanup EXIT
   THIS_CWD=$(pwd)
 
   helm repo add grafana https://grafana.github.io/helm-charts
@@ -32,30 +25,50 @@ main () {
   helm repo add traefik https://traefik.github.io/charts
   helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
   helm repo add fluent https://fluent.github.io/helm-charts
+  helm repo add nfd https://kubernetes-sigs.github.io/node-feature-discovery/charts
+  helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
   helm repo update
 
   rm -Rf charts
   mkdir charts
 
-  cd $TMP
-  git clone --depth=1 https://github.com/supabase-community/supabase-kubernetes.git
-  git clone --depth=1 https://github.com/joshuacox/FOSSBilling-charts.git
-  git clone --depth=1 https://github.com/drupalwxt/helm-drupal.git
-  git clone --depth=1 https://git.deuxfleurs.fr/Deuxfleurs/garage
-  git clone --depth=1 https://github.com/cvat-ai/cvat
-  cd ${TMP}/cvat
-  mv -v helm-chart ${THIS_CWD}/charts/cvat
+  cd ${FETCHR_CACHE}
+  if [[ ! -d ${FETCHR_CACHE}/supabase-kubernetes ]]; then 
+    git clone --depth=1 https://github.com/supabase-community/supabase-kubernetes.git
+  fi
+  if [[ ! -d ${FETCHR_CACHE}/FOSSBilling-charts ]]; then 
+    git clone --depth=1 https://github.com/joshuacox/FOSSBilling-charts.git
+  fi
+  if [[ ! -d ${FETCHR_CACHE}/helm-drupal ]]; then 
+    git clone --depth=1 https://github.com/drupalwxt/helm-drupal.git
+  fi
+  if [[ ! -d ${FETCHR_CACHE}/garage ]]; then 
+    git clone --depth=1 https://git.deuxfleurs.fr/Deuxfleurs/garage
+  fi
+  if [[ ! -d ${FETCHR_CACHE}/cvat ]]; then 
+    git clone --depth=1 https://github.com/cvat-ai/cvat
+  fi
+  cd ${FETCHR_CACHE}/cvat
+  git pull
+  cp -v helm-chart ${THIS_CWD}/charts/cvat
   rm ${THIS_CWD}/charts/cvat/analytics
-  mv -v components/analytics ${THIS_CWD}/charts/cvat/
-  cd ${TMP}/helm-drupal/charts
-  mv -v solr    ${THIS_CWD}/charts/
-  mv -v drupal  ${THIS_CWD}/charts/
-  mv -v varnish ${THIS_CWD}/charts/
-  cd ${TMP}/supabase-kubernetes/charts
-  mv -v supabase ${THIS_CWD}/charts/
-  rm -Rf ${TMP}/FOSSBilling-charts/.git
-  mv -v ${TMP}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
-  mv -v ${TMP}/garage/script/helm/garage ${THIS_CWD}/charts/
+  cp -v components/analytics ${THIS_CWD}/charts/cvat/
+  cd ${FETCHR_CACHE}/helm-drupal/charts
+  git pull
+  cp -v solr    ${THIS_CWD}/charts/
+  cp -v drupal  ${THIS_CWD}/charts/
+  cp -v varnish ${THIS_CWD}/charts/
+  cd ${FETCHR_CACHE}/supabase-kubernetes
+  git pull
+  cd ${FETCHR_CACHE}/supabase-kubernetes/charts
+  cp -v supabase ${THIS_CWD}/charts/
+  cd ${FETCHR_CACHE}/FOSSBilling-charts
+  git pull
+  cp -v ${FETCHR_CACHE}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
+  rm -Rf ${THIS_CWD}/FOSSBilling/.git
+  cd ${FETCHR_CACHE}/garage
+  git pull
+  cp -v ${FETCHR_CACHE}/garage/script/helm/garage ${THIS_CWD}/charts/
 
   cd ${THIS_CWD}/charts
   git checkout nextjs-docker
@@ -90,6 +103,8 @@ main () {
   helm fetch --untar fluent/fluent-bit
   helm fetch --untar fluent/fluent-operator
   helm fetch --untar fluent/fluentd
+  helm fetch --untar nvidia/gpu-operator 
+  helm fetch --untar nfd/node-feature-discovery
 
 }
 

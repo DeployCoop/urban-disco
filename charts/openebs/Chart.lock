@@ -1,7 +1,7 @@
 dependencies:
 - name: openebs-crds
   repository: ""
-  version: 4.3.2
+  version: 4.3.3
 - name: loki
   repository: https://grafana.github.io/helm-charts
   version: 6.29.0
@@ -19,6 +19,6 @@ dependencies:
   version: 1.7.0
 - name: mayastor
   repository: https://openebs.github.io/mayastor-extensions
-  version: 2.9.1
-digest: sha256:626d6557d1cebc7538c9dcef7707a9e01a412579eaef78c9311da76bb179684c
-generated: "2025-06-23T14:42:06.597483074Z"
+  version: 2.9.2
+digest: sha256:1c736e1d057c89c3c7b40ccbed29a4d25fc06ef506cc16a46e739a9fe3e1a1da
+generated: "2025-08-28T17:06:31.838779131Z"
