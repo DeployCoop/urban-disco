@@ -27,6 +27,8 @@ main () {
   helm repo add fluent https://fluent.github.io/helm-charts
   helm repo add nfd https://kubernetes-sigs.github.io/node-feature-discovery/charts
   helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+  helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+  helm repo add jetstack https://charts.jetstack.io
   helm repo update
 
   rm -Rf charts
@@ -105,6 +107,8 @@ main () {
   helm fetch --untar fluent/fluentd
   helm fetch --untar nvidia/gpu-operator 
   helm fetch --untar nfd/node-feature-discovery
+  helm fetch --untar rancher-latest/rancher
+  helm fetch --untar jetstack/cert-manager 
 
 }
 
