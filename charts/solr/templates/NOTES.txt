@@ -1,0 +1,1 @@
+Your Solr Cloud instance has been installed.

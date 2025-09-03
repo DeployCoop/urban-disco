@@ -67,7 +67,7 @@ main () {
   cd ${FETCHR_CACHE}/FOSSBilling-charts
   git pull
   cp -av ${FETCHR_CACHE}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
-  rm -Rf ${THIS_CWD}/FOSSBilling/.git
+  rm -Rf ${THIS_CWD}/charts/FOSSBilling/.git
   cd ${FETCHR_CACHE}/garage
   git pull
   cp -av ${FETCHR_CACHE}/garage/script/helm/garage ${THIS_CWD}/charts/
