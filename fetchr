@@ -52,25 +52,25 @@ main () {
   fi
   cd ${FETCHR_CACHE}/cvat
   git pull
-  cp -v helm-chart ${THIS_CWD}/charts/cvat
+  cp -av helm-chart ${THIS_CWD}/charts/cvat
   rm ${THIS_CWD}/charts/cvat/analytics
-  cp -v components/analytics ${THIS_CWD}/charts/cvat/
+  cp -av components/analytics ${THIS_CWD}/charts/cvat/
   cd ${FETCHR_CACHE}/helm-drupal/charts
   git pull
-  cp -v solr    ${THIS_CWD}/charts/
-  cp -v drupal  ${THIS_CWD}/charts/
-  cp -v varnish ${THIS_CWD}/charts/
+  cp -av solr    ${THIS_CWD}/charts/
+  cp -av drupal  ${THIS_CWD}/charts/
+  cp -av varnish ${THIS_CWD}/charts/
   cd ${FETCHR_CACHE}/supabase-kubernetes
   git pull
   cd ${FETCHR_CACHE}/supabase-kubernetes/charts
-  cp -v supabase ${THIS_CWD}/charts/
+  cp -av supabase ${THIS_CWD}/charts/
   cd ${FETCHR_CACHE}/FOSSBilling-charts
   git pull
-  cp -v ${FETCHR_CACHE}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
+  cp -av ${FETCHR_CACHE}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
   rm -Rf ${THIS_CWD}/FOSSBilling/.git
   cd ${FETCHR_CACHE}/garage
   git pull
-  cp -v ${FETCHR_CACHE}/garage/script/helm/garage ${THIS_CWD}/charts/
+  cp -av ${FETCHR_CACHE}/garage/script/helm/garage ${THIS_CWD}/charts/
 
   cd ${THIS_CWD}/charts
   git checkout nextjs-docker
