@@ -1,6 +1,7 @@
 
 
-### Patch Changes
+### Minor Changes
 
-- 70e88f4: Upgrade OpenProject core version to 16.3.2 (patch update)
+- 316d259: Switch to bitnami secure images for development
+- 9d6e5a2: Move cron-deployment resurces into values
 

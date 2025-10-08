@@ -1,12 +1,12 @@
 dependencies:
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
-  version: 61.0.0
+  version: 70.10.0
 - name: node-problem-detector
   repository: https://charts.deliveryhero.io/
   version: 2.0.9
 - name: localpv-provisioner
   repository: https://openebs.github.io/dynamic-localpv-provisioner
   version: 4.3.0
-digest: sha256:b008c96d1ea0a7044de00faede33ffcd53e09bc55ae25f3271d832ce8f894bda
-generated: "2025-06-10T08:35:59.553736152Z"
+digest: sha256:75744db71cc05e52cb2d0fd6916c78b40b2f2a0d595d58375257ede2fe00a66f
+generated: "2025-09-12T05:32:32.598135313Z"

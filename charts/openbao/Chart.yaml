@@ -1,7 +1,7 @@
 annotations:
   charts.openshift.io/name: Openbao
 apiVersion: v2
-appVersion: v2.4.0
+appVersion: v2.4.1
 description: Official OpenBao Chart
 home: https://github.com/openbao/openbao-helm
 icon: https://github.com/openbao/artwork/blob/main/color/openbao-color.svg
@@ -22,4 +22,4 @@ maintainers:
 name: openbao
 sources:
 - https://github.com/openbao/openbao-helm
-version: 0.18.0
+version: 0.18.4

@@ -1,34 +1,12 @@
 #!/usr/bin/env bash
-: ${VERBOSITY:=0}
-: ${FETCHR_CACHE:=/tmp}
+: "${VERBOSITY:=0}"
+: "${FETCHR_CACHE:=/tmp}"
 
 
 main () {
   THIS_CWD=$(pwd)
 
-  helm repo add grafana https://grafana.github.io/helm-charts
-  helm repo add ingress-nginx  https://kubernetes.github.io/ingress-nginx
-  helm repo add kubeshark https://helm.kubeshark.co  
-  helm repo add openldap  https://jp-gouin.github.io/helm-openldap/
-  helm repo add openproject https://charts.openproject.org
-  helm repo add opensearch https://opensearch-project.github.io/helm-charts/
-  helm repo add opensearch-operator https://opensearch-project.github.io/opensearch-k8s-operator/
-  helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-  helm repo add sloth https://slok.github.io/sloth
-  helm repo add openebs https://openebs.github.io/openebs
-  helm repo add minio-operator https://operator.min.io
-  helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
-  helm repo add openbao https://openbao.github.io/openbao-helm
-  helm repo add nextcloud https://nextcloud.github.io/helm/
-  helm repo add argo https://argoproj.github.io/argo-helm
-  helm repo add openebs-monitoring https://openebs.github.io/monitoring/
-  helm repo add traefik https://traefik.github.io/charts
-  helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
-  helm repo add fluent https://fluent.github.io/helm-charts
-  helm repo add nfd https://kubernetes-sigs.github.io/node-feature-discovery/charts
-  helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-  helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
-  helm repo add jetstack https://charts.jetstack.io
+  bash -eux repo_list
   helm repo update
 
   rm -Rf charts
@@ -82,34 +60,7 @@ main () {
   cd ${THIS_CWD}/charts
   helm fetch --untar openebs-monitoring/monitoring
   mv -v monitoring openebs-monitoring
-  helm fetch --untar opensearch-operator/opensearch-operator
-  helm fetch --untar opensearch-operator/opensearch-cluster
-  helm fetch --untar opensearch/opensearch-dashboards
-  helm fetch --untar opensearch/opensearch
-  helm fetch --untar opensearch/data-prepper
-  helm fetch --untar openbao/openbao
-  helm fetch --untar argo/argo-cd
-  helm fetch --untar nextcloud/nextcloud
-  helm fetch --untar traefik/traefik 
-  helm fetch --untar ingress-nginx/ingress-nginx
-  helm fetch --untar openldap/openldap
-  helm fetch --untar prometheus-community/kube-prometheus-stack 
-  helm fetch --untar kubeshark/kubeshark 
-  helm fetch --untar harbor/harbor
-  helm fetch --untar grafana/grafana 
-  helm fetch --untar --prov openproject/openproject 
-  helm fetch --untar sloth/sloth
-  helm fetch --untar openebs/openebs
-  helm fetch --untar vmware-tanzu/velero
-  helm fetch --untar csi-driver-nfs/csi-driver-nfs
-  helm fetch --untar fluent/fluent-bit
-  helm fetch --untar fluent/fluent-operator
-  helm fetch --untar fluent/fluentd
-  helm fetch --untar nvidia/gpu-operator 
-  helm fetch --untar nfd/node-feature-discovery
-  helm fetch --untar rancher-latest/rancher
-  helm fetch --untar jetstack/cert-manager 
-
+  bash -eux fetch_list
 }
 
 time main $@

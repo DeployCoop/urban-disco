@@ -1,10 +1,10 @@
 apiVersion: v2
-appVersion: 4.1.0
+appVersion: 4.1.1
 dependencies:
 - condition: kube-prometheus-stack.install
   name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
-  version: 61.0.*
+  version: 70.10.0
 - condition: node-problem-detector.install
   name: node-problem-detector
   repository: https://charts.deliveryhero.io/
@@ -21,4 +21,4 @@ name: monitoring
 sources:
 - https://github.com/openebs/monitoring
 type: application
-version: 4.1.0
+version: 4.1.1

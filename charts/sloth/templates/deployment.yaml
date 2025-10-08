@@ -31,9 +31,13 @@ spec:
       tolerations:
 {{ toYaml . | trim | indent 8 }}
       {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | trim | indent 8 }}
+      {{- end }}
       containers:
         - name: sloth
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          image: {{ coalesce .Values.global.imageRegistry .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
           args:
             - kubernetes-controller
             {{- if .Values.sloth.resyncInterval }}
@@ -52,13 +56,10 @@ spec:
             - --extra-labels={{ $key }}={{ $val }}
             {{- end}}
             {{- if .Values.commonPlugins.enabled }}
-            - --sli-plugins-path=/plugins
+            - --plugins-path=/plugins
             {{- end }}
             {{- with .Values.sloth.defaultSloPeriod }}
             - --default-slo-period={{ . }}
-            {{- end }}
-            {{- if not .Values.sloth.optimizedRules }}
-            - --disable-optimized-rules
             {{- end }}
             {{- if .Values.customSloConfig.enabled }}
             - --slo-period-windows-path={{ .Values.customSloConfig.path }}

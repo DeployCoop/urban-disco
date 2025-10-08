@@ -169,6 +169,10 @@ securityContext:
 {{- end }}
 
 {{- define "openproject.env" -}}
+{{- if .Values.metrics.enabled }}
+- name: OPENPROJECT_METRICS_ENABLED
+  value: "true"
+{{- end }}
 {{- if .Values.egress.tls.rootCA.fileName }}
 - name: SSL_CERT_FILE
   value: "/etc/ssl/certs/custom-ca.pem"
@@ -188,6 +192,18 @@ securityContext:
     secretKeyRef:
       name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
       key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- end }}
+{{- if .Values.hocuspocus.enabled }}
+{{- if .Values.hocuspocus.auth.existingSecret }}
+- name: OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.hocuspocus.auth.existingSecret }}
+      key: {{ .Values.hocuspocus.auth.secretKey }}
+{{- else }}
+- name: OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET
+  value: {{ .Values.hocuspocus.auth.password }}
+{{- end }}
 {{- end }}
 {{- end }}
 

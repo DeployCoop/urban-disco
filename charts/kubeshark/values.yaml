@@ -29,6 +29,10 @@ tap:
   capture:
     stopped: false
     stopAfter: 5m
+    raw:
+      enabled: false
+      storageSize: 1Gi
+    dbMaxSize: ""
   release:
     repo: https://helm.kubeshark.co
     name: kubeshark
@@ -139,6 +143,7 @@ tap:
     enabled: false
     className: ""
     host: ks.svc.cluster.local
+    path: /
     tls: []
     annotations: {}
   priorityClass: ""
@@ -148,6 +153,7 @@ tap:
   ipv6: true
   debug: false
   dashboard:
+    streamingType: ""
     completeStreamingEnabled: true
   telemetry:
     enabled: true
@@ -160,7 +166,7 @@ tap:
   sentry:
     enabled: false
     environment: production
-  defaultFilter: "!dns and !error"
+  defaultFilter: ""
   liveConfigMapChangesDisabled: false
   globalFilter: ""
   enabledDissectors:
@@ -253,7 +259,7 @@ license: ""
 cloudLicenseEnabled: true
 aiAssistantEnabled: true
 demoModeEnabled: false
-supportChatEnabled: true
+supportChatEnabled: false
 betaEnabled: false
 internetConnectivity: true
 scripting:
