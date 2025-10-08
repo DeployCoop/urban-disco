@@ -6,5 +6,5 @@ sortr () {
   cat $TMP > $1
 }
 set -uex
-sortr fetch_list
+sortr list_fetch
 sortr repo_list
