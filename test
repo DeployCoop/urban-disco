@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+: ${VERBOSITY:=0}
+: ${FETCHR_CACHE:=/tmp}
+
+
+main () {
+  THIS_CWD=$(pwd)
+
+  for i in $(cat repo_list); do
+    echo "helm repo add $i"
+  done
+  for i in $(cat repo_list); do
+    echo "helm fetch --untarl $i"
+  done
+}
+
+time main $@

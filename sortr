@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+TMP=$(mktemp)
+trap "rm $TMP" EXIT
+sortr () {
+  sort $1 > $TMP
+  cat $TMP > $1
+}
+set -uex
+sortr fetch_list
+sortr repo_list
