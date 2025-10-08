@@ -60,7 +60,7 @@ main () {
   cd ${THIS_CWD}/charts
   helm fetch --untar openebs-monitoring/monitoring
   mv -v monitoring openebs-monitoring
-  bash -eux fetch_list
+  bash -eux ../fetch_list
 }
 
 time main $@
