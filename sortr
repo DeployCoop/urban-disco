@@ -2,7 +2,7 @@
 TMP=$(mktemp)
 trap "rm $TMP" EXIT
 sortr () {
-  sort $1 > $TMP
+  sort $1 | uniq > $TMP
   cat $TMP > $1
 }
 set -uex

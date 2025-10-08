@@ -20,6 +20,9 @@ helm fetch --untar opensearch/opensearch
 helm fetch --untar opensearch/opensearch-dashboards
 helm fetch --untar opensearch-operator/opensearch-cluster
 helm fetch --untar opensearch-operator/opensearch-operator
+helm fetch --untar open-telemetry/opentelemetry-collector
+helm fetch --untar open-telemetry/opentelemetry-demo
+helm fetch --untar open-telemetry/opentelemetry-operator
 helm fetch --untar prometheus-community/kube-prometheus-stack 
 helm fetch --untar --prov openproject/openproject 
 helm fetch --untar rancher-latest/rancher
