@@ -23,3 +23,4 @@ helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
 helm repo add sloth https://slok.github.io/sloth
 helm repo add traefik https://traefik.github.io/charts
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
+helm repo add haproxytech https://haproxytech.github.io/helm-charts

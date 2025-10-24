@@ -60,6 +60,8 @@ main () {
   cd ${THIS_CWD}/charts
   helm fetch --untar openebs-monitoring/monitoring
   mv -v monitoring openebs-monitoring
+  helm fetch --untar haproxytech/kubernetes-ingress
+  mv -v kubernetes-ingress haproxy-ingress
   bash -eux ../list_fetch
 }
 

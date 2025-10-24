@@ -1,9 +1,9 @@
 dependencies:
 - name: fluent-bit-crds
   repository: file://charts/fluent-bit-crds
-  version: 3.4.2
+  version: 3.5.0
 - name: fluentd-crds
   repository: file://charts/fluentd-crds
-  version: 3.4.2
-digest: sha256:f3e746ede000e33d4b9574498ede7b6e78c55b6554ae8aedd73f2b0fc65b6cda
-generated: "2025-07-08T12:44:56.579486305Z"
+  version: 3.5.0
+digest: sha256:7d0fb6dd830872e9be96115495d6949b5f46255761d8321a6b0a346b3ba6ad92
+generated: "2025-10-24T19:56:08.275207924Z"

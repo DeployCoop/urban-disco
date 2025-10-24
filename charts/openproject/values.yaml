@@ -135,6 +135,10 @@ ingress:
   ##   nginx.ingress.kubernetes.io/rewrite-target: /
   annotations: {}
 
+  ## Ingress labels
+  #
+  labels: {}
+
   ## Define the Fully Qualified Domain Name (FQDN) where OpenProject should be reachable.
   #
   host: "openproject.example.com"
@@ -205,7 +209,7 @@ image:
   ## For the helm chart, use the `-slim` variants as the all-in-one container is not compatible
   ## with some of the options (non-root execution, password splitting, etc.) and is inefficient for using in helm
   ## due to embedded a number of services.
-  tag: "16.4.1-slim"
+  tag: "16.5.1-slim"
 
   ## Define image sha256 - mutual exclusive with image tag.
   ## The sha256 has a higher precedence than
@@ -400,10 +404,6 @@ hocuspocus:
       enabled: true
       secretName: ""
 
-  auth:
-    existingSecret:
-    secretKey: secret
-
   image:
     registry: "docker.io"
     repository: "openproject/hocuspocus"
@@ -414,6 +414,9 @@ hocuspocus:
     type: "Recreate"
 
   podAnnotations:
+
+  allowedOpenProjectDomains:
+    - openproject.example.com
 
   service:
     port: 1234

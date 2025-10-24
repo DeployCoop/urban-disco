@@ -1,7 +1,7 @@
 
 
-### Minor Changes
+### Patch Changes
 
-- 316d259: Switch to bitnami secure images for development
-- 9d6e5a2: Move cron-deployment resurces into values
+- c050882: - Remove hocuspocus SECRET environment variable as we will not be using it anymore
+  - Allow hocuspocus server to use the new ALLOWED_DOMAINS env variable
 
