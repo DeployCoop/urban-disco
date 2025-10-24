@@ -282,11 +282,16 @@ metrics:
     enabled: false
     annotations: {}
     additionalLabels: {}
-    # ServiceMonitor namespace. Default to Velero namespace.
+    # metrics.nodeAgentPodMonitor.metricRelabelings Specify Metric Relabelings to add to the scrape endpoint
+    # ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#relabelconfig
+    # metricRelabelings: []
+    # metrics.nodeAgentPodMonitor.relabelings [array] Prometheus relabeling rules
+    # relabelings: []
+    # PodMonitor namespace. Default to Velero namespace.
     # namespace:
-    # ServiceMonitor connection scheme. Defaults to HTTP.
+    # PodMonitor connection scheme. Defaults to HTTP.
     # scheme: ""
-    # ServiceMonitor connection tlsConfig. Defaults to {}.
+    # PodMonitor connection tlsConfig. Defaults to {}.
     # tlsConfig: {}
 
   prometheusRule:
@@ -316,14 +321,14 @@ metrics:
     #     severity: critical
     # - alert: VeleroNoNewBackup
     #   annotations:
-    #     message: Velero backup {{ $labels.schedule }} has not run successfuly in the last 30h
+    #     message: Velero backup {{ $labels.schedule }} has not run successfully in the last 25h
     #   expr: |-
     #     (
-    #     rate(velero_backup_last_successful_timestamp{schedule!=""}[15m]) <=bool 0
+    #     (time() - velero_backup_last_successful_timestamp{schedule!=""}) >bool (25 * 3600)
     #     or
     #     absent(velero_backup_last_successful_timestamp{schedule!=""})
     #     ) == 1
-    #   for: 30h
+    #   for: 1h
     #   labels:
     #     severity: critical
     # - alert: VeleroBackupPartialFailures
