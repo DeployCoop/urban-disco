@@ -1,10 +1,11 @@
 annotations:
-  artifacthub.io/changes: |
-    - "fix(observability): tracer creation warning with default security context"
-    - "fix(CRDs): ✨ update for Traefik Proxy v3.5.2"
-    - "feat(deps): update traefik docker tag to v3.5.3 + add plugin hash option"
-    - "feat(CRDs): update for Traefik to v3.5.3"
-    - "chore(release): :rocket: publish traefik 37.1.2 and crds 1.11.1"
+  artifacthub.io/changes: "- \"feat: support API basePath\"\n- \"feat: make dashboard
+    toggleable\"\n- \"feat: :package: support Traefik Hub v3.18 pluginRegistry feature\"\n-
+    \"feat(traefik-hub): add mcpgateway option\"\n- \"feat(observability): :mag: add
+    per entrypoint observability\"\n- \"feat(metrics): :chart_with_upwards_trend:
+    add OTLP resourceAttributes support\"\n- \"feat(logs): :memo: add missing support
+    of OTLP logs\"\n- \"chore(release): \U0001F680 publish traefik 37.2.0\"\n- \"chore(hub):
+    :twisted_rightwards_arrows: update hub and proxy mapping for v3.18\"\n"
 apiVersion: v2
 appVersion: v3.5.3
 description: A Traefik based Kubernetes ingress controller
@@ -26,4 +27,4 @@ sources:
 - https://github.com/traefik/traefik-helm-chart
 - https://github.com/traefik/traefik
 type: application
-version: 37.1.2
+version: 37.2.0
