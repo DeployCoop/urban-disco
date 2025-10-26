@@ -13,8 +13,7 @@ psa:
   enabled: false
 
 cdi:
-  enabled: false
-  default: false
+  enabled: true
 
 sandboxWorkloads:
   enabled: false
@@ -50,8 +49,8 @@ daemonsets:
     maxUnavailable: "1"
 
 validator:
-  repository: nvcr.io/nvidia/cloud-native
-  image: gpu-operator-validator
+  repository: nvcr.io/nvidia
+  image: gpu-operator
   # If version is not specified, then default is to use chart.AppVersion
   #version: ""
   imagePullPolicy: IfNotPresent
@@ -78,8 +77,8 @@ operator:
   # to be passed during helm upgrade.
   upgradeCRD: true
   initContainer:
-    image: cuda
     repository: nvcr.io/nvidia
+    image: cuda
     version: 13.0.1-base-ubi9
     imagePullPolicy: IfNotPresent
   tolerations:
@@ -144,7 +143,7 @@ driver:
   usePrecompiled: false
   repository: nvcr.io/nvidia
   image: driver
-  version: "580.82.07"
+  version: "580.95.05"
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   startupProbe:
@@ -190,11 +189,11 @@ driver:
       timeoutSeconds: 300
       deleteEmptyDir: false
   manager:
-    image: k8s-driver-manager
     repository: nvcr.io/nvidia/cloud-native
+    image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.8.1
+    version: v0.9.0
     imagePullPolicy: IfNotPresent
     env: []
   env: []
@@ -207,7 +206,7 @@ driver:
     name: ""
   # vGPU licensing configuration
   licensingConfig:
-    configMapName: ""
+    secretName: ""
     nlsEnabled: true
   # vGPU topology daemon configuration
   virtualTopology:
@@ -215,12 +214,14 @@ driver:
   # kernel module configuration for NVIDIA driver
   kernelModuleConfig:
     name: ""
+  # Name of Kubernetes Secret which contains secrets to be passed in as environment variables
+  secretEnv: ""
 
 toolkit:
   enabled: true
   repository: nvcr.io/nvidia/k8s
   image: container-toolkit
-  version: v1.17.8-ubuntu20.04
+  version: v1.18.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -231,7 +232,7 @@ devicePlugin:
   enabled: true
   repository: nvcr.io/nvidia
   image: k8s-device-plugin
-  version: v0.17.4
+  version: v0.18.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   args: []
@@ -277,7 +278,7 @@ dcgm:
   enabled: false
   repository: nvcr.io/nvidia/cloud-native
   image: dcgm
-  version: 4.3.1-1-ubuntu22.04
+  version: 4.4.1-2-ubuntu22.04
   imagePullPolicy: IfNotPresent
   args: []
   env: []
@@ -287,10 +288,11 @@ dcgmExporter:
   enabled: true
   repository: nvcr.io/nvidia/k8s
   image: dcgm-exporter
-  version: 4.3.1-4.4.0-ubuntu22.04
+  version: 4.4.1-4.6.0-distroless
   imagePullPolicy: IfNotPresent
   env: []
   resources: {}
+  hostPID: false
   service:
     internalTrafficPolicy: Cluster
   serviceMonitor:
@@ -329,7 +331,7 @@ gfd:
   enabled: true
   repository: nvcr.io/nvidia
   image: k8s-device-plugin
-  version: v0.17.4
+  version: v0.18.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -339,7 +341,7 @@ migManager:
   enabled: true
   repository: nvcr.io/nvidia/cloud-native
   image: k8s-mig-manager
-  version: v0.12.3-ubuntu20.04
+  version: v0.13.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -388,8 +390,8 @@ migManager:
 
 nodeStatusExporter:
   enabled: false
-  repository: nvcr.io/nvidia/cloud-native
-  image: gpu-operator-validator
+  repository: nvcr.io/nvidia
+  image: gpu-operator
   # If version is not specified, then default is to use chart.AppVersion
   #version: ""
   imagePullPolicy: IfNotPresent
@@ -400,7 +402,7 @@ gds:
   enabled: false
   repository: nvcr.io/nvidia/cloud-native
   image: nvidia-fs
-  version: "2.20.5"
+  version: "2.26.6"
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -426,11 +428,11 @@ vgpuManager:
   env: []
   resources: {}
   driverManager:
-    image: k8s-driver-manager
     repository: nvcr.io/nvidia/cloud-native
+    image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.8.1
+    version: v0.9.0
     imagePullPolicy: IfNotPresent
     env: []
 
@@ -438,7 +440,7 @@ vgpuDeviceManager:
   enabled: true
   repository: nvcr.io/nvidia/cloud-native
   image: vgpu-device-manager
-  version: v0.4.0
+  version: v0.4.1
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -456,11 +458,11 @@ vfioManager:
   env: []
   resources: {}
   driverManager:
-    image: k8s-driver-manager
     repository: nvcr.io/nvidia/cloud-native
+    image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.8.1
+    version: v0.9.0
     imagePullPolicy: IfNotPresent
     env: []
 
