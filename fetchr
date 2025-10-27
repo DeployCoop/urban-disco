@@ -63,7 +63,7 @@ main () {
   helm fetch --untar haproxytech/kubernetes-ingress
   mv -v kubernetes-ingress haproxy-ingress
   helm fetch --untar k8sonlab/mosquitto
-  cp -av assets/mosquitto-svc.yaml charts/mosquitto/templates/
+  cp -av ../assets/mosquitto-svc.yaml charts/mosquitto/templates/service.yaml
   bash -eux ../list_fetch
 }
 
