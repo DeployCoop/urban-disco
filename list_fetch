@@ -29,4 +29,3 @@ helm fetch --untar rancher-latest/rancher
 helm fetch --untar sloth/sloth
 helm fetch --untar traefik/traefik 
 helm fetch --untar vmware-tanzu/velero
-helm fetch --untar k8sonlab/mosquitto
