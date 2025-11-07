@@ -30,3 +30,4 @@ helm fetch --untar sloth/sloth
 helm fetch --untar traefik/traefik 
 helm fetch --untar vmware-tanzu/velero
 helm fetch --untar k8sonlab/mosquitto
+helm fetch --untar headscale/headscale

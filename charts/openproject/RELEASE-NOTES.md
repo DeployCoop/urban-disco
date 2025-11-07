@@ -2,6 +2,5 @@
 
 ### Patch Changes
 
-- c050882: - Remove hocuspocus SECRET environment variable as we will not be using it anymore
-  - Allow hocuspocus server to use the new ALLOWED_DOMAINS env variable
+- ceaf68f: Set default to empty value in cron imap configuration and only roll out config if cron is enabled
 

@@ -209,7 +209,7 @@ image:
   ## For the helm chart, use the `-slim` variants as the all-in-one container is not compatible
   ## with some of the options (non-root execution, password splitting, etc.) and is inefficient for using in helm
   ## due to embedded a number of services.
-  tag: "16.5.1-slim"
+  tag: "16.6.0-slim"
 
   ## Define image sha256 - mutual exclusive with image tag.
   ## The sha256 has a higher precedence than
@@ -347,9 +347,9 @@ cron:
   enabled: false
   ## See documentation referenced above for all variables.
   environment:
-    IMAP_HOST:
-    IMAP_USERNAME:
-    IMAP_PASSWORD:
+    IMAP_HOST: ""
+    IMAP_USERNAME: ""
+    IMAP_PASSWORD: ""
     IMAP_PORT: 993
 
   ## Define custom cron deployment annotations:
@@ -408,7 +408,7 @@ hocuspocus:
     registry: "docker.io"
     repository: "openproject/hocuspocus"
     imagePullPolicy: "Always"
-    tag: "main-4daf60f5"
+    tag: "main-defdb238"
 
   strategy:
     type: "Recreate"

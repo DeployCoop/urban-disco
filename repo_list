@@ -25,3 +25,4 @@ helm repo add traefik https://traefik.github.io/charts
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
 helm repo add haproxytech https://haproxytech.github.io/helm-charts
 helm repo add k8sonlab https://charts.ar80.eu
+helm repo add headscale https://raw.githubusercontent.com/Kapernikov/headscale-helm/main/headscale
