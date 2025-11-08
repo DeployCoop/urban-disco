@@ -4,7 +4,7 @@
 
 
 main () {
-  THIS_CWD=$(pwd)
+  export THIS_CWD=$(pwd)
 
   bash -eux repo_list
   helm repo update
