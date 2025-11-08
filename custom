@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+: "${VERBOSITY:=0}"
+: "${FETCHR_CACHE:=/tmp}"
+
+main () {
+  cd ${FETCHR_CACHE}
+  if [[ ! -d ${FETCHR_CACHE}/supabase-kubernetes ]]; then 
+    git clone --depth=1 https://github.com/supabase-community/supabase-kubernetes.git
+  fi
+  if [[ ! -d ${FETCHR_CACHE}/FOSSBilling-charts ]]; then 
+    git clone --depth=1 https://github.com/joshuacox/FOSSBilling-charts.git
+  fi
+  if [[ ! -d ${FETCHR_CACHE}/helm-drupal ]]; then 
+    git clone --depth=1 https://github.com/drupalwxt/helm-drupal.git
+  fi
+  if [[ ! -d ${FETCHR_CACHE}/garage ]]; then 
+    git clone --depth=1 https://git.deuxfleurs.fr/Deuxfleurs/garage
+  fi
+  if [[ ! -d ${FETCHR_CACHE}/cvat ]]; then 
+    git clone --depth=1 https://github.com/cvat-ai/cvat
+  fi
+  cd ${FETCHR_CACHE}/cvat
+  git pull
+  cp -av helm-chart ${THIS_CWD}/charts/cvat
+  rm ${THIS_CWD}/charts/cvat/analytics
+  cp -av components/analytics ${THIS_CWD}/charts/cvat/
+  cd ${FETCHR_CACHE}/helm-drupal/charts
+  git pull
+  cp -av solr    ${THIS_CWD}/charts/
+  cp -av drupal  ${THIS_CWD}/charts/
+  cp -av varnish ${THIS_CWD}/charts/
+  cd ${FETCHR_CACHE}/supabase-kubernetes
+  git pull
+  cd ${FETCHR_CACHE}/supabase-kubernetes/charts
+  cp -av supabase ${THIS_CWD}/charts/
+  cd ${FETCHR_CACHE}/FOSSBilling-charts
+  git pull
+  cp -av ${FETCHR_CACHE}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
+  rm -Rf ${THIS_CWD}/charts/FOSSBilling/.git
+  cd ${FETCHR_CACHE}/garage
+  git pull
+  cp -av ${FETCHR_CACHE}/garage/script/helm/garage ${THIS_CWD}/charts/
+
+  cd ${THIS_CWD}
+  cd ${THIS_CWD}/charts
+  git checkout nextjs-docker
+  git checkout sass-starter
+  git checkout urban-mosquitto
+  mkdir minio
+  cd minio
+  helm fetch --untar minio-operator/operator
+  helm fetch --untar minio-operator/tenant
+  cd ${THIS_CWD}/charts
+  helm fetch --untar openebs-monitoring/monitoring
+  mv -v monitoring openebs-monitoring
+  helm fetch --untar haproxytech/kubernetes-ingress
+  mv -v kubernetes-ingress haproxy-ingress
+}
+
+time main $@
