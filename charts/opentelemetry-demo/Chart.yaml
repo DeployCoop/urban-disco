@@ -34,4 +34,4 @@ name: opentelemetry-demo
 sources:
 - https://github.com/open-telemetry/opentelemetry-demo
 type: application
-version: 0.38.5
+version: 0.38.6

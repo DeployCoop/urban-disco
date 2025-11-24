@@ -1,28 +1,31 @@
+{{- /*
+Copyright Broadcom, Inc. All Rights Reserved.
+SPDX-License-Identifier: APACHE-2.0
+*/}}
+
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet
 metadata:
   name: {{ include "common.names.fullname" . }}
-  namespace: {{ .Release.Namespace | quote }}
-  labels: {{- include "common.labels.standard" . | nindent 4 }}
-    {{- if .Values.commonLabels }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
-    {{- end }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: etcd
   {{- if .Values.commonAnnotations }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
   selector:
-    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
+      app.kubernetes.io/component: etcd
   serviceName: {{ printf "%s-headless" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
   podManagementPolicy: {{ .Values.podManagementPolicy }}
   updateStrategy: {{- include "common.tplvalues.render" (dict "value" .Values.updateStrategy "context" $ ) | nindent 4 }}
   template:
     metadata:
-      labels: {{- include "common.labels.standard" . | nindent 8 }}
-        {{- if .Values.podLabels }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.podLabels "context" $) | nindent 8 }}
-        {{- end }}
+      labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
+        app.kubernetes.io/component: etcd
       annotations:
         {{- if .Values.podAnnotations }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.podAnnotations "context" $) | nindent 8 }}
@@ -38,6 +41,7 @@ spec:
         {{- end }}
     spec:
       {{- include "etcd.imagePullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       {{- if .Values.hostAliases }}
       hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.hostAliases "context" $) | nindent 8 }}
       {{- end }}
@@ -45,8 +49,8 @@ spec:
       affinity: {{- include "common.tplvalues.render" (dict "value" .Values.affinity "context" $) | nindent 8 }}
       {{- else }}
       affinity:
-        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "context" $) | nindent 10 }}
-        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "context" $) | nindent 10 }}
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAffinityPreset "component" "etcd" "customLabels" $podLabels "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.podAntiAffinityPreset "component" "etcd" "customLabels" $podLabels "context" $) | nindent 10 }}
         nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.nodeAffinityPreset.type "key" .Values.nodeAffinityPreset.key "values" .Values.nodeAffinityPreset.values) | nindent 10 }}
       {{- end }}
       {{- if .Values.nodeSelector }}
@@ -71,7 +75,7 @@ spec:
       runtimeClassName: {{ .Values.runtimeClassName }}
       {{- end }}
       {{- if .Values.podSecurityContext.enabled }}
-      securityContext: {{- omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.podSecurityContext "context" $) | nindent 8 }}
       {{- end }}
       {{- if .Values.shareProcessNamespace }}
       shareProcessNamespace: {{ .Values.shareProcessNamespace }}
@@ -95,17 +99,22 @@ spec:
             runAsUser: 0
           {{- if .Values.volumePermissions.resources }}
           resources: {{- include "common.tplvalues.render" (dict "value" .Values.volumePermissions.resources "context" $) | nindent 12 }}
+          {{- else if ne .Values.volumePermissions.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.volumePermissions.resourcesPreset) | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: data
               mountPath: /bitnami/etcd
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
         {{- end }}
       {{- end }}
       containers:
         {{- $replicaCount := int .Values.replicaCount }}
         {{- $peerPort := int .Values.containerPorts.peer }}
         {{- $etcdFullname := include "common.names.fullname" . }}
-        {{- $releaseNamespace := .Release.Namespace }}
+        {{- $releaseNamespace := include "common.names.namespace" . }}
         {{- $etcdHeadlessServiceName := (printf "%s-%s" $etcdFullname "headless" | trunc 63 | trimSuffix "-") }}
         {{- $clusterDomain := .Values.clusterDomain }}
         {{- $etcdPeerProtocol := include "etcd.peerProtocol" . }}
@@ -114,7 +123,7 @@ spec:
           image: {{ include "etcd.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
           {{- if .Values.containerSecurityContext.enabled }}
-          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          securityContext: {{- include "common.compatibility.renderSecurityContext" (dict "secContext" .Values.containerSecurityContext "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.diagnosticMode.enabled }}
           command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
@@ -139,8 +148,6 @@ spec:
                   fieldPath: metadata.name
             - name: MY_STS_NAME
               value: {{ include "common.names.fullname" . | quote }}
-            - name: ETCDCTL_API
-              value: "3"
             - name: ETCD_ON_K8S
               value: "yes"
             - name: ETCD_START_FROM_SNAPSHOT
@@ -156,26 +163,37 @@ spec:
             - name: ALLOW_NONE_AUTHENTICATION
               value: {{ ternary "yes" "no" (and (not (or .Values.auth.rbac.create .Values.auth.rbac.enabled)) .Values.auth.rbac.allowNoneAuthentication) | quote }}
             {{- if or .Values.auth.rbac.create .Values.auth.rbac.enabled }}
+            {{- if .Values.usePasswordFiles }}
+            - name: ETCD_ROOT_PASSWORD_FILE
+              value: {{ printf "/opt/bitnami/etcd/secrets/%s" (include "etcd.secretPasswordKey" .) }}
+            {{- else }}
             - name: ETCD_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "etcd.secretName" . }}
                   key: {{ include "etcd.secretPasswordKey" . }}
             {{- end }}
+            {{- end }}
+            {{- if .Values.auth.token.enabled }}
             - name: ETCD_AUTH_TOKEN
               {{- if eq .Values.auth.token.type "jwt" }}
               value: {{ printf "jwt,priv-key=/opt/bitnami/etcd/certs/token/%s,sign-method=%s,ttl=%s" .Values.auth.token.privateKey.filename .Values.auth.token.signMethod .Values.auth.token.ttl | quote }}
               {{- else if eq .Values.auth.token.type "simple" }}
               value: "simple"
               {{- end }}
+            {{- end }}
             - name: ETCD_ADVERTISE_CLIENT_URLS
-              value: "{{ $etcdClientProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.{{ $clusterDomain }}:{{ .Values.containerPorts.client }},{{ $etcdClientProtocol }}://{{ $etcdFullname }}.{{ .Release.Namespace }}.svc.{{ $clusterDomain }}:{{ coalesce .Values.service.ports.client .Values.service.port }}"
+              value: "{{ $etcdClientProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ include "common.names.namespace" . }}.svc.{{ $clusterDomain }}:{{ .Values.containerPorts.client }}{{- if .Values.service.enabled }},{{ $etcdClientProtocol }}://{{ $etcdFullname }}.{{ include "common.names.namespace" . }}.svc.{{ $clusterDomain }}:{{ .Values.service.ports.client }}{{- end }}"
             - name: ETCD_LISTEN_CLIENT_URLS
               value: "{{ $etcdClientProtocol }}://0.0.0.0:{{ .Values.containerPorts.client }}"
             - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
-              value: "{{ $etcdPeerProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ .Release.Namespace }}.svc.{{ $clusterDomain }}:{{ .Values.containerPorts.peer }}"
+              value: "{{ $etcdPeerProtocol }}://$(MY_POD_NAME).{{ $etcdHeadlessServiceName }}.{{ include "common.names.namespace" . }}.svc.{{ $clusterDomain }}:{{ .Values.containerPorts.peer }}"
             - name: ETCD_LISTEN_PEER_URLS
               value: "{{ $etcdPeerProtocol }}://0.0.0.0:{{ .Values.containerPorts.peer }}"
+            {{- if .Values.metrics.useSeparateEndpoint }}
+            - name: ETCD_LISTEN_METRICS_URLS
+              value: "http://0.0.0.0:{{ .Values.containerPorts.metrics }}"
+            {{- end }}
             {{- if .Values.autoCompactionMode }}
             - name: ETCD_AUTO_COMPACTION_MODE
               value: {{ .Values.autoCompactionMode | quote }}
@@ -186,20 +204,16 @@ spec:
             {{- end }}
             {{- if .Values.maxProcs }}
             - name: GOMAXPROCS
-              value: {{ .Values.maxProcs }}
+              value: {{ .Values.maxProcs | quote }}
             {{- end }}
-            {{- if gt $replicaCount 1 }}
             - name: ETCD_INITIAL_CLUSTER_TOKEN
-              value: "etcd-cluster-k8s"
-            - name: ETCD_INITIAL_CLUSTER_STATE
-              value: {{ default (ternary "new" "existing" .Release.IsInstall) .Values.initialClusterState | quote }}
+              value: {{ .Values.initialClusterToken | quote }}
             {{- $initialCluster := list }}
             {{- range $e, $i := until $replicaCount }}
             {{- $initialCluster = append $initialCluster (printf "%s-%d=%s://%s-%d.%s.%s.svc.%s:%d" $etcdFullname $i $etcdPeerProtocol $etcdFullname $i $etcdHeadlessServiceName $releaseNamespace $clusterDomain $peerPort) }}
             {{- end }}
             - name: ETCD_INITIAL_CLUSTER
               value: {{ join "," $initialCluster | quote }}
-            {{- end }}
             - name: ETCD_CLUSTER_DOMAIN
               value: {{ printf "%s.%s.svc.%s" $etcdHeadlessServiceName $releaseNamespace $clusterDomain | quote }}
             {{- if and .Values.auth.client.secureTransport .Values.auth.client.useAutoTLS }}
@@ -263,14 +277,26 @@ spec:
             - name: peer
               containerPort: {{ .Values.containerPorts.peer }}
               protocol: TCP
+            {{- if .Values.metrics.useSeparateEndpoint }}
+            - name: metrics
+              containerPort: {{ .Values.containerPorts.metrics }}
+              protocol: TCP
+            {{- end }}
           {{- if not .Values.diagnosticMode.enabled }}
           {{- if .Values.customLivenessProbe }}
           livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.customLivenessProbe "context" $) | nindent 12 }}
           {{- else if .Values.livenessProbe.enabled }}
           livenessProbe:
+            {{- if .Values.auth.client.secureTransport }}
             exec:
               command:
                 - /opt/bitnami/scripts/etcd/healthcheck.sh
+            {{- else }}
+            httpGet:
+              port: {{ .Values.metrics.useSeparateEndpoint | ternary .Values.containerPorts.metrics .Values.containerPorts.client }}
+              path: /livez
+              scheme: "HTTP"
+            {{- end }}
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
@@ -305,21 +331,28 @@ spec:
           {{- end }}
           {{- if .Values.lifecycleHooks }}
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
-          {{- else if and (gt $replicaCount 1) .Values.removeMemberOnContainerTermination }}
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - /opt/bitnami/scripts/etcd/prestop.sh
           {{- end }}
           {{- end }}
           {{- if .Values.resources }}
           resources: {{- include "common.tplvalues.render" (dict "value" .Values.resources "context" $) | nindent 12 }}
+          {{- else if ne .Values.resourcesPreset "none" }}
+          resources: {{- include "common.resources.preset" (dict "type" .Values.resourcesPreset) | nindent 12 }}
           {{- end }}
           volumeMounts:
+            {{- if or .Values.configuration .Values.existingConfigmap }}
+            - name: configuration
+              mountPath: /opt/bitnami/etcd/conf/
+            {{- else }}
+            - name: empty-dir
+              mountPath: /opt/bitnami/etcd/conf/
+              subPath: app-conf-dir
+            {{- end }}
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
             - name: data
               mountPath: /bitnami/etcd
-            {{- if eq .Values.auth.token.type "jwt" }}
+            {{- if and (eq .Values.auth.token.enabled true) (eq .Values.auth.token.type "jwt") }}
             - name: etcd-jwt-token
               mountPath: /opt/bitnami/etcd/certs/token/
               readOnly: true
@@ -328,13 +361,12 @@ spec:
             - name: init-snapshot-volume
               mountPath: /init-snapshot
             {{- end }}
-            {{- if or .Values.disasterRecovery.enabled (and .Values.disasterRecovery.enabled .Values.startFromSnapshot.enabled) }}
+            {{- if .Values.disasterRecovery.enabled }}
             - name: snapshot-volume
               mountPath: /snapshots
-            {{- end }}
-            {{- if or .Values.configuration .Values.existingConfigmap }}
-            - name: etcd-config
-              mountPath: /opt/bitnami/etcd/conf/
+              {{- if .Values.disasterRecovery.pvc.subPath }}
+              subPath: {{ .Values.disasterRecovery.pvc.subPath }}
+              {{- end }}
             {{- end }}
             {{- if or .Values.auth.client.enableAuthentication (and .Values.auth.client.secureTransport (not .Values.auth.client.useAutoTLS )) }}
             - name: etcd-client-certs
@@ -346,6 +378,10 @@ spec:
               mountPath: /opt/bitnami/etcd/certs/peer/
               readOnly: true
             {{- end }}
+            {{- if and .Values.usePasswordFiles (or .Values.auth.rbac.create .Values.auth.rbac.enabled) }}
+            - name: etcd-secrets
+              mountPath: /opt/bitnami/etcd/secrets
+            {{- end }}
             {{- if .Values.extraVolumeMounts }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
@@ -353,7 +389,14 @@ spec:
         {{- include "common.tplvalues.render" (dict "value" .Values.sidecars "context" $) | nindent 8 }}
         {{- end }}
       volumes:
-        {{- if eq .Values.auth.token.type "jwt" }}
+        - name: empty-dir
+          emptyDir: {}
+        {{- if or .Values.configuration .Values.existingConfigmap }}
+        - name: configuration
+          configMap:
+            name: {{ include "etcd.configmapName" . }}
+        {{- end }}
+        {{- if and (eq .Values.auth.token.enabled true) (eq .Values.auth.token.type "jwt") }}
         - name: etcd-jwt-token
           secret:
             secretName: {{ include "etcd.token.secretName" . }}
@@ -369,11 +412,6 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "etcd.disasterRecovery.pvc.name" . }}
         {{- end }}
-        {{- if or .Values.configuration .Values.existingConfigmap }}
-        - name: etcd-config
-          configMap:
-            name: {{ include "etcd.configmapName" . }}
-        {{- end }}
         {{- if or .Values.auth.client.enableAuthentication (and .Values.auth.client.secureTransport (not .Values.auth.client.useAutoTLS )) }}
         - name: etcd-client-certs
           secret:
@@ -385,6 +423,13 @@ spec:
           secret:
             secretName: {{ required "A secret containing the peer certificates is required" (tpl .Values.auth.peer.existingSecret .) }}
             defaultMode: 256
+        {{- end }}
+        {{- if and .Values.usePasswordFiles (or .Values.auth.rbac.create .Values.auth.rbac.enabled) }}
+        - name: etcd-secrets
+          projected:
+            sources:
+              - secret:
+                  name:  {{ include "etcd.secretName" . }}
         {{- end }}
         {{- if .Values.extraVolumes }}
         {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes "context" $) | nindent 8 }}
@@ -404,6 +449,9 @@ spec:
         {{- if .Values.persistence.annotations }}
         annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.persistence.annotations "context" $) | nindent 10 }}
         {{- end }}
+        {{- if .Values.persistence.labels }}
+        labels: {{- include "common.tplvalues.render" ( dict "value" .Values.persistence.labels "context" $) | nindent 10 }}
+        {{- end }}
       spec:
         accessModes:
         {{- range .Values.persistence.accessModes }}
@@ -416,4 +464,7 @@ spec:
         selector: {{- include "common.tplvalues.render" ( dict "value" .Values.persistence.selector "context" $) | nindent 10 }}
         {{- end }}
         {{ include "common.storage.class" (dict "persistence" .Values.persistence "global" .Values.global) }}
+    {{- if .Values.extraVolumeClaimTemplates }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeClaimTemplates "context" $) | nindent 4 }}
+    {{- end }}
   {{- end }}

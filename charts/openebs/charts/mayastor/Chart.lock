@@ -1,10 +1,10 @@
 dependencies:
 - name: crds
   repository: ""
-  version: 2.9.2
+  version: 2.10.0
 - name: etcd
   repository: https://charts.bitnami.com/bitnami
-  version: 8.6.0
+  version: 12.0.14
 - name: jaeger-operator
   repository: https://jaegertracing.github.io/helm-charts
   version: 2.50.1
@@ -19,6 +19,6 @@ dependencies:
   version: 0.19.14
 - name: localpv-provisioner
   repository: https://openebs.github.io/dynamic-localpv-provisioner
-  version: 4.3.0
-digest: sha256:a76bb12e631fd5c21bef5932c3e68d04e18ab98736ec999a008f2e8e842924ff
-generated: "2025-08-27T08:08:47.285907173Z"
+  version: 4.4.0
+digest: sha256:3f8b564dcddd40fc908991e99b222abb4322d55f4d285a105cae6c9ae0c8b006
+generated: "2025-11-19T16:41:00.052587499Z"

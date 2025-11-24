@@ -1,9 +1,6 @@
 annotations:
-  artifacthub.io/changes: |-
-    - Use Ingress Controller 3.1.14 version for base image
-    - Fix crdjob helm hook annotation (#313)
-    - Add helm hook annotations to crdjob (#312)
-    - Make initContainers templateable (#311)
+  artifacthub.io/changes: '- Add crdjob-specific Affinity, Tolerations and NodeSelector
+    (fixes #318)'
 apiVersion: v2
 appVersion: 3.1.14
 description: A Helm chart for HAProxy Kubernetes Ingress Controller
@@ -20,4 +17,4 @@ name: kubernetes-ingress
 sources:
 - https://github.com/haproxytech/kubernetes-ingress
 type: application
-version: 1.46.0
+version: 1.46.1

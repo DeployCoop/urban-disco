@@ -300,7 +300,7 @@ Get the Jaeger URL
           {{- fail "etcd.externalUrl must be set" }}
         {{- end }}
     {{- else }}
-        {{- .Release.Name }}-etcd:{{ .Values.etcd.service.port }}
+        {{- .Release.Name }}-etcd:{{ .Values.etcd.service.ports.client }}
     {{- end }}
 {{- end }}
 
@@ -354,3 +354,36 @@ Get the Events Jetstream Replica Count
         {{- print "1" -}}
     {{- end }}
 {{- end -}}
+
+{{/*
+Returns matched if the Etcd StatefulSet is of v8.6.0
+Usage:
+  {{- if include "etcd_is_8.6.0" . }}
+    Do something
+  {{- end }}
+*/}}
+{{- define "etcd_is_8.6.0" -}}
+  {{- $sts  := lookup "apps/v1" "StatefulSet" .Release.Namespace (printf "%s-etcd" .Release.Name) -}}
+  {{/*
+  If no STS exists, erring on the side of caution and assuming there is one
+  and we made a mistake in finding it --> matched
+  */}}
+  {{- if not $sts -}}
+    matched
+  {{- else -}}
+    {{- if and $sts.metadata $sts.metadata.labels -}}
+      {{/* Grab value of chart label (or default to "") */}}
+      {{- $chart_name := index $sts.metadata.labels "helm.sh/chart" | default "" -}}
+      {{/* If it’s exactly "etcd-8.6.0" --> matched */}}
+      {{- if eq $chart_name "etcd-8.6.0" -}}
+        matched
+      {{- end -}}
+    {{- else -}}
+      {{/*
+      $sts exists, but doesn't have .metadata or .metadata.labels for some reason.
+      This may happen in a dry-run due to how lookup behaves. Erring on the side of caution and matching.
+      */}}
+      matched
+    {{- end -}}
+  {{- end -}}
+{{- end }}
