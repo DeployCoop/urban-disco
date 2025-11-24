@@ -24,11 +24,11 @@ You can see this notes again by running:
 
 {{- $count := 0 -}}
 {{- $listOfURL := "" -}}
-{{- if and .Values.resourcespace.ingress .Values.resourcespace.ingress.enabled }}
-{{- $count = add1 $count -}}{{- $listOfURL = printf "%s\n- http://%s" $listOfURL (tpl .Values.resourcespace.ingress.host .) -}}
-{{- end }}
 {{- if and .Values.mariadb.ingress .Values.mariadb.ingress.enabled }}
 {{- $count = add1 $count -}}{{- $listOfURL = printf "%s\n- http://%s" $listOfURL (tpl .Values.mariadb.ingress.host .) -}}
+{{- end }}
+{{- if and .Values.resourcespace.ingress .Values.resourcespace.ingress.enabled }}
+{{- $count = add1 $count -}}{{- $listOfURL = printf "%s\n- http://%s" $listOfURL (tpl .Values.resourcespace.ingress.host .) -}}
 {{- end }}
 {{- if gt $count 0 }}
 

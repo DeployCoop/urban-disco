@@ -76,8 +76,11 @@ resourcespace:
   repository:
     # key: resourcespace.repository.image
     image: ""
+    # This is the version of the main application.
+    # Leave it to blank to use the Chart "AppVersion" value.
     # key: resourcespace.repository.tag
     tag: ""
+
   # key: resourcespace.persistence
   persistence:
     # key: resourcespace.persistence.filestore
@@ -95,6 +98,34 @@ resourcespace:
         - ReadWriteOnce
       # key: resourcespace.persistence.filestore.enabled
       enabled: true
+  # Default value for ingress.class annotation
+  # class: "-"
+  # If the value is "-", controller will not set ingressClassName
+  # If the value is "", Ingress will be set to an empty string, so
+  # controller will use the default value for ingressClass
+  # If the value is specified, controller will set the named class e.g. "nginx"
+  # key: resourcespace.ingress
+  ingress:
+    # key: resourcespace.ingress.annotations
+    annotations: {}
+    # key: resourcespace.ingress.host
+    host: mywebsite.com (optional)
+    # key: resourcespace.ingress.path
+    path: /
+    # key: resourcespace.ingress.class
+    class: '-'
+    # key: resourcespace.ingress.enabled
+    enabled: false
+    # Ingress TLS configuration
+    # If enabled, a secret containing the certificate and the key should be
+    # created by the ingress controller. If the name if emtpy, so the secret
+    # name is generated. You can specify the secret name to use your own secret.
+    # key: resourcespace.ingress.tls
+    tls:
+      # key: resourcespace.ingress.tls.enabled
+      enabled: true
+      # key: resourcespace.ingress.tls.secretName
+      secretName: ""
   # key: resourcespace.replicas
   replicas: 1
   # key: resourcespace.nodeSelector
