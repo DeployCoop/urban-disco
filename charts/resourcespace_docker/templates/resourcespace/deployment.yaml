@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    katenary.v3/compose-hash: 7ef9ff871f6607662d992bcbf313e5f61d10ae7a
+    katenary.v3/version: master
+  labels:
+    {{- include "resourcespace_docker.labels" . | nindent 4 }}
+    katenary.v3/component: resourcespace
+  name: '{{ include "resourcespace_docker.fullname" . }}-resourcespace'
+spec:
+  replicas: {{ .Values.resourcespace.replicas }}
+  selector:
+    matchLabels:
+      {{- include "resourcespace_docker.selectorLabels" . | nindent 6 }}
+      katenary.v3/component: resourcespace
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        {{- include "resourcespace_docker.selectorLabels" . | nindent 8 }}
+        katenary.v3/component: resourcespace
+    spec:
+      containers:
+      - image: '{{ tpl .Values.resourcespace.repository.image $ }}:{{ tpl .Values.resourcespace.repository.tag $ | default "latest" }}'
+        imagePullPolicy: {{ .Values.resourcespace.imagePullPolicy }}
+        name: resourcespace
+        ports:
+        - containerPort: 80
+          name: http
+        {{- if .Values.resourcespace.resources }}
+        resources:
+          {{ .Values.resourcespace.resources | toYaml | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.resourcespace.persistence.filestore.enabled }}
+        - mountPath: /var/www/html/filestore
+          name: filestore
+        {{- end }}
+        - mountPath: /var/www/html/include/config.php
+          name: config-php
+          subPath: config.php
+      {{- if .Values.pullSecrets }}
+      imagePullSecrets:
+      {{- .Values.pullSecrets | toYaml | nindent 6 }}
+      {{- end }}
+      initContainers:
+      - command:
+        - /bin/sh
+        - -c
+        - |-
+          until nc -z {{ include "resourcespace_docker.fullname" . }}-mariadb 3306; do
+            sleep 1;
+          done
+        image: busybox:latest
+        name: wait-for-mariadb
+        {{- if .Values.resourcespace.resources }}
+        resources:
+          {{ .Values.resourcespace.resources | toYaml | nindent 10 }}
+        {{- end }}
+      {{- if .Values.resourcespace.nodeSelector }}
+      nodeSelector:
+        {{- .Values.resourcespace.nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if ne .Values.resourcespace.serviceAccount "" }}
+      serviceAccountName: {{ .Values.resourcespace.serviceAccount | quote }}
+      {{- end }}
+      volumes:
+      {{- if .Values.resourcespace.persistence.filestore.enabled }}
+      - name: filestore
+        persistentVolumeClaim:
+          claimName: '{{ include "resourcespace_docker.fullname" . }}-resourcespace-filestore'
+      {{- end }}
+      - configMap:
+          name: '{{ include "resourcespace_docker.fullname" . }}-resourcespace'
+        name: config-php

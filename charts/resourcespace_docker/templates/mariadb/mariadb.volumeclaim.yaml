@@ -1,0 +1,22 @@
+{{- if .Values.mariadb.persistence.mariadb.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    katenary.v3/compose-hash: 7ef9ff871f6607662d992bcbf313e5f61d10ae7a
+    katenary.v3/version: master
+  labels:
+    {{- include "resourcespace_docker.labels" . | nindent 4 }}
+    katenary.v3/component: mariadb
+  name: '{{ include "resourcespace_docker.fullname" . }}-mariadb-mariadb'
+spec:
+  accessModes:
+  {{- .Values.mariadb.persistence.mariadb.accessMode | toYaml | nindent 2 }}
+  resources:
+    requests:
+      storage: {{ tpl .Values.mariadb.persistence.mariadb.size $ }}
+  {{- if ne .Values.mariadb.persistence.mariadb.storageClass "-" }}
+  storageClassName: '{{ .Values.mariadb.persistence.mariadb.storageClass }}'
+  {{- end }}
+
+{{- end }}
