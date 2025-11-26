@@ -32,4 +32,4 @@ maintainers:
   url: https://github.com/opf/helm-charts
 name: openproject
 type: application
-version: 11.4.2
+version: 11.5.0

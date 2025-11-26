@@ -4,9 +4,11 @@ apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-hocuspocus
+  namespace: {{ include "common.names.namespace" . | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
     openproject/process: hocuspocus
+    app.kubernetes.io/component: hocuspocus
 spec:
   replicas: 1
   strategy:
@@ -50,6 +52,11 @@ spec:
           image: "{{ with .Values.hocuspocus.image }}{{ .registry }}/{{ .repository }}:{{ .tag }}{{ end }}"
           imagePullPolicy: {{ .Values.hocuspocus.image.imagePullPolicy }}
           env:
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hocuspocus.auth.existingSecret }}
+                  key: {{ .Values.hocuspocus.auth.secretKey }}
             - name: ALLOWED_DOMAINS
               value: {{ join "," .Values.hocuspocus.allowedOpenProjectDomains | quote }}
           volumeMounts:
