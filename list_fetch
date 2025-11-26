@@ -31,4 +31,6 @@ helm fetch --untar traefik/traefik
 helm fetch --untar vmware-tanzu/velero
 helm fetch --untar k8sonlab/mosquitto
 helm fetch --untar resourcespace/resourcespace
+helm fetch --untar mariadb-operator/mariadb-operator-crds
+helm fetch --untar mariadb-operator/mariadb-operator
 # helm fetch --untar headscale/headscale
