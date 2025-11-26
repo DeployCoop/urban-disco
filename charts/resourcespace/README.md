@@ -1,6 +1,6 @@
-# resourcespace_docker
+# resourcespace
 
-A Helm chart for resourcespace_docker
+A Helm chart for resourcespace
 
 ## Installing the Chart
 
@@ -8,20 +8,20 @@ To install the chart with the release name `my-release`:
 
 ```bash
 # Standard Helm install
-$ helm install  my-release resourcespace_docker
+$ helm install  my-release resourcespace
 
 # To use a custom namespace and force the creation of the namespace
-$ helm install my-release --namespace my-namespace --create-namespace resourcespace_docker
+$ helm install my-release --namespace my-namespace --create-namespace resourcespace
 
 # To use a custom values file
-$ helm install my-release -f my-values.yaml resourcespace_docker
+$ helm install my-release -f my-values.yaml resourcespace
 ```
 
 See the [Helm documentation](https://helm.sh/docs/intro/using_helm/) for more information on installing and managing the chart.
 
 ## Configuration
 
-The following table lists the configurable parameters of the resourcespace_docker chart and their default values.
+The following table lists the configurable parameters of the resourcespace chart and their default values.
 
 | Parameter                                                 | Default                    |
 | --------------------------------------------------------- | -------------------------- |

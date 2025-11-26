@@ -55,8 +55,6 @@ main () {
   mv -v monitoring openebs-monitoring
   helm fetch --untar haproxytech/kubernetes-ingress
   mv -v kubernetes-ingress haproxy-ingress
-  helm fetch --untar resourcespace/resourcespace_docker
-  mv -v resourcespace_docker resourcespace 
 }
 
 time main $@

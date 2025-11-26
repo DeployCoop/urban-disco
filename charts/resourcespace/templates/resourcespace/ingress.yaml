@@ -1,5 +1,5 @@
 {{- if .Values.resourcespace.ingress.enabled -}}
-{{- $fullname := include "resourcespace_docker.fullname" . -}}
+{{- $fullname := include "resourcespace.fullname" . -}}
 {{- $tlsname := printf "%s-%s-tls" $fullname "resourcespace" -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -11,7 +11,7 @@ metadata:
         {{- toYaml .Values.resourcespace.ingress.annotations | nindent 4 }}
     {{- end }}
   labels:
-    {{- include "resourcespace_docker.labels" . | nindent 4 }}
+    {{- include "resourcespace.labels" . | nindent 4 }}
     katenary.v3/component: resourcespace
   name: '{{ $fullname }}-resourcespace'
 spec:

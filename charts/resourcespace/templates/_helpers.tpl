@@ -1,4 +1,4 @@
-{{- define "resourcespace_docker.fullname" -}}
+{{- define "resourcespace.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -11,7 +11,7 @@
 {{- end -}}
 {{- end -}}
 
-{{- define "resourcespace_docker.name" -}}
+{{- define "resourcespace.name" -}}
 {{- if .Values.nameOverride -}}
 {{- .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -19,8 +19,8 @@
 {{- end -}}
 {{- end -}}
 
-{{- define "resourcespace_docker.labels" -}}
-{{ include "resourcespace_docker.selectorLabels" .}}
+{{- define "resourcespace.labels" -}}
+{{ include "resourcespace.selectorLabels" .}}
 {{ if .Chart.Version -}}
 {{ printf "katenary.v3/chart-version: '%s'" .Chart.Version }}
 {{- end }}
@@ -29,7 +29,7 @@
 {{- end }}
 {{- end -}}
 
-{{- define "resourcespace_docker.selectorLabels" -}}
+{{- define "resourcespace.selectorLabels" -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{ printf "katenary.v3/name: %s" $name }}
 {{ printf "katenary.v3/instance: %s" .Release.Name }}

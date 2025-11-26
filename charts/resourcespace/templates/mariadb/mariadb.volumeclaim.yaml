@@ -6,9 +6,9 @@ metadata:
     katenary.v3/compose-hash: 130407091ed05d8753a6b9ecc272bb838a11d1ca
     katenary.v3/version: master
   labels:
-    {{- include "resourcespace_docker.labels" . | nindent 4 }}
+    {{- include "resourcespace.labels" . | nindent 4 }}
     katenary.v3/component: mariadb
-  name: '{{ include "resourcespace_docker.fullname" . }}-mariadb-mariadb'
+  name: '{{ include "resourcespace.fullname" . }}-mariadb-mariadb'
 spec:
   accessModes:
   {{- .Values.mariadb.persistence.mariadb.accessMode | toYaml | nindent 2 }}
