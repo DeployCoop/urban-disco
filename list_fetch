@@ -34,4 +34,5 @@ helm fetch --untar resourcespace/resourcespace
 helm fetch --untar mariadb-operator/mariadb-operator-crds
 helm fetch --untar mariadb-operator/mariadb-operator
 helm fetch --untar apache-airflow/airflow
+helm fetch --untar rook-release/rook-ceph
 # helm fetch --untar headscale/headscale
