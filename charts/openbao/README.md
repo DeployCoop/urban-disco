@@ -1,6 +1,6 @@
 # openbao
 
-![Version: 0.19.3](https://img.shields.io/badge/Version-0.19.3-informational?style=flat-square) ![AppVersion: v2.4.4](https://img.shields.io/badge/AppVersion-v2.4.4-informational?style=flat-square)
+![Version: 0.23.3](https://img.shields.io/badge/Version-0.23.3-informational?style=flat-square) ![AppVersion: v2.4.4](https://img.shields.io/badge/AppVersion-v2.4.4-informational?style=flat-square)
 
 Official OpenBao Chart
 
@@ -110,7 +110,7 @@ Kubernetes: `>= 1.30.0-0`
 | injector.image.pullPolicy | string | `"IfNotPresent"` | image pull policy to use for k8s image. if tag is "latest", set to "Always" |
 | injector.image.registry | string | `"docker.io"` | image registry to use for k8s image |
 | injector.image.repository | string | `"hashicorp/vault-k8s"` | image repo to use for k8s image |
-| injector.image.tag | string | `"1.4.2"` | image tag to use for k8s image |
+| injector.image.tag | string | `"1.7.2"` | image tag to use for k8s image |
 | injector.leaderElector | object | `{"enabled":true}` | If multiple replicas are specified, by default a leader will be determined so that only one injector attempts to create TLS certificates. |
 | injector.livenessProbe.failureThreshold | int | `2` | When a probe fails, Kubernetes will try failureThreshold times before giving up |
 | injector.livenessProbe.initialDelaySeconds | int | `5` | Number of seconds after the container has started before probe initiates |
@@ -137,6 +137,7 @@ Kubernetes: `>= 1.30.0-0`
 | injector.securityContext.container | object | `{}` |  |
 | injector.securityContext.pod | object | `{}` |  |
 | injector.service.annotations | object | `{}` |  |
+| injector.service.extraLabels | object | `{}` |  |
 | injector.serviceAccount.annotations | object | `{}` |  |
 | injector.startupProbe.failureThreshold | int | `12` | When a probe fails, Kubernetes will try failureThreshold times before giving up |
 | injector.startupProbe.initialDelaySeconds | int | `5` | Number of seconds after the container has started before probe initiates |
@@ -182,6 +183,13 @@ Kubernetes: `>= 1.30.0-0`
 | server.extraPorts | list | `[]` | extraPorts is a list of extra ports. Specified as a YAML list. This is useful if you need to add additional ports to the statefulset in dynamic way. |
 | server.extraSecretEnvironmentVars | list | `[]` |  |
 | server.extraVolumes | list | `[]` |  |
+| server.gateway.tlsRoute.activeService | bool | `true` |  |
+| server.gateway.tlsRoute.annotations | object | `{}` |  |
+| server.gateway.tlsRoute.apiVersion | string | `"gateway.networking.k8s.io/v1alpha3"` |  |
+| server.gateway.tlsRoute.enabled | bool | `false` |  |
+| server.gateway.tlsRoute.hosts | list | `[]` |  |
+| server.gateway.tlsRoute.labels | object | `{}` |  |
+| server.gateway.tlsRoute.parentRefs | list | `[]` |  |
 | server.ha.apiAddr | string | `nil` |  |
 | server.ha.clusterAddr | string | `nil` |  |
 | server.ha.config | string | `"ui = true\n\nlistener \"tcp\" {\n  tls_disable = 1\n  address = \"[::]:8200\"\n  cluster_address = \"[::]:8201\"\n}\nstorage \"consul\" {\n  path = \"openbao\"\n  address = \"HOST_IP:8500\"\n}\n\nservice_registration \"kubernetes\" {}\n\n# Example configuration for using auto-unseal, using Google Cloud KMS. The\n# GKMS keys must already exist, and the cluster must have a service account\n# that is authorized to access GCP KMS.\n#seal \"gcpckms\" {\n#   project     = \"openbao-helm-dev-246514\"\n#   region      = \"global\"\n#   key_ring    = \"openbao-helm-unseal-kr\"\n#   crypto_key  = \"openbao-helm-unseal-key\"\n#}\n\n# Example configuration for enabling Prometheus metrics.\n# If you are using Prometheus Operator you can enable a ServiceMonitor resource below.\n# You may wish to enable unauthenticated metrics in the listener block above.\n#telemetry {\n#  prometheus_retention_time = \"30s\"\n#  disable_hostname = true\n#}\n"` |  |
@@ -228,7 +236,7 @@ Kubernetes: `>= 1.30.0-0`
 | server.networkPolicy.ingress[0].ports[1].protocol | string | `"TCP"` |  |
 | server.nodeSelector | object | `{}` |  |
 | server.persistentVolumeClaimRetentionPolicy | object | `{}` |  |
-| server.podManagementPolicy | string | `"Parallel"` |  |
+| server.podManagementPolicy | string | `"OrderedReady"` |  |
 | server.postStart | list | `[]` |  |
 | server.preStopSleepSeconds | int | `5` |  |
 | server.priorityClassName | string | `""` |  |
@@ -248,9 +256,11 @@ Kubernetes: `>= 1.30.0-0`
 | server.route.tls.termination | string | `"passthrough"` |  |
 | server.service.active.annotations | object | `{}` |  |
 | server.service.active.enabled | bool | `true` |  |
+| server.service.active.extraLabels | object | `{}` |  |
 | server.service.annotations | object | `{}` |  |
 | server.service.enabled | bool | `true` |  |
 | server.service.externalTrafficPolicy | string | `"Cluster"` |  |
+| server.service.extraLabels | object | `{}` |  |
 | server.service.instanceSelector.enabled | bool | `true` |  |
 | server.service.ipFamilies | list | `[]` |  |
 | server.service.ipFamilyPolicy | string | `""` |  |
@@ -258,6 +268,7 @@ Kubernetes: `>= 1.30.0-0`
 | server.service.publishNotReadyAddresses | bool | `true` |  |
 | server.service.standby.annotations | object | `{}` |  |
 | server.service.standby.enabled | bool | `true` |  |
+| server.service.standby.extraLabels | object | `{}` |  |
 | server.service.targetPort | int | `8200` |  |
 | server.serviceAccount.annotations | object | `{}` |  |
 | server.serviceAccount.create | bool | `true` |  |
@@ -291,11 +302,34 @@ Kubernetes: `>= 1.30.0-0`
 | serverTelemetry.serviceMonitor.scrapeTimeout | string | `"10s"` |  |
 | serverTelemetry.serviceMonitor.selectors | object | `{}` |  |
 | serverTelemetry.serviceMonitor.tlsConfig | object | `{}` |  |
+| snapshotAgent.annotations | object | `{}` |  |
+| snapshotAgent.config.baoAuthPath | string | `"kubernetes"` |  |
+| snapshotAgent.config.baoRole | string | `"snapshot"` |  |
+| snapshotAgent.config.s3Bucket | string | `"openbao-snapshots"` |  |
+| snapshotAgent.config.s3ExpireDays | string | `"14"` |  |
+| snapshotAgent.config.s3Host | string | `"s3.eu-east-1.amazonaws.com"` |  |
+| snapshotAgent.config.s3Uri | string | `"s3://openbao-snapshots"` |  |
+| snapshotAgent.config.s3cmdExtraFlag | string | `"-v"` |  |
+| snapshotAgent.enabled | bool | `false` |  |
+| snapshotAgent.extraVolumes | object | `{}` |  |
+| snapshotAgent.image.repository | string | `"ghcr.io/openbao/openbao-snapshot-agent"` |  |
+| snapshotAgent.image.tag | string | `"0.2.4"` |  |
+| snapshotAgent.resources | object | `{}` |  |
+| snapshotAgent.restartPolicy | string | `"OnFailure"` |  |
+| snapshotAgent.s3CredentialsSecret | string | `"my-s3-credentials"` |  |
+| snapshotAgent.schedule | string | `"*/15 * * * *"` |  |
+| snapshotAgent.securityContext.container | object | `{}` |  |
+| snapshotAgent.securityContext.pod | object | `{}` |  |
+| snapshotAgent.serviceAccount.annotations | object | `{}` |  |
+| snapshotAgent.serviceAccount.create | bool | `true` |  |
+| snapshotAgent.serviceAccount.extraLabels | object | `{}` |  |
+| snapshotAgent.serviceAccount.name | string | `""` |  |
 | ui.activeOpenbaoPodOnly | bool | `false` |  |
 | ui.annotations | object | `{}` |  |
 | ui.enabled | bool | `false` |  |
 | ui.externalPort | int | `8200` |  |
 | ui.externalTrafficPolicy | string | `"Cluster"` |  |
+| ui.extraLabels | object | `{}` |  |
 | ui.publishNotReadyAddresses | bool | `true` |  |
 | ui.serviceIPFamilies | list | `[]` |  |
 | ui.serviceIPFamilyPolicy | string | `""` |  |

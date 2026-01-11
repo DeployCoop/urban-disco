@@ -5,8 +5,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
-    katenary.v3/compose-hash: 130407091ed05d8753a6b9ecc272bb838a11d1ca
-    katenary.v3/version: master
+    katenary.v3/compose-hash: 7f751bec0593ec34a43c687908476d1d61048907
+    katenary.v3/version: svc4-a27a851
     {{- if .Values.resourcespace.ingress.annotations -}}
         {{- toYaml .Values.resourcespace.ingress.annotations | nindent 4 }}
     {{- end }}

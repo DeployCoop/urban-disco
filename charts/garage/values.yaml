@@ -124,6 +124,8 @@ service:
   # - NodePort (+ Ingress)
   # - LoadBalancer
   type: ClusterIP
+  # -- Annotations to add to the service
+  annotations: {}
   s3:
     api:
       port: 3900

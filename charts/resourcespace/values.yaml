@@ -75,11 +75,11 @@ resourcespace:
   # key: resourcespace.repository
   repository:
     # key: resourcespace.repository.image
-    image: "ghcr.io/joshuacox/resourcespace_docker/resourcespace"
+    image: ""
     # This is the version of the main application.
     # Leave it to blank to use the Chart "AppVersion" value.
     # key: resourcespace.repository.tag
-    tag: "latest"
+    tag: ""
 
   # key: resourcespace.persistence
   persistence:
@@ -109,7 +109,7 @@ resourcespace:
     # key: resourcespace.ingress.annotations
     annotations: {}
     # key: resourcespace.ingress.host
-    host: resourcespace.example.com
+    host: mywebsite.com (optional)
     # key: resourcespace.ingress.path
     path: /
     # key: resourcespace.ingress.class

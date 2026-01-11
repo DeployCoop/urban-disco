@@ -2,9 +2,9 @@
 
 ### Minor Changes
 
-- 10d264f: Add component labels, namespace metadata and service account name
+- 2b44560: Add support for optional `extraEnvVars` in the Helm chart to allow users to inject additional environment variables without modifying templates.
 
 ### Patch Changes
 
-- 7cc7a22: Reintroduce SECRET env variable on hocuspocus - related to https://github.com/opf/helm-charts/pull/257
+- 38290e1: Upgrade OpenProject core version to 16.6.4 (patch update)
 

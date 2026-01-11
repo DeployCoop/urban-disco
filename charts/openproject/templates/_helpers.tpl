@@ -212,6 +212,9 @@ securityContext:
   value: {{ .Values.hocuspocus.auth.password }}
 {{- end }}
 {{- end }}
+{{- if .Values.extraEnvVars }}
+{{- toYaml .Values.extraEnvVars | nindent 0 }}
+{{- end }}
 {{- end }}
 
 {{- define "openproject.envChecksums" }}
@@ -219,5 +222,16 @@ securityContext:
 {{/* If I knew how to map and reduce a range in helm I would do that and use a single checksum. But here we are. */}}
 {{- range $suffix := list "core" "memcached" "oidc" "s3" "environment" }}
 checksum/env-{{ $suffix }}: {{ include (print $.Template.BasePath "/secret_" $suffix ".yaml") $ | sha256sum }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "openproject.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "common.names.fullname" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}

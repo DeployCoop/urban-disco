@@ -92,12 +92,23 @@
   {{- end }}
 {{- end }}
 
+{{- if and (semverCompare "<v3.6.4-0" $version) (or
+    (eq .Values.ports.websecure.http.sanitizePath false)
+    .Values.ports.websecure.http.encodedCharacters.allowEncodedSlash
+    .Values.ports.websecure.http.encodedCharacters.allowEncodedBackSlash
+    .Values.ports.websecure.http.encodedCharacters.allowEncodedNullCharacter
+    .Values.ports.websecure.http.encodedCharacters.allowEncodedSemicolon
+    .Values.ports.websecure.http.encodedCharacters.allowEncodedPercent
+    .Values.ports.websecure.http.encodedCharacters.allowEncodedQuestionMark
+    .Values.ports.websecure.http.encodedCharacters.allowEncodedHash )}}
+  {{- fail "ERROR: request path security options are only available for traefik >= v3.6.4." }}
+{{- end }}
 
 {{- if $.Values.hub.token -}}
   {{ $hubVersion := $.Values.oci_meta.enabled | ternary $.Values.oci_meta.images.hub.tag $.Values.image.tag }}
   {{ $hubVersion = ($.Values.global.azure.enabled | ternary $.Values.global.azure.images.hub.tag $hubVersion) }}
   {{ if not $hubVersion }}
-    {{ fail "When using Traefik Hub image tag needs to be specified !" }}
+    {{ fail "When using Traefik Hub image tag needs to be specified!" }}
   {{- end -}}
 
   {{ $hubVersion = (split "@" (default "v3" $hubVersion))._0 }}
@@ -107,7 +118,11 @@
     {{ $hubVersion = "v3.99" }}
   {{- end }}
 
-  {{- if and (semverCompare "<v3.9.0" $hubVersion) .Values.hub.tracing.additionalTraceHeaders.enabled }}
+  {{- if semverCompare ">v3.19.0-0" $hubVersion }}
+    {{ fail "ERROR: this Chart does not support Traefik Hub v3.19.0+."}}
+  {{- end }}
+
+  {{- if and (semverCompare "<v3.9.0-0" $hubVersion) .Values.hub.tracing.additionalTraceHeaders.enabled }}
     {{ fail "ERROR: additionalTraceHeaders is a feature only available for traefik-hub >= v3.9.0."}}
   {{- end }}
 
@@ -115,15 +130,15 @@
     {{ fail "ERROR: additionalTraceHeaders needs tracing.otlp to be enabled."}}
   {{- end }}
 
-  {{- if and (semverCompare "<v3.6.0" $hubVersion) .Values.hub.providers.consulCatalogEnterprise.enabled }}
+  {{- if and (semverCompare "<v3.6.0-0" $hubVersion) .Values.hub.providers.consulCatalogEnterprise.enabled }}
     {{ fail "ERROR: consulCatalogEnterprise provider is a feature only available for traefik-hub >= v3.6.0."}}
   {{- end }}
 
-  {{- if and (semverCompare "<v3.7.0" $hubVersion) .Values.hub.providers.microcks.enabled }}
+  {{- if and (semverCompare "<v3.7.0-0" $hubVersion) .Values.hub.providers.microcks.enabled }}
     {{ fail "ERROR: microcks provider is a feature only available for traefik-hub >= v3.7.0."}}
   {{- end }}
 
-  {{- if and (and .Values.hub.apimanagement.enabled (and .Values.rbac.enabled .Values.rbac.namespaced)) (semverCompare "<v3.16.0" $hubVersion) }}
+  {{- if and (and .Values.hub.apimanagement.enabled (and .Values.rbac.enabled .Values.rbac.namespaced)) (semverCompare "<v3.16.0-0" $hubVersion) }}
     {{- fail "ERROR: Traefik Hub < v3.16.0 doesn't support namespaced RBACs" -}}
   {{- end }}
 

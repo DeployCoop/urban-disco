@@ -313,7 +313,7 @@ config:
 container:
   image:
     repository: nats
-    tag: 2.12.2-alpine
+    tag: 2.12.3-alpine
     pullPolicy:
     registry:
     # if digest is provided, it overrides tag (example: "sha256:abcdef1234567890")
@@ -367,7 +367,7 @@ reloader:
   enabled: true
   image:
     repository: natsio/nats-server-config-reloader
-    tag: 0.20.1
+    tag: 0.21.1
     pullPolicy:
     registry:
     digest:
@@ -394,7 +394,7 @@ promExporter:
   enabled: false
   image:
     repository: natsio/prometheus-nats-exporter
-    tag: 0.17.3
+    tag: 0.18.0
     pullPolicy:
     registry:
     digest:

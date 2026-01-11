@@ -143,7 +143,7 @@ driver:
   usePrecompiled: false
   repository: nvcr.io/nvidia
   image: driver
-  version: "580.95.05"
+  version: "580.105.08"
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   startupProbe:
@@ -193,7 +193,7 @@ driver:
     image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.9.0
+    version: v0.9.1
     imagePullPolicy: IfNotPresent
     env: []
   env: []
@@ -221,7 +221,7 @@ toolkit:
   enabled: true
   repository: nvcr.io/nvidia/k8s
   image: container-toolkit
-  version: v1.18.0
+  version: v1.18.1
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -232,7 +232,7 @@ devicePlugin:
   enabled: true
   repository: nvcr.io/nvidia
   image: k8s-device-plugin
-  version: v0.18.0
+  version: v0.18.1
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   args: []
@@ -278,7 +278,7 @@ dcgm:
   enabled: false
   repository: nvcr.io/nvidia/cloud-native
   image: dcgm
-  version: 4.4.1-2-ubuntu22.04
+  version: 4.4.2-1-ubuntu22.04
   imagePullPolicy: IfNotPresent
   args: []
   env: []
@@ -288,11 +288,16 @@ dcgmExporter:
   enabled: true
   repository: nvcr.io/nvidia/k8s
   image: dcgm-exporter
-  version: 4.4.1-4.6.0-distroless
+  version: 4.4.2-4.7.0-distroless
   imagePullPolicy: IfNotPresent
   env: []
   resources: {}
   hostPID: false
+  # HPC job mapping configuration for correlating GPU metrics with HPC workload manager jobs
+  # This is used by HPC workload managers like Slurm to label GPU metrics with job IDs
+  # hpcJobMapping:
+  #   enabled: true
+  #   directory: /var/lib/dcgm-exporter/job-mapping
   service:
     internalTrafficPolicy: Cluster
   serviceMonitor:
@@ -331,7 +336,7 @@ gfd:
   enabled: true
   repository: nvcr.io/nvidia
   image: k8s-device-plugin
-  version: v0.18.0
+  version: v0.18.1
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -341,7 +346,7 @@ migManager:
   enabled: true
   repository: nvcr.io/nvidia/cloud-native
   image: k8s-mig-manager
-  version: v0.13.0
+  version: v0.13.1
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -432,7 +437,7 @@ vgpuManager:
     image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.9.0
+    version: v0.9.1
     imagePullPolicy: IfNotPresent
     env: []
 
@@ -462,7 +467,7 @@ vfioManager:
     image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.9.0
+    version: v0.9.1
     imagePullPolicy: IfNotPresent
     env: []
 

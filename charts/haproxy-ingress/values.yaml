@@ -59,8 +59,8 @@ aws:
 controller:
   name: controller
   image:
-    repository: haproxytech/kubernetes-ingress    # can be changed to use CE or EE Controller images
-    tag: ""                                       # overrides the image tag whose default is the chart appVersion
+    repository: docker.io/haproxytech/kubernetes-ingress    # can be changed to use CE or EE Controller images
+    tag: ""                                                 # overrides the image tag whose default is the chart appVersion
     pullPolicy: IfNotPresent
 
   ## Deployment or DaemonSet pod mode
@@ -126,37 +126,37 @@ controller:
   ## Controller Container liveness/readiness probe configuration
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
   livenessProbe:
-    failureThreshold: 3
-    initialDelaySeconds: 0
-    periodSeconds: 10
-    successThreshold: 1
-    timeoutSeconds: 1
     httpGet:
       path: /healthz
       port: 1042
       scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
 
   readinessProbe:
-    failureThreshold: 3
-    initialDelaySeconds: 0
-    periodSeconds: 10
-    successThreshold: 1
-    timeoutSeconds: 1
     httpGet:
       path: /healthz
       port: 1042
       scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
 
   startupProbe:
-    failureThreshold: 20
-    initialDelaySeconds: 0
-    periodSeconds: 1
-    successThreshold: 1
-    timeoutSeconds: 1
     httpGet:
       path: /healthz
       port: 1042
       scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 30
 
   ## IngressClass:
   ## ref: https://github.com/haproxytech/kubernetes-ingress/blob/master/documentation/ingressclass.md
@@ -655,3 +655,13 @@ crdjob:
   ## Node Affinity for pod-node scheduling constraints
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   affinity: {}
+
+  ## Compute Resources for the CRD Job
+  ## ref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+  resources:
+  #  limits:
+  #    cpu: 250m
+  #    memory: 400Mi
+    requests:
+      cpu: 250m
+      memory: 400Mi
