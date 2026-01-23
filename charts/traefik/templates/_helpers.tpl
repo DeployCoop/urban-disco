@@ -189,25 +189,15 @@ It requires a dict with "Version" and "Hub".
 {{- define "traefik.proxyVersionFromHub" -}}
  {{- $version := .Version -}}
  {{- if .Hub -}}
-   {{- $hubProxyVersion := "v3.5" }}
-   {{- if regexMatch "v[0-9]+.[0-9]+.[0-9]+" (default "" $version) -}}
-     {{- if semverCompare "<v3.3.2-0" $version -}}
-        {{- $hubProxyVersion = "v3.0" }}
-     {{- else if semverCompare "<v3.7.0-0" $version -}}
-        {{- $hubProxyVersion = "v3.1" }}
-     {{- else if semverCompare "<v3.10.2-0" $version -}}
-        {{ $hubProxyVersion = "v3.2" }}
-     {{- else if semverCompare "<v3.15.3-0" $version -}}
-        {{ $hubProxyVersion = "v3.3" }}
-     {{- else if or (semverCompare "=v3.16.0" $version) (semverCompare "=v3.16.1" $version) -}}
-        {{ $hubProxyVersion = "v3.3" }}
-     {{- else if semverCompare "<v3.18.0" $version -}}
-        {{ $hubProxyVersion = "v3.4" }}
+   {{- $hubProxyVersion := "v3.6.7" }}
+   {{- if regexMatch "v[0-9]+.[0-9]+.[0-9]+" (default "" $version) }}
+     {{- if semverCompare "<v3.19.0-0" $version }}
+        {{- $hubProxyVersion = "v3.6.3" }}
      {{- end -}}
    {{- end -}}
-   {{ $hubProxyVersion }}
+   {{- $hubProxyVersion }}
  {{- else -}}
-   {{ $version }}
+   {{- $version }}
  {{- end -}}
 {{- end -}}
 
@@ -261,10 +251,8 @@ Hash: {{ sha1sum ($cert.Cert | b64enc) }}
     {{- range $key, $value := .content -}}
         {{- if kindIs "map" $value }}
             {{- include "traefik.yaml2CommandLineArgsRec" (dict "path" (printf "%s.%s" $path $key) "content" $value) -}}
-        {{- else }}
-            {{- with $value  }}
---{{ join "." (list $path $key)}}={{ join "," $value }}
-            {{- end -}}
+        {{- else if ne $value nil }}
+--{{ join "." (list $path $key)}}={{ if kindIs "slice" $value }}{{ join "," $value }}{{ else }}{{ $value }}{{ end }}
         {{- end -}}
     {{- end -}}
 {{- end -}}

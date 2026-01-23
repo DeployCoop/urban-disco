@@ -15,9 +15,8 @@ spec:
     {{ .Values.hocuspocus.strategy | toYaml | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "common.labels.matchLabels" (dict "customLabels" .Values.commonLabels "context" $) | nindent 6 }}
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
       openproject/process: hocuspocus
-      app.kubernetes.io/component: hocuspocus
   template:
     metadata:
       annotations:
@@ -57,11 +56,19 @@ spec:
           image: "{{ with .Values.hocuspocus.image }}{{ .registry }}/{{ .repository }}:{{ .tag }}{{ end }}"
           imagePullPolicy: {{ .Values.hocuspocus.image.imagePullPolicy }}
           env:
+            {{- if .Values.hocuspocus.auth.existingSecret }}
             - name: SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.hocuspocus.auth.existingSecret }}
                   key: {{ .Values.hocuspocus.auth.secretKey }}
+            {{- else }}
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: hocuspocus-secret-auto-generated
+                  key: secret
+            {{- end }}
           volumeMounts:
             {{- include "hocuspocus.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.egress.tls.rootCA.fileName }}

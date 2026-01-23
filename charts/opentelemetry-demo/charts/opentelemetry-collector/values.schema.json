@@ -125,6 +125,28 @@
             "enabled": {
               "description": "Specifies whether the collector should collect cluster metrics.",
               "type": "boolean"
+            },
+            "disableLeaderElection": {
+              "description": "Specifies whether the collector should use leader election extension to collect cluster metrics.",
+              "type": "boolean"
+            }
+          }
+        },
+        "annotationDiscovery": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "logs": {
+              "enabled": {
+                "description": "Specifies whether the collector should collect logs.",
+                "type": "boolean"
+              }
+            },
+            "metrics": {
+              "enabled": {
+                "description": "Specifies whether the collector should collect metrics.",
+                "type": "boolean"
+              }
             }
           }
         }
@@ -649,6 +671,9 @@
         }
       }
     },
+    "enableConfigChecksumAnnotation": {
+      "type": "boolean"
+    },
     "podAnnotations": {
       "type": "object"
     },
@@ -1045,13 +1070,44 @@
         },
         "defaultRules": {
           "type": "object",
+          "required": [
+            "enabled",
+            "additionalRuleLabels",
+            "additionalRuleAnnotations"
+          ],
           "properties": {
             "enabled": {
-              "type": "boolean"
+              "type": "boolean",
+              "default": false,
+              "examples": [
+                false
+              ]
+            },
+            "additionalRuleLabels": {
+              "type": "object",
+              "default": {},
+              "required": [],
+              "properties": {},
+              "examples": [
+                {}
+              ]
+            },
+            "additionalRuleAnnotations": {
+              "type": "object",
+              "default": {},
+              "required": [],
+              "properties": {},
+              "examples": [
+                {}
+              ]
             }
           },
-          "required": [
-            "enabled"
+          "examples": [
+            {
+              "enabled": false,
+              "additionalRuleLabels": {},
+              "additionalRuleAnnotations": {}
+            }
           ]
         },
         "extraLabels": {

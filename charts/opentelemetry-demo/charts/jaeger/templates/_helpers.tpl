@@ -52,17 +52,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{/*
-Create the name of the cassandra schema service account to use
-*/}}
-{{- define "jaeger.cassandraSchema.serviceAccountName" -}}
-{{- if .Values.schema.serviceAccount.create -}}
-  {{ default (printf "%s-cassandra-schema" (include "jaeger.fullname" .)) .Values.schema.serviceAccount.name }}
-{{- else -}}
-  {{ default "default" .Values.schema.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Create the name of the spark service account to use
 */}}
 {{- define "jaeger.spark.serviceAccountName" -}}
@@ -106,134 +95,10 @@ Create the name of the esLookback service account to use
 {{- end -}}
 {{- end -}}
 
-{{/*
-Create the name of the hotrod service account to use
-*/}}
-{{- define "jaeger.hotrod.serviceAccountName" -}}
-{{- if .Values.hotrod.serviceAccount.create -}}
-  {{ default (printf "%s-hotrod" (include "jaeger.fullname" .)) .Values.hotrod.serviceAccount.name }}
-{{- else -}}
-  {{ default "default" .Values.hotrod.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
 
-{{/*
-Create the name of the query service account to use
-*/}}
-{{- define "jaeger.query.serviceAccountName" -}}
-{{- if .Values.query.serviceAccount.create -}}
-  {{ default (include "jaeger.query.name" .) .Values.query.serviceAccount.name }}
-{{- else -}}
-  {{ default "default" .Values.query.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
 
-{{/*
-Create the name of the agent service account to use
-*/}}
-{{- define "jaeger.agent.serviceAccountName" -}}
-{{- if .Values.agent.serviceAccount.create -}}
-  {{ default (include "jaeger.agent.name" .) .Values.agent.serviceAccount.name }}
-{{- else -}}
-  {{ default "default" .Values.agent.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
 
-{{/*
-Create the name of the collector service account to use
-*/}}
-{{- define "jaeger.collector.serviceAccountName" -}}
-{{- if .Values.collector.serviceAccount.create -}}
-  {{ default (include "jaeger.collector.name" .) .Values.collector.serviceAccount.name }}
-{{- else -}}
-  {{ default "default" .Values.collector.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
 
-{{/*
-Create the collector ingress host
-*/}}
-{{- define "jaeger.collector.ingressHost" -}}
-{{- if (kindIs "string" .) }}
-  {{- . }}
-{{- else }}
-  {{- .host }}
-{{- end }}
-{{- end -}}
-
-{{/*
-Create the collector ingress servicePort
-*/}}
-{{- define "jaeger.collector.ingressServicePort" -}}
-{{- if (kindIs "string" .context) }}
-  {{- .defaultServicePort }}
-{{- else }}
-  {{- .context.servicePort }}
-{{- end }}
-{{- end -}}
-
-{{/*
-Create the name of the ingester service account to use
-*/}}
-{{- define "jaeger.ingester.serviceAccountName" -}}
-{{- if .Values.ingester.serviceAccount.create -}}
-  {{ default (include "jaeger.ingester.name" .) .Values.ingester.serviceAccount.name }}
-{{- else -}}
-  {{ default "default" .Values.ingester.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create a fully qualified query name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "jaeger.query.name" -}}
-{{- $nameGlobalOverride := printf "%s-query" (include "jaeger.fullname" .) -}}
-{{- if .Values.query.fullnameOverride -}}
-{{- printf "%s" .Values.query.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s" $nameGlobalOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create a fully qualified agent name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "jaeger.agent.name" -}}
-{{- $nameGlobalOverride := printf "%s-agent" (include "jaeger.fullname" .) -}}
-{{- if .Values.agent.fullnameOverride -}}
-{{- printf "%s" .Values.agent.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s" $nameGlobalOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create a fully qualified collector name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "jaeger.collector.name" -}}
-{{- $nameGlobalOverride := printf "%s-collector" (include "jaeger.fullname" .) -}}
-{{- if .Values.collector.fullnameOverride -}}
-{{- printf "%s" .Values.collector.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s" $nameGlobalOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create a fully qualified ingester name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "jaeger.ingester.name" -}}
-{{- $nameGlobalOverride := printf "%s-ingester" (include "jaeger.fullname" .) -}}
-{{- if .Values.ingester.fullnameOverride -}}
-{{- printf "%s" .Values.ingester.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s" $nameGlobalOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
 
 {{- define "cassandra.host" -}}
 {{- if .Values.provisionDataStore.cassandra -}}
@@ -262,22 +127,6 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 {{- end -}}
 
-{{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "elasticsearch.client.url" -}}
-{{- $port := .Values.storage.elasticsearch.port | toString -}}
-{{- $host := .Values.storage.elasticsearch.host }}
-{{- if .Values.provisionDataStore.elasticsearch }}
-{{- $host = printf "%s-elasticsearch" .Release.Name }}
-{{- end }}
-{{- printf "%s://%s:%s" .Values.storage.elasticsearch.scheme $host $port }}
-{{- end -}}
-
-{{- define "jaeger.hotrod.tracing.host" -}}
-{{- default (include "jaeger.agent.name" .) .Values.hotrod.tracing.host -}}
-{{- end -}}
 
 
 {{/*
@@ -332,7 +181,7 @@ Cassandra related environment variables
     secretKeyRef:
       name: {{ if .Values.storage.cassandra.existingSecret }}{{ .Values.storage.cassandra.existingSecret }}{{- else }}{{ include "jaeger.fullname" . }}-cassandra{{- end }}
       key: password
-{{- range $key, $value := .Values.storage.cassandra.env }}
+{{ range $key, $value := .Values.storage.cassandra.env }}
 - name: {{ $key | quote }}
   value: {{ $value | quote }}
 {{ end -}}
@@ -341,41 +190,6 @@ Cassandra related environment variables
 {{- end }}
 {{- end -}}
 
-{{/*
-Elasticsearch related environment variables
-*/}}
-{{- define "elasticsearch.env" -}}
-- name: ES_SERVER_URLS
-  value: {{ include "elasticsearch.client.url" . }}
-{{- if not .Values.storage.elasticsearch.anonymous }}
-- name: ES_USERNAME
-  value: {{ .Values.storage.elasticsearch.user }}
-{{- end }}
-{{- if .Values.storage.elasticsearch.usePassword }}
-- name: ES_PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: {{ if .Values.storage.elasticsearch.existingSecret }}{{ .Values.storage.elasticsearch.existingSecret }}{{- else }}{{ include "jaeger.fullname" . }}-elasticsearch{{- end }}
-      key: {{ default "password" .Values.storage.elasticsearch.existingSecretKey }}
-{{- end }}
-{{- if .Values.storage.elasticsearch.tls.enabled }}
-- name: ES_TLS_ENABLED
-  value: "true"
-- name: ES_TLS_CA
-  value: {{ .Values.storage.elasticsearch.tls.ca }}
-{{- end }}
-{{- if .Values.storage.elasticsearch.indexPrefix }}
-- name: ES_INDEX_PREFIX
-  value: {{ .Values.storage.elasticsearch.indexPrefix }}
-{{- end }}
-{{- range $key, $value := .Values.storage.elasticsearch.env }}
-- name: {{ $key | quote }}
-  value: {{ $value | quote }}
-{{ end -}}
-{{- if .Values.storage.elasticsearch.extraEnv }}
-{{ toYaml .Values.storage.elasticsearch.extraEnv }}
-{{- end }}
-{{- end -}}
 
 {{/*
 grpcPlugin related environment variables
@@ -414,12 +228,40 @@ memory related environment variables
 
 
 {{/*
+Elasticsearch related environment variables
+*/}}
+{{- define "elasticsearch.env" -}}
+{{- if or .Values.provisionDataStore.elasticsearch (eq .Values.storage.type "elasticsearch") -}}
+{{- $es := .Values.storage.elasticsearch | default dict -}}
+{{- $scheme := $es.scheme | default "http" -}}
+{{- $port := $es.port | default 9200 -}}
+{{- $user := $es.user | default "elastic" -}}
+{{- $password := .Values.elasticsearch.secret.password | default "changeme" -}}
+- name: ES_SERVER_URLS
+  value: "{{ $scheme }}://elasticsearch-master:{{ $port }}"
+- name: ES_USERNAME
+  value: {{ $user | quote }}
+- name: ES_PASSWORD
+  value: {{ $password | quote }}
+{{- /* Handle TLS insecurity */ -}}
+{{- if or ( and $es.tls ( $es.tls.insecure ) ) ( eq $scheme "https" ) }}
+  {{- if $es.tls }}
+    {{- if $es.tls.insecure }}
+- name: ES_TLS_SKIP_HOST_VERIFY
+  value: "true"
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Cassandra, Elasticsearch, or grpc-plugin, badger, memory related environment variables depending on which is used
 */}}
 {{- define "storage.env" -}}
 {{- if eq .Values.storage.type "cassandra" -}}
 {{ include "cassandra.env" . }}
-{{- else if eq .Values.storage.type "elasticsearch" -}}
+{{- else if or (eq .Values.storage.type "elasticsearch") .Values.provisionDataStore.elasticsearch -}}
 {{ include "elasticsearch.env" . }}
 {{- else if or (eq .Values.storage.type "grpc-plugin") (eq .Values.storage.type "grpc") -}}
 {{ include "grpcPlugin.env" . }}
@@ -443,18 +285,6 @@ Cassandra related command line options
 {{- end -}}
 {{- end -}}
 
-{{/*
-Elasticsearch related command line options
-*/}}
-{{- define "elasticsearch.cmdArgs" -}}
-{{- range $key, $value := .Values.storage.elasticsearch.cmdlineParams -}}
-{{- if $value }}
-- --{{ $key }}={{ $value }}
-{{- else }}
-- --{{ $key }}
-{{- end -}}
-{{- end -}}
-{{- end -}}
 
 {{/*
 Cassandra or Elasticsearch related command line options depending on which is used
@@ -463,24 +293,10 @@ Cassandra or Elasticsearch related command line options depending on which is us
 {{- if eq .Values.storage.type "cassandra" -}}
 {{- include "cassandra.cmdArgs" . -}}
 {{- else if eq .Values.storage.type "elasticsearch" -}}
-{{- include "elasticsearch.cmdArgs" . -}}
+# No specific helper, usage depends on args
 {{- end -}}
 {{- end -}}
 
-{{/*
-Add extra argument to the command line options
-Usage:
-    {{ include "extra.cmdArgs" ( dict "cmdlineParams" .Values.collector.cmdlineParams ) | nindent 10  }}
-*/}}
-{{- define "extra.cmdArgs" -}}
-{{- range $key, $value := .cmdlineParams -}}
-{{- if $value }}
-- --{{ $key }}={{ $value }}
-{{- else }}
-- --{{ $key }}
-{{- end }}
-{{- end -}}
-{{- end -}}
 
 {{/*
 Provides a basic ingress network policy
@@ -563,96 +379,18 @@ If not tag is provided, it defaults to .Chart.AppVersion.
 {{- end -}}
 
 {{/*
-Create image name for all in one image
+Create image name for jaeger image
 */}}
-{{- define "allInOne.image" -}}
-{{- include "renderImage" ( dict "imageRoot" .Values.allInOne.image "context" $ ) -}}
+{{- define "jaeger.image" -}}
+{{- include "renderImage" ( dict "imageRoot" .Values.jaeger.image "context" $ ) -}}
 {{- end -}}
 
 {{/*
-Create pull secrets for all in one image
+Create pull secrets for jaeger image
 */}}
-{{- define "allInOne.imagePullSecrets" -}}
-{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.allInOne.image) "context" $) -}}
+{{- define "jaeger.imagePullSecrets" -}}
+{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.jaeger.image) "context" $) -}}
 {{- end }}
-
-{{/*
-Create image name for schema image
-*/}}
-{{- define "schema.image" -}}
-{{- include "renderImage" ( dict "imageRoot" .Values.schema.image "context" $ ) -}}
-{{- end -}}
-
-{{/*
-Create pull secrets for schema image
-*/}}
-{{- define "schema.imagePullSecrets" -}}
-{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.schema.image) "context" $) -}}
-{{- end }}
-
-{{/*
-Create image name for ingester image
-*/}}
-{{- define "ingester.image" -}}
-{{- include "renderImage" ( dict "imageRoot" .Values.ingester.image "context" $ ) -}}
-{{- end -}}
-
-{{/*
-Create pull secrets for ingester image
-*/}}
-{{- define "ingester.imagePullSecrets" -}}
-{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.ingester.image) "context" $) -}}
-{{- end }}
-
-{{/*
-Create image name for agent image
-*/}}
-{{- define "agent.image" -}}
-{{- include "renderImage" ( dict "imageRoot" .Values.agent.image "context" $ ) -}}
-{{- end -}}
-
-{{/*
-Create pull secrets for agent image
-*/}}
-{{- define "agent.imagePullSecrets" -}}
-{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.agent.image) "context" $) -}}
-{{- end }}
-
-
-{{/*
-Create image name for collector image
-*/}}
-{{- define "collector.image" -}}
-{{- include "renderImage" ( dict "imageRoot" .Values.collector.image "context" $ ) -}}
-{{- end -}}
-
-{{/*
-Create pull secrets for collector image
-*/}}
-{{- define "collector.imagePullSecrets" -}}
-{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.collector.image) "context" $) -}}
-{{- end }}
-
-{{/*
-Create image name for query image
-*/}}
-{{- define "query.image" -}}
-{{- include "renderImage" ( dict "imageRoot" .Values.query.image "context" $ ) -}}
-{{- end -}}
-
-{{/*
-Create pull secrets for query image
-*/}}
-{{- define "query.imagePullSecrets" -}}
-{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.query.image .Values.query.oAuthSidecar.image) "context" $) -}}
-{{- end }}
-
-{{/*
-Create image name for oAuthSidecar image
-*/}}
-{{- define "oAuthSidecar.image" -}}
-{{- include "common.images.image" (dict "imageRoot" .Values.query.oAuthSidecar.image "global" .Values.global) -}}
-{{- end -}}
 
 {{/*
 Create image name for spark image
@@ -710,12 +448,6 @@ Create pull secrets for esLookback image
 {{- include "common.images.renderPullSecrets" (dict "images" (list .Values.esLookback.image) "context" $) -}}
 {{- end }}
 
-{{/*
-Create image name for hotrod image
-*/}}
-{{- define "hotrod.image" -}}
-{{- include "renderImage" ( dict "imageRoot" .Values.hotrod.image "context" $ ) -}}
-{{- end -}}
 
 {{/*
 Define curl image declaration
@@ -729,9 +461,24 @@ Define curl image declaration
 {{- end -}}
 {{- end -}}
 
+
+{{- define "jaeger.namespace" -}}
+  {{- if .Values.namespaceOverride -}}
+    {{- .Values.namespaceOverride -}}
+  {{- else -}}
+    {{- .Release.Namespace -}}
+  {{- end -}}
+{{- end -}}
+
 {{/*
-Create pull secrets for hotrod image
+Generate command line arguments from a dictionary
 */}}
-{{- define "hotrod.imagePullSecrets" -}}
-{{- include "common.images.renderPullSecrets" (dict "images" (list .Values.hotrod.image) "context" $) -}}
-{{- end }}
+{{- define "extra.cmdArgs" -}}
+{{- range $key, $value := .cmdlineParams -}}
+{{- if $value }}
+- --{{ $key }}={{ $value }}
+{{- else }}
+- --{{ $key }}
+{{- end -}}
+{{- end -}}
+{{- end -}}

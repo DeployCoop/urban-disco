@@ -11,9 +11,6 @@
 {{ end }}
 
 {{- if .Values.presets.clusterMetrics.enabled }}
-{{- if eq .Values.mode "daemonset"}}
-{{- fail "Cluster Metrics preset is not suitable for daemonset mode. Please use statefulset or deployment mode with replicaCount: 1"}}
-{{ end }}
 {{- if gt (int .Values.replicaCount) 1 }}
 {{- fail "Cluster Metrics preset is not suitable for replicaCount greater than one. Please change replica count to one." }}
 {{ end }}
@@ -63,3 +60,7 @@
 {{- if .Values.config.service.telemetry.metrics.address }}
 [WARNING] config.service.telemetry.metrics.address should not be used and will be removed in the future. Use internalTelemetryViaOTLP or config.service.telemetry.metrics.readers  instead"
 {{ end }}
+
+{{- if and .Values.presets.logsCollection.enabled .Values.presets.annotationDiscovery.logs.enabled }}
+{{- fail "[ERROR] logsCollection and annotationDiscovery.logs are mutually exclusive" }}
+{{- end }}

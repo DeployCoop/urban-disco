@@ -95,6 +95,9 @@ Build config file for daemonset OpenTelemetry Collector
 {{- if .Values.presets.logsCollection.enabled }}
 {{- $config = (include "opentelemetry-collector.applyLogsCollectionConfig" (dict "Values" $data "config" $config) | fromYaml) }}
 {{- end }}
+{{- if or .Values.presets.annotationDiscovery.logs.enabled .Values.presets.annotationDiscovery.metrics.enabled }}
+{{- $config = (include "opentelemetry-collector.applyAnnotationDiscoveryConfig" (dict "Values" $data "config" $config) | fromYaml) }}
+{{- end }}
 {{- if .Values.presets.hostMetrics.enabled }}
 {{- $config = (include "opentelemetry-collector.applyHostMetricsConfig" (dict "Values" $data "config" $config) | fromYaml) }}
 {{- end }}
@@ -119,6 +122,9 @@ Build config file for deployment OpenTelemetry Collector
 {{- $config := include "opentelemetry-collector.baseConfig" $data | fromYaml }}
 {{- if .Values.presets.logsCollection.enabled }}
 {{- $config = (include "opentelemetry-collector.applyLogsCollectionConfig" (dict "Values" $data "config" $config) | fromYaml) }}
+{{- end }}
+{{- if or .Values.presets.annotationDiscovery.logs.enabled .Values.presets.annotationDiscovery.metrics.enabled }}
+{{- $config = (include "opentelemetry-collector.applyAnnotationDiscoveryConfig" (dict "Values" $data "config" $config) | fromYaml) }}
 {{- end }}
 {{- if .Values.presets.hostMetrics.enabled }}
 {{- $config = (include "opentelemetry-collector.applyHostMetricsConfig" (dict "Values" $data "config" $config) | fromYaml) }}
@@ -195,14 +201,32 @@ receivers:
 {{- end }}
 
 {{- define "opentelemetry-collector.applyClusterMetricsConfig" -}}
-{{- $config := mustMergeOverwrite (dict "service" (dict "pipelines" (dict "metrics" (dict "receivers" list)))) (include "opentelemetry-collector.clusterMetricsConfig" .Values | fromYaml) .config }}
+{{- $vals := .Values.Values -}}
+{{- $disableLeaderElection := false -}}
+{{- if and (hasKey $vals "presets") (hasKey $vals.presets "clusterMetrics") -}}
+  {{- $disableLeaderElection = $vals.presets.clusterMetrics.disableLeaderElection -}}
+{{- end -}}
+{{- $useLeaderElection := and (eq $vals.mode "daemonset") (not $disableLeaderElection) -}}
+{{- $electorName := "k8s_cluster" }}
+{{- $ctx := mustMerge (dict "namespace" (include "opentelemetry-collector.namespace" .Values) "useLeaderElection" $useLeaderElection "electorName" $electorName) .Values }}
+{{- $config := mustMergeOverwrite (dict "service" (dict "pipelines" (dict "metrics" (dict "receivers" list)))) (include "opentelemetry-collector.clusterMetricsConfig" $ctx | fromYaml) .config }}
+{{- if $useLeaderElection}}
+{{- $configExtensions := mustMergeOverwrite (dict "service" (dict "extensions" list)) $config }}
+{{- $_ := set $config.service "extensions" (append $configExtensions.service.extensions (printf "k8s_leader_elector/%s" $electorName) | uniq)  }}
+{{- end }}
 {{- $_ := set $config.service.pipelines.metrics "receivers" (append $config.service.pipelines.metrics.receivers "k8s_cluster" | uniq)  }}
 {{- $config | toYaml }}
 {{- end }}
 
 {{- define "opentelemetry-collector.clusterMetricsConfig" -}}
+{{- if .useLeaderElection}}
+{{- include "opentelemetry-collector.leaderElectionConfig" (dict "name" .electorName "leaseName" "k8s.cluster.receiver.opentelemetry.io" "leaseNamespace" .namespace)}}
+{{- end}}
 receivers:
   k8s_cluster:
+    {{- if .useLeaderElection}}
+    k8s_leader_elector: k8s_leader_elector/{{ .electorName }}
+    {{- end}}
     collection_interval: 10s
 {{- end }}
 
@@ -260,6 +284,43 @@ receivers:
         max_log_size: {{ $.Values.presets.logsCollection.maxRecombineLogSize }}
 {{- end }}
 
+{{- define "opentelemetry-collector.applyAnnotationDiscoveryConfig" -}}
+{{- $config := mustMergeOverwrite (include "opentelemetry-collector.annotationDiscoveryConfig" .Values | fromYaml) .config }}
+{{- $_ := set $config.service "extensions" (append $config.service.extensions "k8s_observer" | uniq) }}
+{{- if .Values.Values.presets.annotationDiscovery.logs.enabled }}
+{{- $_ := set $config.service.pipelines.logs "receivers" (append $config.service.pipelines.logs.receivers "receiver_creator/logs" | uniq)  }}
+{{- end }}
+{{- if .Values.Values.presets.annotationDiscovery.metrics.enabled }}
+{{- $_ := set $config.service.pipelines.metrics "receivers" (append $config.service.pipelines.metrics.receivers "receiver_creator/metrics" | uniq) }}
+{{- end }}
+{{- $config | toYaml }}
+{{- end }}
+
+{{- define "opentelemetry-collector.annotationDiscoveryConfig" -}}
+extensions:
+  k8s_observer:
+    auth_type: serviceAccount
+    node: ${env:K8S_NODE_NAME}
+
+receivers:
+  {{- if .Values.presets.annotationDiscovery.logs.enabled }}
+  receiver_creator/logs:
+    watch_observers:
+      - k8s_observer
+    discovery:
+      enabled: true
+      default_annotations:
+        io.opentelemetry.discovery.logs/enabled: "true"
+ {{- end }}
+  {{- if .Values.presets.annotationDiscovery.metrics.enabled }}
+  receiver_creator/metrics:
+    watch_observers:
+      - k8s_observer
+    discovery:
+      enabled: true
+  {{- end }}
+{{- end }}
+
 {{- define "opentelemetry-collector.applyKubernetesAttributesConfig" -}}
 {{- $config := mustMergeOverwrite (include "opentelemetry-collector.kubernetesAttributesConfig" .Values | fromYaml) .config }}
 {{- if $config.service.pipelines.logs }}
@@ -301,17 +362,31 @@ processors:
     - sources:
       - from: connection
     extract:
+      otel_annotations: true
       metadata:
-        - "k8s.namespace.name"
-        - "k8s.deployment.name"
-        - "k8s.statefulset.name"
-        - "k8s.daemonset.name"
-        - "k8s.cronjob.name"
-        - "k8s.job.name"
-        - "k8s.node.name"
-        - "k8s.pod.name"
-        - "k8s.pod.uid"
-        - "k8s.pod.start_time"
+        - k8s.namespace.name
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.node.name
+        - k8s.pod.start_time
+        - k8s.deployment.name
+        - k8s.replicaset.name
+        - k8s.replicaset.uid
+        - k8s.daemonset.name
+        - k8s.daemonset.uid
+        - k8s.job.name
+        - k8s.job.uid
+        - k8s.container.name
+        - k8s.cronjob.name
+        - k8s.statefulset.name
+        - k8s.statefulset.uid
+        - container.image.tag
+        - container.image.name
+        - k8s.cluster.uid
+        - service.namespace
+        - service.name
+        - service.version
+        - service.instance.id
       {{- if .Values.presets.kubernetesAttributes.extractAllPodLabels }}
       labels:
         - tag_name: $$1
@@ -375,4 +450,12 @@ receivers:
         group: "events.k8s.io"
         exclude_watch_type:
           - "DELETED"
+{{- end }}
+
+{{- define "opentelemetry-collector.leaderElectionConfig" -}}
+extensions:
+  k8s_leader_elector/{{ .name }}:
+    auth_type: serviceAccount
+    lease_name: {{ .leaseName }}
+    lease_namespace: {{ .leaseNamespace }}
 {{- end }}
