@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: "4.07"
-description: SeaweedFS
-name: seaweedfs
-version: 4.0.407

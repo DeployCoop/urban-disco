@@ -55,6 +55,7 @@ main () {
   mv -v monitoring openebs-monitoring
   helm fetch --untar haproxytech/kubernetes-ingress
   mv -v kubernetes-ingress haproxy-ingress
+  helm pull --untar oci://ghcr.io/spegel-org/helm-charts/spegel
 }
 
 time main $@

@@ -27,7 +27,7 @@ If release name contains chart name it will be used as a full name.
 Create the name of the rpc secret
 */}}
 {{- define "garage.rpcSecretName" -}}
-{{- printf "%s-rpc-secret" (include "garage.fullname" .) -}}
+{{- .Values.garage.existingRpcSecret | default (printf "%s-rpc-secret" (include "garage.fullname" .)) -}}
 {{- end }}
 
 {{/*
@@ -47,6 +47,9 @@ helm.sh/chart: {{ include "garage.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- with .Values.commonLabels }}
+{{- toYaml . | nindent 0 }}
+{{- end }}
 {{- end }}
 
 {{/*
