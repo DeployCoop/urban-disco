@@ -13,10 +13,9 @@ data:
 
     db_engine = "{{ .Values.garage.dbEngine }}"
 
-    block_size = "{{ .Values.garage.blockSize }}"
+    block_size = {{ .Values.garage.blockSize }}
 
-    replication_factor = {{ .Values.garage.replicationFactor }}
-    consistency_mode = "{{ .Values.garage.consistencyMode }}"
+    replication_mode = "{{ .Values.garage.replicationMode }}"
 
     compression_level = {{ .Values.garage.compressionLevel }}
 
@@ -28,16 +27,8 @@ data:
     # rpc_secret will be populated by the init container from a k8s secret object
     rpc_secret = "__RPC_SECRET_REPLACE__"
 
-    bootstrap_peers = [
-    {{- range $index, $peer := .Values.garage.bootstrapPeers }}
-    {{- if $index}}, {{ end }}{{ $peer | quote }}
-    {{ end }} 
-    ]
+    bootstrap_peers = {{ .Values.garage.bootstrapPeers }}
 
-    {{- if .Values.garage.additionalTopLevelConfig }}
-    {{ .Values.garage.additionalTopLevelConfig | nindent 4 }}
-    {{- end }}
-  
     [kubernetes_discovery]
     namespace = "{{ .Release.Namespace }}"
     service_name = "{{ include "garage.fullname" . }}"

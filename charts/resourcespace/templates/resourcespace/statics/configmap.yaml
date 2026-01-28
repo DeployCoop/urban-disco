@@ -1,0 +1,12 @@
+apiVersion: v1
+data:
+  config.php: ""
+kind: ConfigMap
+metadata:
+  annotations:
+    katenary.v3/compose-hash: 7f751bec0593ec34a43c687908476d1d61048907
+    katenary.v3/version: svc4-a27a851
+  labels:
+    {{- include "resourcespace.labels" . | nindent 4 }}
+    katenary.v3/component: resourcespace
+  name: '{{ include "resourcespace.fullname" . }}-resourcespace'
