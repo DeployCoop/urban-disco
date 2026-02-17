@@ -2,5 +2,5 @@
 
 ### Minor Changes
 
-- 15c7096: Add digest, policy, and repository for hocuspocus
+- a7d75d7: Upgrade OpenProject core version to 17.1.0 (minor update)
 

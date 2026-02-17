@@ -1,6 +1,7 @@
 {{- $clusterName := include "opensearch-cluster.cluster-name" . }}
+{{- $apiGroup := .Values.apiGroup | default "opensearch.org" }}
 ---
-apiVersion: opensearch.opster.io/v1
+apiVersion: {{ $apiGroup }}/v1
 kind: OpenSearchCluster
 metadata:
   name: {{ $clusterName }}
@@ -27,7 +28,9 @@ spec:
     serviceName: {{ .serviceName | default $clusterName }}
   {{- end }}
   {{- with .Values.cluster.initHelper }}
-  initHelper: {{ . | toYaml | nindent 4 }}
+  initHelper:
+    {{- omit . "image" | toYaml | nindent 4 }}
+    image: {{ .image }}:{{ .version }}
   {{- end }}
   {{- with .Values.cluster.nodePools }}
   nodePools: {{ . | toYaml | nindent 4 }}
@@ -45,16 +48,25 @@ spec:
         {{- with .tls.transport.caSecret }}
         caSecret: {{ . | toYaml | nindent 10 }}
         {{- end }}
-        {{- with .tls.transport.adminDn }}
-        adminDn: {{ . | toYaml | nindent 10 }}
-        {{- end }}
         {{- with .tls.transport.nodesDn }}
         nodesDn: {{ . | toYaml | nindent 10 }}
         {{- end }}
         {{- with .tls.transport.secret }}
         secret: {{ . | toYaml | nindent 10 }}
         {{- end }}
+        {{- if .tls.transport.rotateDaysBeforeExpiry }}
+        rotateDaysBeforeExpiry: {{ .tls.transport.rotateDaysBeforeExpiry }}
+        {{- end }}
+        {{- if .tls.transport.duration }}
+        duration: {{ .tls.transport.duration }}
+        {{- end }}
+        {{- if .tls.transport.enableHotReload }}
+        enableHotReload: {{ .tls.transport.enableHotReload }}
+        {{- end }}
       http:
+        {{- with .tls.http.adminDn }}
+        adminDn: {{ . | toYaml | nindent 10 }}
+        {{- end }}
         {{- if .tls.http.generate }}
         generate: {{ .tls.http.generate }}
         {{- end }}
@@ -63,6 +75,15 @@ spec:
         {{- end }}
         {{- with .tls.http.caSecret }}
         caSecret: {{ . | toYaml | nindent 10 }}
+        {{- end }}
+        {{- if .tls.http.rotateDaysBeforeExpiry }}
+        rotateDaysBeforeExpiry: {{ .tls.http.rotateDaysBeforeExpiry }}
+        {{- end }}
+        {{- if .tls.http.duration }}
+        duration: {{ .tls.http.duration }}
+        {{- end }}
+        {{- if .tls.http.enableHotReload }}
+        enableHotReload: {{ .tls.http.enableHotReload }}
         {{- end }}
     {{- with .config }}
     config: {{ . | toYaml | nindent 6 }}

@@ -35,6 +35,7 @@ Helm Chart for Apache Airflow
     keda
     using-additional-containers
     customizing-workers
+    customizing-labels
     Installing from sources<installing-helm-chart-from-sources>
     Extending the Chart<extending-the-chart>
 
@@ -43,6 +44,7 @@ Helm Chart for Apache Airflow
     :caption: Guides
 
     production-guide
+    service-account-token-examples
 
 .. toctree::
     :hidden:
@@ -52,7 +54,7 @@ Helm Chart for Apache Airflow
     release_notes
 
 
-This chart will bootstrap an `Airflow <https://airflow.apache.org>`__
+This chart bootstraps an `Airflow <https://airflow.apache.org>`__
 deployment on a `Kubernetes <http://kubernetes.io>`__ cluster using the
 `Helm <https://helm.sh>`__ package manager.
 

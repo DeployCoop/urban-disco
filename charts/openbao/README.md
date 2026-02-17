@@ -1,6 +1,6 @@
 # openbao
 
-![Version: 0.23.5](https://img.shields.io/badge/Version-0.23.5-informational?style=flat-square) ![AppVersion: v2.4.4](https://img.shields.io/badge/AppVersion-v2.4.4-informational?style=flat-square)
+![Version: 0.25.3](https://img.shields.io/badge/Version-0.25.3-informational?style=flat-square) ![AppVersion: v2.5.0](https://img.shields.io/badge/AppVersion-v2.5.0-informational?style=flat-square)
 
 Official OpenBao Chart
 
@@ -183,6 +183,24 @@ Kubernetes: `>= 1.30.0-0`
 | server.extraPorts | list | `[]` | extraPorts is a list of extra ports. Specified as a YAML list. This is useful if you need to add additional ports to the statefulset in dynamic way. |
 | server.extraSecretEnvironmentVars | list | `[]` |  |
 | server.extraVolumes | list | `[]` |  |
+| server.gateway.httpRoute.activeService | bool | `true` |  |
+| server.gateway.httpRoute.annotations | object | `{}` |  |
+| server.gateway.httpRoute.apiVersion | string | `"gateway.networking.k8s.io/v1"` |  |
+| server.gateway.httpRoute.enabled | bool | `false` |  |
+| server.gateway.httpRoute.filters | list | `[]` |  |
+| server.gateway.httpRoute.hosts[0] | string | `"chart-example.local"` |  |
+| server.gateway.httpRoute.labels | object | `{}` |  |
+| server.gateway.httpRoute.matches.path.type | string | `"PathPrefix"` |  |
+| server.gateway.httpRoute.matches.path.value | string | `"/"` |  |
+| server.gateway.httpRoute.matches.timeouts | object | `{}` |  |
+| server.gateway.httpRoute.parentRefs | list | `[]` |  |
+| server.gateway.tlsPolicy.activeService | bool | `true` |  |
+| server.gateway.tlsPolicy.annotations | object | `{}` |  |
+| server.gateway.tlsPolicy.apiVersion | string | `"gateway.networking.k8s.io/v1"` |  |
+| server.gateway.tlsPolicy.enabled | bool | `false` |  |
+| server.gateway.tlsPolicy.labels | object | `{}` |  |
+| server.gateway.tlsPolicy.targetRefs | list | `[]` |  |
+| server.gateway.tlsPolicy.validation | object | `{}` |  |
 | server.gateway.tlsRoute.activeService | bool | `true` |  |
 | server.gateway.tlsRoute.annotations | object | `{}` |  |
 | server.gateway.tlsRoute.apiVersion | string | `"gateway.networking.k8s.io/v1alpha3"` |  |
@@ -261,6 +279,7 @@ Kubernetes: `>= 1.30.0-0`
 | server.service.enabled | bool | `true` |  |
 | server.service.externalTrafficPolicy | string | `"Cluster"` |  |
 | server.service.extraLabels | object | `{}` |  |
+| server.service.extraPorts | list | `[]` | extraPorts is a list of extra ports. Specified as a YAML list. This is useful if you need to add additional ports to the server service in dynamic way. |
 | server.service.instanceSelector.enabled | bool | `true` |  |
 | server.service.ipFamilies | list | `[]` |  |
 | server.service.ipFamilyPolicy | string | `""` |  |
@@ -298,6 +317,8 @@ Kubernetes: `>= 1.30.0-0`
 | serverTelemetry.serviceMonitor.authorization | object | `{}` |  |
 | serverTelemetry.serviceMonitor.enabled | bool | `false` |  |
 | serverTelemetry.serviceMonitor.interval | string | `"30s"` |  |
+| serverTelemetry.serviceMonitor.port | string | `""` | Port which Prometheus uses when scraping metrics. If empty will use `openbao.scheme` helper for its value |
+| serverTelemetry.serviceMonitor.scheme | string | `""` | scheme to use when Prometheus scrapes metrics. If empty will use `openbao.scheme` helper for its value |
 | serverTelemetry.serviceMonitor.scrapeClass | string | `""` |  |
 | serverTelemetry.serviceMonitor.scrapeTimeout | string | `"10s"` |  |
 | serverTelemetry.serviceMonitor.selectors | object | `{}` |  |
@@ -311,7 +332,10 @@ Kubernetes: `>= 1.30.0-0`
 | snapshotAgent.config.s3Uri | string | `"s3://openbao-snapshots"` |  |
 | snapshotAgent.config.s3cmdExtraFlag | string | `"-v"` |  |
 | snapshotAgent.enabled | bool | `false` |  |
-| snapshotAgent.extraVolumes | object | `{}` |  |
+| snapshotAgent.extraEnvironmentVars | object | `{}` | Map of extra environment variables to set in the snapshot-agent cronjob |
+| snapshotAgent.extraSecretEnvironmentVars | list | `[]` | List of extra environment variables to set in the snapshot-agent cronjob These variables take value from existing Secret objects. |
+| snapshotAgent.extraVolumeMounts | list | `[]` | List of additional volumeMounts for the snapshot cronjob container. |
+| snapshotAgent.extraVolumes | list | `[]` | List of extraVolumes made available to the snapshot cronjob container. |
 | snapshotAgent.image.repository | string | `"ghcr.io/openbao/openbao-snapshot-agent"` |  |
 | snapshotAgent.image.tag | string | `"0.2.4"` |  |
 | snapshotAgent.resources | object | `{}` |  |

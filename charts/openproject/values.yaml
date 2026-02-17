@@ -296,7 +296,7 @@ image:
   ## For the helm chart, use the `-slim` variants as the all-in-one container is not compatible
   ## with some of the options (non-root execution, password splitting, etc.) and is inefficient for using in helm
   ## due to embedded a number of services.
-  tag: "17.0.2-slim"
+  tag: "17.1.0-slim"
 
   ## Define image sha256 - mutual exclusive with image tag.
   ## The sha256 has a higher precedence than
@@ -564,9 +564,10 @@ openproject:
 
   extraEnvVarsSecret: ""
 
-  ## Define the language to seed the instance in
+  ## Force the language to seed the instance in.
+  # Defaults to English if not set.
   #
-  seed_locale: "en"
+  # seed_locale: "en"
 
   ##
   # Let OpenProject run in a subdirectory,

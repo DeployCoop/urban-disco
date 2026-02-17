@@ -215,16 +215,6 @@ db:
   ## and explicitly configure it according to your cluster capacity
   resources: {}
 
-  ## Persistent volume configuration
-  persistence:
-    enabled: true
-    storageClassName: ""
-    annotations: {}
-    size: 8Gi
-    accessModes:
-      - ReadWriteOnce
-    class: ""
-
   ## TODO: remove autoscaling for database
   autoscaling:
     enabled: true
@@ -262,7 +252,7 @@ studio:
   image:
     repository: supabase/studio
     pullPolicy: IfNotPresent
-    tag: "2025.11.10-sha-5291fe3"
+    tag: "2026.02.16-sha-26c615c"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -343,7 +333,7 @@ auth:
   image:
     repository: supabase/gotrue
     pullPolicy: IfNotPresent
-    tag: "v2.182.1"
+    tag: "v2.186.0"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -464,7 +454,7 @@ rest:
   image:
     repository: postgrest/postgrest
     pullPolicy: IfNotPresent
-    tag: "v13.0.7"
+    tag: "v14.5"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -544,7 +534,7 @@ realtime:
   image:
     repository: supabase/realtime
     pullPolicy: IfNotPresent
-    tag: "v2.63.0"
+    tag: "v2.76.5"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -631,7 +621,7 @@ meta:
   image:
     repository: supabase/postgres-meta
     pullPolicy: IfNotPresent
-    tag: "v0.93.1"
+    tag: "v0.95.2"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -711,7 +701,7 @@ storage:
   image:
     repository: supabase/storage-api
     pullPolicy: IfNotPresent
-    tag: "v1.29.0"
+    tag: "v1.37.8"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -787,16 +777,6 @@ storage:
   ## and explicitly configure it according to your cluster capacity
   resources: {}
 
-  ## Persistent volume configuration
-  persistence:
-    enabled: true
-    storageClassName: ""
-    annotations: {}
-    size: 10Gi
-    accessModes:
-      - ReadWriteOnce
-    class: ""
-
   ## TODO: remove autoscaling for storage
   autoscaling:
     enabled: true
@@ -816,7 +796,7 @@ imgproxy:
   image:
     repository: darthsim/imgproxy
     pullPolicy: IfNotPresent
-    tag: "v3.8.0"
+    tag: "v3.30.1"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -872,16 +852,6 @@ imgproxy:
   ## NOTE: It is recommended to leave this empty by default
   ## and explicitly configure it according to your cluster capacity
   resources: {}
-
-  ## Persistent volume configuration
-  persistence:
-    enabled: true
-    storageClassName: ""
-    annotations: {}
-    size: 10Gi
-    accessModes:
-      - ReadWriteOnce
-    class: ""
 
   ## TODO: remove autoscaling for imgproxy
   autoscaling:
@@ -1003,7 +973,7 @@ analytics:
   image:
     repository: supabase/logflare
     pullPolicy: IfNotPresent
-    tag: "1.22.6"
+    tag: "1.31.2"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -1094,7 +1064,7 @@ vector:
   image:
     repository: timberio/vector
     pullPolicy: IfNotPresent
-    tag: "0.28.1-alpine"
+    tag: "0.53.0-alpine"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -1164,7 +1134,7 @@ functions:
   image:
     repository: supabase/edge-runtime
     pullPolicy: IfNotPresent
-    tag: "v1.68.4"
+    tag: "v1.70.3"
 
   ## Secrets used to pull private images
   imagePullSecrets: []
@@ -1299,16 +1269,6 @@ minio:
   ## and explicitly configure it according to your cluster capacity
   resources: {}
 
-  ## Persistent volume configuration
-  persistence:
-    enabled: false
-    storageClassName: ""
-    annotations: {}
-    size: 10Gi
-    accessModes:
-      - ReadWriteOnce
-    class: ""
-
   ## TODO: remove autoscaling for minio
   autoscaling:
     enabled: true
@@ -1316,3 +1276,58 @@ minio:
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
+
+persistence:
+  db:
+    enabled: true
+    storageClassName: ""
+    # existingClaim: ""
+    annotations: {}
+    size: 5Gi
+    accessModes:
+      - ReadWriteOnce
+
+  functions:
+    enabled: true
+    storageClassName: ""
+    # existingClaim: ""
+    annotations: {}
+    size: 1Gi
+    accessModes:
+      - ReadWriteMany
+
+  imgproxy:
+    enabled: true
+    storageClassName: ""
+    # existingClaim: ""
+    annotations: {}
+    size: 1Gi
+    accessModes:
+      - ReadWriteOnce
+
+  minio:
+    enabled: true
+    storageClassName: ""
+    # existingClaim: ""
+    annotations: {}
+    size: 1Gi
+    accessModes:
+      - ReadWriteOnce
+
+  snippets:
+    enabled: true
+    storageClassName: ""
+    # existingClaim: ""
+    annotations: {}
+    size: 1Gi
+    accessModes:
+      - ReadWriteOnce
+
+  storage:
+    enabled: true
+    storageClassName: ""
+    # existingClaim: ""
+    annotations: {}
+    size: 1Gi
+    accessModes:
+      - ReadWriteOnce

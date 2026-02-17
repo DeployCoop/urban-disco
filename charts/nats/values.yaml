@@ -53,6 +53,11 @@ config:
     port: 6222
     # must be 2 or higher when jetstream is enabled
     replicas: 3
+    # set to false to allow cluster nodes to advertise their addresses
+    # so that clients can reconnect without extra DNS lookups.
+    # Note: in case clients have external connectivity make sure to define the `advertise` section as well.
+    # If clients are behind a load balancer it is best to leave this as is.
+    noAdvertise: true
 
     # apply to generated route URLs that connect to other pods in the StatefulSet
     routeURLs:
@@ -313,7 +318,7 @@ config:
 container:
   image:
     repository: nats
-    tag: 2.12.3-alpine
+    tag: 2.12.4-alpine
     pullPolicy:
     registry:
     # if digest is provided, it overrides tag (example: "sha256:abcdef1234567890")
@@ -477,7 +482,8 @@ statefulSet:
 podTemplate:
   # adds a hash of the ConfigMap as a pod annotation
   # this will cause the StatefulSet to roll when the ConfigMap is updated
-  configChecksumAnnotation: true
+  # set to true to force pod rollouts on config changes instead of using the reloader for hot updates
+  configChecksumAnnotation: false
 
   # map of topologyKey: topologySpreadConstraint
   # labelSelector will be added to match StatefulSet pods
@@ -583,7 +589,7 @@ natsBox:
   container:
     image:
       repository: natsio/nats-box
-      tag: 0.19.2
+      tag: 0.19.3
       pullPolicy:
       registry:
       digest:

@@ -1,7 +1,7 @@
 annotations:
-  artifacthub.io/changes: '- Use Ingress Controller 3.2.4 version for base image'
+  artifacthub.io/changes: '- Add securityContext.sysctls options (#337)'
 apiVersion: v2
-appVersion: 3.2.4
+appVersion: 3.2.5
 description: A Helm chart for HAProxy Kubernetes Ingress Controller
 home: https://github.com/haproxytech/helm-charts/tree/main/kubernetes-ingress
 icon: https://raw.githubusercontent.com/haproxytech/helm-charts/main/kubernetes-ingress/chart-icon.png
@@ -16,4 +16,4 @@ name: kubernetes-ingress
 sources:
 - https://github.com/haproxytech/kubernetes-ingress
 type: application
-version: 1.47.4
+version: 1.48.0
