@@ -1,0 +1,131 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ant-media-server-origin
+spec:
+  selector:
+    app: ant-media-origin
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5080 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ant-media-server-origin
+spec:
+  selector:
+    matchLabels:
+      app: ant-media-origin
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ant-media-origin
+    spec:
+      {{ if .Values.hostNetwork }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - ant-media-origin
+                - ant-media-edge
+            topologyKey: "kubernetes.io/hostname"
+      hostNetwork: {{ .Values.hostNetwork }}
+      {{end}}
+      {{- if and .Values.OriginNodeSelector.key }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: "{{ .Values.OriginNodeSelector.key }}"
+                operator: In
+                values:
+                - "{{ .Values.OriginNodeSelector.values }}"
+      {{- end }}
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: ant-media-server
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}" 
+        imagePullPolicy: {{ .Values.image.pullPolicy }}   
+        args:
+          - -g
+          - "{{ .Values.UseGlobalIP }}"
+          - -s
+          - "{{ .Values.UseServerName }}"
+          - -r
+          - "{{ .Values.ReplaceCandidateAddress }}"
+          - -m
+          - cluster
+          - -h
+          - "$(MONGO_URL)"
+          - -l
+          - "$(LICENSE_KEY)"
+          {{- if not (empty .Values.TurnStunServerURL) }}
+          - -a
+          - "$(TURN_SERVER)"
+          - -n
+          - "$(TURN_USERNAME)"
+          - -w
+          - "$(TURN_PASSWORD)"
+          {{- end }}
+          {{- if not (empty .Values.kafkaURL) }}
+          - -k
+          - "{{ .Values.kafkaURL }}"
+          {{- end }}
+        env:
+          - name: MONGO_URL
+            valueFrom:
+              configMapKeyRef:
+                name: mongodb-config
+                key: mongoURL
+          - name: LICENSE_KEY
+            value: "{{ if and .Values.originLicense (not (empty .Values.originLicense.Key)) }}{{ .Values.originLicense.Key }}{{ else }}{{ .Values.licenseKey }}{{ end }}"
+          {{- if not (empty .Values.TurnStunServerURL) }}
+          - name: TURN_SERVER
+            value: "{{ .Values.TurnStunServerURL }}"
+          - name: TURN_USERNAME
+            value: "{{ .Values.TurnUsername }}"
+          - name: TURN_PASSWORD
+            value: "{{ .Values.TurnPassword }}"
+          {{- end }}
+
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 5080
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 5080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 1
+        volumeMounts:
+        - mountPath: /tmp
+          name: temp-volume
+        {{- if .Values.OriginCpu }}  
+        resources:
+        {{ "requests:" | indent 2 }}
+        {{ "cpu:" | indent 4 }} {{ .Values.OriginCpu }}
+        {{- end }}
+      volumes:
+      - hostPath:
+          path: /temp-data
+          type: DirectoryOrCreate
+        name: temp-volume

@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ant-media-server-origin
+  annotations:
+  {{- if .Values.provider.aws }}
+{{ toYaml .Values.annotations.aws | indent 4 }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.aws.ssl.arn }}
+{{ else }}
+{{ toYaml .Values.annotations.default | indent 4 }}
+  {{ end }}
+spec:
+  {{- if .Values.provider.aws }}
+  ingressClassName: alb
+  {{ else }}
+  ingressClassName: nginx
+  {{ end }}
+  rules:
+  - host: {{ .Values.origin }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ant-media-server-origin
+            port:
+              number: 5080
+
+  tls:
+    - hosts:
+      - {{ .Values.origin }}
+      secretName: antmedia-cert-origin
+
+
