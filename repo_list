@@ -32,3 +32,4 @@ helm repo add kubevela https://charts.kubevela.net/core
 helm repo add rook-release https://charts.rook.io/release
 helm repo add seaweedfs https://seaweedfs.github.io/seaweedfs/helm
 # helm repo add headscale https://raw.githubusercontent.com/Kapernikov/headscale-helm/main/headscale
+helm repo add antmedia https://ant-media.github.io/helm

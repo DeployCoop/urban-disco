@@ -37,3 +37,4 @@ helm fetch --untar apache-airflow/airflow
 helm fetch --untar rook-release/rook-ceph
 helm fetch --untar seaweedfs/seaweedfs
 # helm fetch --untar headscale/headscale
+helm fetch --untar antmedia/antmedia
