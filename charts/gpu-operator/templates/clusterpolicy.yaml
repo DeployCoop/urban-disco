@@ -152,6 +152,9 @@ spec:
     {{- if .Values.cdi.default }}
     default: {{ .Values.cdi.default }}
     {{- end }}
+    {{- if and (.Values.cdi.enabled) (.Values.cdi.nriPluginEnabled) }}
+    nriPluginEnabled: {{ .Values.cdi.nriPluginEnabled }}
+    {{- end }}
   driver:
     enabled: {{ .Values.driver.enabled }}
     useNvidiaDriverCRD: {{ .Values.driver.nvidiaDriverCRD.enabled }}
@@ -276,6 +279,9 @@ spec:
     {{- if .Values.vgpuManager.args }}
     args: {{ toYaml .Values.vgpuManager.args | nindent 6 }}
     {{- end }}
+    {{- if .Values.vgpuManager.kernelModuleConfig }}
+    kernelModuleConfig: {{ toYaml .Values.vgpuManager.kernelModuleConfig | nindent 6 }}
+    {{- end }}
     driverManager:
       {{- if .Values.vgpuManager.driverManager.repository }}
       repository: {{ .Values.vgpuManager.driverManager.repository }}
@@ -294,7 +300,9 @@ spec:
       {{- end }}
   kataManager:
     enabled: {{ .Values.kataManager.enabled }}
+    {{- if .Values.kataManager.config }}
     config: {{ toYaml .Values.kataManager.config | nindent 6 }}
+    {{- end }}
     {{- if .Values.kataManager.repository }}
     repository: {{ .Values.kataManager.repository }}
     {{- end }}
@@ -471,8 +479,8 @@ spec:
     {{- end }}
     {{- if .Values.devicePlugin.config.name }}
     config:
-      name: {{ .Values.devicePlugin.config.name }}
-      default: {{ .Values.devicePlugin.config.default }}
+      name: {{ .Values.devicePlugin.config.name | quote }}
+      default: {{ .Values.devicePlugin.config.default | quote }}
     {{- end }}
   dcgm:
     enabled: {{ .Values.dcgm.enabled }}
@@ -539,6 +547,9 @@ spec:
     {{- if .Values.dcgmExporter.hostPID }}
     hostPID: {{ .Values.dcgmExporter.hostPID }}
     {{- end }}
+    {{- if .Values.dcgmExporter.hostNetwork }}
+    hostNetwork: {{ .Values.dcgmExporter.hostNetwork }}
+    {{- end }}
     {{- if .Values.dcgmExporter.hpcJobMapping }}
     hpcJobMapping: {{ toYaml .Values.dcgmExporter.hpcJobMapping | nindent 6 }}
     {{- end }}
@@ -596,7 +607,9 @@ spec:
     {{- end }}
     {{- if .Values.migManager.config }}
     config:
+      {{- if .Values.migManager.config.name }}
       name: {{ .Values.migManager.config.name }}
+      {{- end }}
       default: {{ .Values.migManager.config.default | quote }}
     {{- end }}
     {{- if .Values.migManager.gpuClientsConfig }}
@@ -677,6 +690,9 @@ spec:
     {{- if .Values.sandboxWorkloads.defaultWorkload }}
     defaultWorkload: {{ .Values.sandboxWorkloads.defaultWorkload }}
     {{- end }}
+    {{- if .Values.sandboxWorkloads.mode }}
+    mode: {{ .Values.sandboxWorkloads.mode | quote }}
+    {{- end }}
   sandboxDevicePlugin:
     {{- if .Values.sandboxDevicePlugin.enabled }}
     enabled: {{ .Values.sandboxDevicePlugin.enabled }}
@@ -704,4 +720,32 @@ spec:
     {{- end }}
     {{- if .Values.sandboxDevicePlugin.args }}
     args: {{ toYaml .Values.sandboxDevicePlugin.args | nindent 6 }}
+    {{- end }}
+  kataSandboxDevicePlugin:
+    {{- if ne .Values.kataSandboxDevicePlugin.enabled nil }}
+    enabled: {{ .Values.kataSandboxDevicePlugin.enabled }}
+    {{- end }}
+    {{- if .Values.kataSandboxDevicePlugin.repository }}
+    repository: {{ .Values.kataSandboxDevicePlugin.repository }}
+    {{- end }}
+    {{- if .Values.kataSandboxDevicePlugin.image }}
+    image: {{ .Values.kataSandboxDevicePlugin.image }}
+    {{- end }}
+    {{- if .Values.kataSandboxDevicePlugin.version }}
+    version: {{ .Values.kataSandboxDevicePlugin.version | quote }}
+    {{- end }}
+    {{- if .Values.kataSandboxDevicePlugin.imagePullPolicy }}
+    imagePullPolicy: {{ .Values.kataSandboxDevicePlugin.imagePullPolicy }}
+    {{- end }}
+    {{- if .Values.kataSandboxDevicePlugin.imagePullSecrets }}
+    imagePullSecrets: {{ toYaml .Values.kataSandboxDevicePlugin.imagePullSecrets | nindent 6 }}
+    {{- end }}
+    {{- if .Values.kataSandboxDevicePlugin.resources }}
+    resources: {{ toYaml .Values.kataSandboxDevicePlugin.resources | nindent 6 }}
+    {{- end }}
+    {{- if .Values.kataSandboxDevicePlugin.env }}
+    env: {{ toYaml .Values.kataSandboxDevicePlugin.env | nindent 6 }}
+    {{- end }}
+    {{- if .Values.kataSandboxDevicePlugin.args }}
+    args: {{ toYaml .Values.kataSandboxDevicePlugin.args | nindent 6 }}
     {{- end }}

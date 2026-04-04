@@ -1,5 +1,95 @@
 # Change Log
 
+## v39.0.7  ![AppVersion: v3.6.12](https://img.shields.io/static/v1?label=AppVersion&message=v3.6.12&color=success&logo=) ![Kubernetes: >=1.22.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.22.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2026-03-30
+
+* feat(deps): update traefik docker tag to v3.6.12 (v39.0)
+* chore(release): 🚀 publish v39.0.7
+
+## 39.0.6  ![AppVersion: v3.6.11](https://img.shields.io/static/v1?label=AppVersion&message=v3.6.11&color=success&logo=) ![Kubernetes: >=1.22.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.22.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2026-03-20
+
+* feat: :rocket: upgrade traefik to version v3.6.11
+* chore(release): :rocket: publish v39.0.6
+
+## 39.0.5  ![AppVersion: v3.6.10](https://img.shields.io/static/v1?label=AppVersion&message=v3.6.10&color=success&logo=) ![Kubernetes: >=1.22.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.22.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+* fix: :bug: handle experimental-master and fail gracefully
+* fix(nginx): add required RBAC for v3.7
+* fix(gateway): setting port value for `websecure` listener can fail
+* feat: upgrade traefik to version v3.6.10
+
+**Upgrade Notes**
+
+This version allows users to test the upcoming Traefik v3.7.0.
+
+Since v3.7.0 is not released yet, the required CRDs are not part of the chart release.
+Users must manually apply the latest CRDs from the `master` branch before upgrading.
+## 39.0.4  ![AppVersion: v3.6.9](https://img.shields.io/static/v1?label=AppVersion&message=v3.6.9&color=success&logo=) ![Kubernetes: >=1.22.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.22.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2026-03-05
+
+* fix(deps): bump traefik.io CRDs to release v3.6.9
+* chore(release): publish v39.0.4
+
+## 39.0.3  ![AppVersion: v3.6.9](https://img.shields.io/static/v1?label=AppVersion&message=v3.6.9&color=success&logo=) ![Kubernetes: >=1.22.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.22.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2026-03-05
+
+* fix: remove `rbac.secretResourceNames`
+* feat(deps): update traefik docker tag to v3.6.9
+* docs(example): anchors on trustedIPs with schema enforced
+* chore(release): :rocket: publish v39.0.3
+
+### Default value changes
+
+```diff
+diff --git a/traefik/values.yaml b/traefik/values.yaml
+index 5604572..ef2993c 100644
+--- a/traefik/values.yaml
++++ b/traefik/values.yaml
+@@ -1111,8 +1111,6 @@ rbac:  # @schema additionalProperties: false
+   # Enable user-facing roles
+   # https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
+   aggregateTo: []
+-  # List of Kubernetes secrets that are accessible for Traefik. If empty, then access is granted to every secret.
+-  secretResourceNames: []
+ 
+ # -- Enable to create a PodSecurityPolicy and assign it to the Service Account via RoleBinding or ClusterRoleBinding
+ podSecurityPolicy:
+```
+
+## 39.0.2  ![AppVersion: v3.6.8](https://img.shields.io/static/v1?label=AppVersion&message=v3.6.8&color=success&logo=) ![Kubernetes: >=1.22.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.22.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
+
+**Release date:** 2026-02-20
+
+* chore(release): 🚀 publish traefik 39.0.2
+* docs: fix typo in examples
+* chore(deps): update helm/kind-action action to v1.14.0
+* feat: :package: allow IBM cloud values
+* chore(ci): lint on pr title
+
+### Default value changes
+
+```diff
+diff --git a/traefik/values.yaml b/traefik/values.yaml
+index e1ede33..5604572 100644
+--- a/traefik/values.yaml
++++ b/traefik/values.yaml
+@@ -1394,5 +1394,9 @@ oci_meta:
+       image: traefik-hub
+       tag: latest
+ 
++# -- Required for IBM Cloud Marketplace integration.
++# Injected by IBM Cloud Catalog when deploying via IBM Cloud Schematics. This value is not used by the chart.
++offering_version: ""  # @schema type:[string, null]
++
+ # -- Allow the Helm chart to be used as optional subchart.
+ enabled: true  # @schema type:boolean; const:true
+```
+
 ## 39.0.1  ![AppVersion: v3.6.8](https://img.shields.io/static/v1?label=AppVersion&message=v3.6.8&color=success&logo=) ![Kubernetes: >=1.22.0-0](https://img.shields.io/static/v1?label=Kubernetes&message=%3E%3D1.22.0-0&color=informational&logo=kubernetes) ![Helm: v3](https://img.shields.io/static/v1?label=Helm&message=v3&color=informational&logo=helm)
 
 **Release date:** 2026-02-13

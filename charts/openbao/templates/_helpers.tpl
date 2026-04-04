@@ -787,6 +787,23 @@ Sets extra openbao server Service (standby) annotations
 {{- end -}}
 
 {{/*
+Sets extra openbao server Service (headless) annotations
+*/}}
+{{- define "openbao.service.headless.annotations" -}}
+  {{- $headless := .Values.server.service.headless.annotations -}}
+  {{- $generic := .Values.server.service.annotations -}}
+  {{- if or $headless $generic }}
+  annotations:
+    {{- if $headless }}
+      {{- include "openbao.annotations.render.4" (list . $headless) -}}
+    {{- end }}
+    {{- if $generic }}
+      {{- include "openbao.annotations.render.4" (list . $generic) -}}
+    {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{/*
 Sets PodSecurityPolicy annotations
 */}}
 {{- define "openbao.psp.annotations" -}}
@@ -1208,5 +1225,20 @@ securityContext for the snapshotAgent container level.
               capabilities:
                 drop:
                   - ALL
+  {{- end }}
+{{- end -}}
+
+{{/*
+tolerations for the snapshotAgent cronjob pod
+*/}}
+{{- define "snapshotAgent.tolerations" -}}
+  {{- if .Values.snapshotAgent.tolerations }}
+          tolerations:
+          {{- $tp := typeOf .Values.snapshotAgent.tolerations }}
+          {{- if eq $tp "string" }}
+            {{ tpl .Values.snapshotAgent.tolerations . | nindent 12 | trim }}
+          {{- else }}
+            {{- toYaml .Values.snapshotAgent.tolerations | nindent 12 }}
+          {{- end }}
   {{- end }}
 {{- end -}}

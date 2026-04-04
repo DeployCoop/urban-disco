@@ -53,7 +53,7 @@ spec:
 
               # Pre Install scripts
               {{- if .Values.drupal.preInstallScripts }}
-              {{ toYaml .Values.drupal.preInstallScripts | nindent 14}}
+              {{ .Values.drupal.preInstallScripts | nindent 14}}
               {{- end }}
 
               {{- if .Values.mysql.enabled }}
@@ -136,7 +136,7 @@ spec:
               echo "Drop database"
               drush sql-drop -y
               echo "Restore database"
-              gunzip -c /backup/$BACKUPNAME/db.sql.gz{{ if .Values.drupal.restore.convert }} | sed 's/MyISAM/InnoDB/g'{{ end }} | drush sql-cli
+              gunzip -c /backup/$BACKUPNAME/db.sql.gz{{ if .Values.drupal.restore.convert }} | sed 's/MyISAM/InnoDB/g'{{ end }} | $(drush sql:connect)
               echo "Database restored"
               {{- end }}
 
@@ -199,7 +199,7 @@ spec:
 
               # Extra installation scripts
               {{- if .Values.drupal.postInstallScripts }}
-              {{ toYaml .Values.drupal.postInstallScripts | nindent 14}}
+              {{ .Values.drupal.postInstallScripts | nindent 14}}
               {{- end }}
         env:
           {{- include "drupal.env" . | nindent 10 }}

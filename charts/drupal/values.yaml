@@ -30,6 +30,9 @@ drupal:
   ##
   image: drupalwxt/site-wxt
 
+  ## Init container image for volume permission setup
+  initContainerImage: alpine:3.10
+
   ## Note that by default we use appVersion to get image tag
   # tag: 6.1.0
 
@@ -59,6 +62,7 @@ drupal:
 
   ## User of the application
   ##
+  existingSecret: ""
   username: admin
 
   ## Application password
@@ -157,7 +161,16 @@ drupal:
   migrate: true
 
   # Reconfigure on upgrade
-  reconfigure: true
+  reconfigure:
+    enabled: true
+    resources:
+      limits:
+        cpu: 250m
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+
   cacheRebuildBeforeDatabaseMigration: true
   updateDBBeforeDatabaseMigration: true
 
@@ -834,20 +847,72 @@ redis:
     enabled: true
 
 ## Configuration values for the Solr dependency sub-chart
-## ref: https://github.com/bitnami/charts/blob/master/bitnami/redis/README.md
+## ref: https://github.com/bitnami/charts/blob/master/bitnami/solr/README.md
 solr:
   enabled: false
+  ingress:
+    enabled: false
+  global:
+    security:
+      allowInsecureImages: true
+    compatibility:
+      openshift:
+        adaptSecurityContext: auto
   image:
     registry: docker.io
     repository: bitnamilegacy/solr
-    tag: "9.2.1-debian-11-r73"
-    pullPolicy: IfNotPresent
-  cloudEnabled: false
-  cloudBootstrap: false
-  zookeeper:
-    enabled: false
+    tag: 9.9.0-debian-12-r1
+  auth: {}
+  cloudEnabled: true
+  cloudBootstrap: true
+  persistence:
+    # storageClass: "-"
+    size: 5Gi
+  # OpenShift should be auto detected
+  # podSecurityContext:
+  #   enabled: false
+  # containerSecurityContext:
+  #   enabled: false
+  coreNames:
+    - drupal
+  collection: drupal
   replicaCount: 1
   collectionReplicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+  zookeeper:
+    enabled: true
+    global:
+      security:
+        allowInsecureImages: true
+      compatibility:
+        openshift:
+          adaptSecurityContext: auto
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/zookeeper
+      tag: 3.9.3-debian-12-r21
+    persistence:
+      # storageClass: "-"
+      size: 500Mi
+    # OpenShift should be auto detected
+    # podSecurityContext:
+    #   enabled: false
+    # containerSecurityContext:
+    #   enabled: false
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
 
 ## Configuration values for the Varnish dependency sub-chart
 ## ref: https://github.com/drupalwxt/helm-drupal/blob/main/charts/varnish/README.md

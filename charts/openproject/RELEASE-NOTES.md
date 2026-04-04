@@ -1,6 +1,6 @@
 
 
-### Minor Changes
+### Patch Changes
 
-- a7d75d7: Upgrade OpenProject core version to 17.1.0 (minor update)
+- b20533e: Upgrade OpenProject core version to 17.2.3 (patch update)
 

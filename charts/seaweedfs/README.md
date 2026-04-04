@@ -165,8 +165,9 @@ admin:
   enabled: true
   port: 23646
   grpcPort: 33646  # For worker connections
-  adminUser: "admin"
-  adminPassword: "your-secure-password"  # Leave empty to disable auth
+  secret:
+    adminUser: "admin"
+    adminPassword: "your-secure-password"  # Leave empty to disable auth
   
   # Optional: persist admin data
   data:
@@ -191,6 +192,8 @@ If `adminPassword` is set, the admin interface requires authentication:
 
 If `adminPassword` is empty or not set, the admin interface runs without authentication (not recommended for production).
 
+As an alternative, a kubernetes Secret can be used (`admin.secret.existingSecret`).
+
 ### Admin Data Persistence
 
 The admin component can store configuration and maintenance data. You can configure storage in several ways:
@@ -212,8 +215,9 @@ To enable workers, add the following to your values.yaml:
 worker:
   enabled: true
   replicas: 2  # Scale based on workload
-  capabilities: "vacuum,balance,erasure_coding"  # Tasks this worker can handle
-  maxConcurrent: 3  # Maximum concurrent tasks per worker
+  jobType: "vacuum,volume_balance,erasure_coding"  # Job types this worker can handle
+  maxDetect: 1  # Maximum concurrent detection requests
+  maxExecute: 4  # Maximum concurrent execution jobs per worker
   
   # Working directory for task execution
   # Default: "/tmp/seaweedfs-worker"
@@ -248,14 +252,14 @@ worker:
       memory: "2Gi"
 ```
 
-### Worker Capabilities
+### Worker Job Types
 
-Workers can be configured with different capabilities:
+Workers can be configured with different job types:
 - **vacuum**: Reclaim deleted file space
-- **balance**: Balance volumes across volume servers
+- **volume_balance**: Balance volumes across volume servers
 - **erasure_coding**: Handle erasure coding operations
 
-You can configure workers with all capabilities or create specialized worker pools with specific capabilities.
+You can configure workers with all job types or create specialized worker pools with specific job types.
 
 ### Worker Deployment Strategy
 
@@ -264,11 +268,11 @@ For production deployments, consider:
 1. **Multiple Workers**: Deploy 2+ worker replicas for high availability
 2. **Resource Allocation**: Workers need sufficient CPU/memory for maintenance tasks
 3. **Storage**: Workers need temporary storage for vacuum and balance operations (size depends on volume size)
-4. **Specialized Workers**: Create separate worker deployments for different capabilities if needed
+4. **Specialized Workers**: Create separate worker deployments for different job types if needed
 
 Example specialized worker configuration:
 
-For specialized worker pools, deploy separate Helm releases with different capabilities:
+For specialized worker pools, deploy separate Helm releases with different job types:
 
 **values-worker-vacuum.yaml** (for vacuum operations):
 ```yaml
@@ -287,8 +291,8 @@ admin:
 worker:
   enabled: true
   replicas: 2
-  capabilities: "vacuum"
-  maxConcurrent: 2
+  jobType: "vacuum"
+  maxExecute: 2
   # REQUIRED: Point to the admin service of your main SeaweedFS release
   # Replace <namespace> with the namespace where your main seaweedfs is deployed
   # Example: If deploying in namespace "production":
@@ -313,8 +317,8 @@ admin:
 worker:
   enabled: true
   replicas: 1
-  capabilities: "balance"
-  maxConcurrent: 1
+  jobType: "volume_balance"
+  maxExecute: 1
   # REQUIRED: Point to the admin service of your main SeaweedFS release
   # Replace <namespace> with the namespace where your main seaweedfs is deployed
   # Example: If deploying in namespace "production":
@@ -323,12 +327,29 @@ worker:
 ```
 
 Deploy the specialized workers as separate releases:
+### Specialized Worker Deployment
 ```bash
 # Deploy vacuum workers
 helm install seaweedfs-worker-vacuum seaweedfs/seaweedfs -f values-worker-vacuum.yaml
 
 # Deploy balance workers
 helm install seaweedfs-worker-balance seaweedfs/seaweedfs -f values-worker-balance.yaml
+```
+
+## OpenShift Support
+
+SeaweedFS can be deployed on OpenShift or any cluster enforcing the Kubernetes "restricted" Pod Security Standard. By default, OpenShift blocks containers that run as root or use `hostPath` volumes.
+
+To deploy on OpenShift, use the provided `openshift-values.yaml` which overrides the default configuration to:
+1. Use `PersistentVolumeClaims` instead of `hostPath`.
+2. Enable `runAsNonRoot` and omit hardcoded UIDs to allow OpenShift to assign valid UIDs automatically.
+3. Apply appropriate `seccompProfile` and drop capabilities.
+
+Usage:
+```bash
+helm install seaweedfs seaweedfs/seaweedfs \
+  -n seaweedfs --create-namespace \
+  -f openshift-values.yaml
 ```
 
 ## Enterprise

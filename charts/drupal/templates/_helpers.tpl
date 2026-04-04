@@ -78,7 +78,7 @@ Create common environment variables for Drupal
 - name: EXTERNAL_PASSWORD
   valueFrom:
     secretKeyRef:
-      name: {{ template "drupal.fullname" . }}
+      name: {{ default (include "drupal.fullname" .) .Values.drupal.existingSecret }}
       key: databasePassword
 {{- else if and .Values.mysql.enabled }}
 - name: MYSQL_PASSWORD
@@ -101,10 +101,15 @@ Create common environment variables for Drupal
       key: default-password
 {{- end }}
 {{- if not .Values.drupal.usePasswordFiles }}
+- name: DRUPAL_ADMIN
+  valueFrom:
+    secretKeyRef:
+      name: {{ default (include "drupal.fullname" .) .Values.drupal.existingSecret }}
+      key: username
 - name: DRUPAL_ADMIN_PASSWORD
   valueFrom:
     secretKeyRef:
-      name: {{ include "drupal.fullname" . }}
+      name: {{ default (include "drupal.fullname" .) .Values.drupal.existingSecret }}
       key: password
 {{- end }}
 {{- end -}}
@@ -115,7 +120,7 @@ Create initContainers for Drupal
 {{- define "drupal.initContainers" -}}
 {{- if .Values.drupal.volumePermissions.enabled }}
 - name: set-volume-permissions
-  image: 'alpine:3.10'
+  image: {{ .Values.drupal.initContainerImage | quote }}
   command:
     - chown
     - '-R'
@@ -132,7 +137,7 @@ Create initContainers for Drupal
 {{- end }}
 {{- if .Values.azure.sharedDisk.enabled }}
 - name: init-chown
-  image: 'alpine:3.10'
+  image: {{ .Values.drupal.initContainerImage | quote }}
   command:
     - chown
     - '-R'
@@ -144,7 +149,7 @@ Create initContainers for Drupal
 {{- end }}
 {{- if or (and .Values.azure.azureFile.enabled .Values.azure.azureFile.initMediaIconsFolder) (and .Values.azure.sharedDisk.enabled .Values.azure.sharedDisk.initMediaIconsFolder) }}
 - name: init-media-icons-folder
-  image: 'alpine:3.10'
+  image: {{ .Values.drupal.initContainerImage | quote }}
   command:
     - mkdir
     - '-p'
@@ -155,7 +160,7 @@ Create initContainers for Drupal
 {{- end }}
 {{- if not (eq .Values.drupal.siteRoot "/") }}
 - name: init-site-root
-  image: 'alpine:3.10'
+  image: {{ .Values.drupal.initContainerImage | quote }}
   command:
     - /bin/sh
     - '-c'

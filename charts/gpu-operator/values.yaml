@@ -14,10 +14,13 @@ psa:
 
 cdi:
   enabled: true
+  nriPluginEnabled: false
 
 sandboxWorkloads:
   enabled: false
   defaultWorkload: "container"
+  # Sandbox mode: "kubevirt" (default) or "kata". When "kata", the Kata device plugin is deployed on vm-passthrough nodes.
+  mode: "kubevirt"
 
 hostPaths:
   # rootFS represents the path to the root filesystem of the host.
@@ -76,16 +79,7 @@ operator:
   # upgrade CRD on chart upgrade, requires --disable-openapi-validation flag
   # to be passed during helm upgrade.
   upgradeCRD: true
-  initContainer:
-    repository: nvcr.io/nvidia
-    image: cuda
-    version: 13.0.1-base-ubi9
-    imagePullPolicy: IfNotPresent
   tolerations:
-  - key: "node-role.kubernetes.io/master"
-    operator: "Equal"
-    value: ""
-    effect: "NoSchedule"
   - key: "node-role.kubernetes.io/control-plane"
     operator: "Equal"
     value: ""
@@ -95,12 +89,6 @@ operator:
   affinity:
     nodeAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 1
-          preference:
-            matchExpressions:
-              - key: "node-role.kubernetes.io/master"
-                operator: In
-                values: [""]
         - weight: 1
           preference:
             matchExpressions:
@@ -143,7 +131,7 @@ driver:
   usePrecompiled: false
   repository: nvcr.io/nvidia
   image: driver
-  version: "580.105.08"
+  version: "580.126.20"
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   startupProbe:
@@ -193,7 +181,7 @@ driver:
     image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.9.1
+    version: v0.10.0
     imagePullPolicy: IfNotPresent
     env: []
   env: []
@@ -221,7 +209,7 @@ toolkit:
   enabled: true
   repository: nvcr.io/nvidia/k8s
   image: container-toolkit
-  version: v1.18.1
+  version: v1.19.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -232,7 +220,7 @@ devicePlugin:
   enabled: true
   repository: nvcr.io/nvidia
   image: k8s-device-plugin
-  version: v0.18.1
+  version: v0.19.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   args: []
@@ -278,7 +266,7 @@ dcgm:
   enabled: false
   repository: nvcr.io/nvidia/cloud-native
   image: dcgm
-  version: 4.4.2-1-ubuntu22.04
+  version: 4.5.2-1-ubuntu22.04
   imagePullPolicy: IfNotPresent
   args: []
   env: []
@@ -288,11 +276,12 @@ dcgmExporter:
   enabled: true
   repository: nvcr.io/nvidia/k8s
   image: dcgm-exporter
-  version: 4.4.2-4.7.0-distroless
+  version: 4.5.1-4.8.0-distroless
   imagePullPolicy: IfNotPresent
   env: []
   resources: {}
   hostPID: false
+  hostNetwork: false
   # HPC job mapping configuration for correlating GPU metrics with HPC workload manager jobs
   # This is used by HPC workload managers like Slurm to label GPU metrics with job IDs
   # hpcJobMapping:
@@ -336,7 +325,7 @@ gfd:
   enabled: true
   repository: nvcr.io/nvidia
   image: k8s-device-plugin
-  version: v0.18.1
+  version: v0.19.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -346,15 +335,24 @@ migManager:
   enabled: true
   repository: nvcr.io/nvidia/cloud-native
   image: k8s-mig-manager
-  version: v0.13.1
+  version: v0.14.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
   resources: {}
   # MIG configuration
-  # Use "name" to either point to an existing ConfigMap or to create a new one with a list of configurations(i.e with create=true).
-  # Use "data" to build an integrated ConfigMap from a set of configurations as
-  # part of this helm chart. An example of setting "data" might be:
+  # NOTE: MIG manager automatically generates configuration from hardware on each node.
+  # Only provide a custom config if you need settings that differ from hardware discovery.
+  #
+  # To use an existing ConfigMap:
+  #   - Set name="your-configmap-name" with create=false
+  #   - ConfigMap MUST have a key named "config.yaml"
+  #
+  # To create a new ConfigMap via Helm:
+  #   - Set create=true, name="your-configmap-name", and provide data below
+  #   - If create=true but data is empty, ConfigMap creation is skipped
+  #
+  # Example of creating a custom ConfigMap:
   # config:
   #   name: custom-mig-parted-configs
   #   create: true
@@ -386,9 +384,11 @@ migManager:
     default: "all-disabled"
     # Create a ConfigMap (default: false)
     create: false
-    # ConfigMap name (either existing or to create a new one with create=true above)
+    # ConfigMap name (either existing or to create with create=true)
+    # If name is provided, mig-manager will use this config instead of auto-generated one.
+    # REQUIREMENT: Custom ConfigMaps must contain a key named "config.yaml"
     name: ""
-    # Data section for the ConfigMap to create (i.e only applies when create=true)
+    # Data section for the ConfigMap (required only if create=true)
     data: {}
   gpuClientsConfig:
     name: ""
@@ -407,7 +407,7 @@ gds:
   enabled: false
   repository: nvcr.io/nvidia/cloud-native
   image: nvidia-fs
-  version: "2.26.6"
+  version: "2.27.3"
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -437,15 +437,18 @@ vgpuManager:
     image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.9.1
+    version: v0.10.0
     imagePullPolicy: IfNotPresent
     env: []
+   # kernel module configuration for vGPU manager
+  kernelModuleConfig:
+    name: ""
 
 vgpuDeviceManager:
   enabled: true
   repository: nvcr.io/nvidia/cloud-native
   image: vgpu-device-manager
-  version: v0.4.1
+  version: v0.4.2
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -455,9 +458,9 @@ vgpuDeviceManager:
 
 vfioManager:
   enabled: true
-  repository: nvcr.io/nvidia
-  image: cuda
-  version: 13.0.1-base-ubi9
+  repository: nvcr.io/nvidia/cloud-native
+  image: k8s-driver-manager
+  version: v0.10.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -467,29 +470,13 @@ vfioManager:
     image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.9.1
+    version: v0.10.0
     imagePullPolicy: IfNotPresent
     env: []
 
 kataManager:
   enabled: false
-  config:
-    artifactsDir: "/opt/nvidia-gpu-operator/artifacts/runtimeclasses"
-    runtimeClasses:
-      - name: kata-nvidia-gpu
-        nodeSelector: {}
-        artifacts:
-          url: nvcr.io/nvidia/cloud-native/kata-gpu-artifacts:ubuntu22.04-535.54.03
-          pullSecret: ""
-      - name: kata-nvidia-gpu-snp
-        nodeSelector:
-          "nvidia.com/cc.capable": "true"
-        artifacts:
-          url: nvcr.io/nvidia/cloud-native/kata-gpu-artifacts:ubuntu22.04-535.86.10-snp
-          pullSecret: ""
-  repository: nvcr.io/nvidia/cloud-native
-  image: k8s-kata-manager
-  version: v0.2.3
+  config: {}
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -499,7 +486,19 @@ sandboxDevicePlugin:
   enabled: true
   repository: nvcr.io/nvidia
   image: kubevirt-gpu-device-plugin
-  version: v1.4.0
+  version: v1.5.0
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets: []
+  args: []
+  env: []
+  resources: {}
+
+# Kata sandbox device plugin (used when sandboxWorkloads.mode is "kata").
+kataSandboxDevicePlugin:
+  enabled: true
+  repository: nvcr.io/nvidia/cloud-native
+  image: nvidia-sandbox-device-plugin
+  version: "v0.0.2"
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   args: []
@@ -507,17 +506,21 @@ sandboxDevicePlugin:
   resources: {}
 
 ccManager:
-  enabled: false
-  defaultMode: "off"
+  enabled: true
+  defaultMode: "on"
   repository: nvcr.io/nvidia/cloud-native
   image: k8s-cc-manager
-  version: v0.1.1
+  version: v0.3.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env:
     - name: CC_CAPABLE_DEVICE_IDS
       value: "0x2339,0x2331,0x2330,0x2324,0x2322,0x233d"
   resources: {}
+
+# Array of extra K8s manifests to deploy
+# Supports use of custom Helm templates
+extraObjects: []
 
 node-feature-discovery:
   priorityClassName: system-node-critical
@@ -533,10 +536,6 @@ node-feature-discovery:
       # disable creation to avoid duplicate serviceaccount creation by master spec below
       create: false
     tolerations:
-    - key: "node-role.kubernetes.io/master"
-      operator: "Equal"
-      value: ""
-      effect: "NoSchedule"
     - key: "node-role.kubernetes.io/control-plane"
       operator: "Equal"
       value: ""
