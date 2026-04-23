@@ -701,6 +701,14 @@ alertmanager:
       ## Filters define the filters that are applied to requests that match this rule.
       filters: []
 
+      ## Session persistence configuration for the route rule.
+      sessionPersistence: {}
+      # sessionName: route
+      # type: Cookie
+      # absoluteTimeout: 12h
+      # cookieConfig:
+      #   lifetimeType: Permanent
+
       ## Additional custom rules that can be added to the route
       additionalRules: []
 
@@ -948,7 +956,7 @@ alertmanager:
     image:
       registry: quay.io
       repository: prometheus/alertmanager
-      tag: v0.31.1
+      tag: v0.32.0
       sha: ""
       pullPolicy: IfNotPresent
 
@@ -1179,7 +1187,7 @@ alertmanager:
     containers: []
     # containers:
     # - name: oauth-proxy
-    #   image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.1
+    #   image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.2
     #   args:
     #   - --upstream=http://127.0.0.1:9093
     #   - --http-address=0.0.0.0:8081
@@ -1277,7 +1285,7 @@ alertmanager:
   #     foo:$apr1$OFG3Xybp$ckL0FHDAkoXYIlH9.cysT0
   #     someoneelse:$apr1$DMZX2Z4q$6SbQIfyuLQd.xmo/P0m2c.
 
-## Using default values from https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
+## Using default values from https://github.com/grafana-community/helm-charts/blob/main/charts/grafana/values.yaml
 ##
 grafana:
   enabled: true
@@ -2991,7 +2999,7 @@ prometheusOperator:
       image:
         registry: ghcr.io
         repository: jkroepke/kube-webhook-certgen
-        tag: 1.8.0
+        tag: 1.8.1
         sha: ""
         pullPolicy: IfNotPresent
       resources: {}
@@ -3894,6 +3902,14 @@ prometheus:
       ## Filters define the filters that are applied to requests that match this rule.
       filters: []
 
+      ## Session persistence configuration for the route rule.
+      sessionPersistence: {}
+      # sessionName: route
+      # type: Cookie
+      # absoluteTimeout: 12h
+      # cookieConfig:
+      #   lifetimeType: Permanent
+
       ## Additional custom rules that can be added to the route
       additionalRules: []
 
@@ -4138,7 +4154,7 @@ prometheus:
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v3.11.0
+      tag: v3.11.2
       sha: ""
       pullPolicy: IfNotPresent
 
@@ -4658,7 +4674,7 @@ prometheus:
     containers: []
     # containers:
     # - name: oauth-proxy
-    #   image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.1
+    #   image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.2
     #   args:
     #   - --upstream=http://127.0.0.1:9090
     #   - --http-address=0.0.0.0:8081
@@ -5129,6 +5145,14 @@ thanosRuler:
 
       ## Filters define the filters that are applied to requests that match this rule.
       filters: []
+
+      ## Session persistence configuration for the route rule.
+      sessionPersistence: {}
+      # sessionName: route
+      # type: Cookie
+      # absoluteTimeout: 12h
+      # cookieConfig:
+      #   lifetimeType: Permanent
 
       ## Additional custom rules that can be added to the route
       additionalRules: []
