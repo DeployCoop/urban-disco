@@ -2,23 +2,32 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- Additional labels to add to all resources created by this chart
+commonLabels: {}
+#   app.kubernetes.io/part-of: storage
+#   team: platform
+
 # Garage configuration. These values go to garage.toml
 garage:
   # -- Can be changed for better performance on certain systems
-  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#db-engine-since-v0-8-0
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#db_engine
   dbEngine: "lmdb"
 
   # -- Defaults is 1MB
   # An increase can result in better performance in certain scenarios
-  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#block-size
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#block_size
   blockSize: "1048576"
 
-  # -- Default to 3 replicas, see the replication_mode section at
-  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#replication-mode
-  replicationMode: "3"
+  # -- Default to 3 replicas, see the replication_factor section at
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#replication_factor
+  replicationFactor: "3"
+
+  # -- By default, enable read-after-write consistency guarantees, see the consistency_mode section at
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#consistency_mode
+  consistencyMode: "consistent"
 
   # -- zstd compression level of stored blocks
-  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#compression-level
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#compression_level
   compressionLevel: "1"
 
   # -- If this value is set, Garage will automatically take a snapshot of the metadata DB file at a regular interval and save it in the metadata directory.
@@ -28,18 +37,32 @@ garage:
   rpcBindAddr: "[::]:3901"
   # -- If not given, a random secret will be generated and stored in a Secret object
   rpcSecret: ""
+  # -- If you want to provide an rpcSecret within an existing k8s secret,
+  # specify the secret name here, and store the value under the secret key `rpcSecret`
+  # the default secret will not be created
+  existingRpcSecret: ""
   # -- This is not required if you use the integrated kubernetes discovery
   bootstrapPeers: []
   # -- Set to true if you want to use k8s discovery but install the CRDs manually outside
-  # of the helm chart, for example if you operate at namespace level without cluster ressources
+  # of the helm chart, for example if you operate at namespace level without cluster resources
   kubernetesSkipCrd: false
   s3:
     api:
+      bindAddr: "[::]:3900"
       region: "garage"
       rootDomain: ".s3.garage.tld"
     web:
+      bindAddr: "[::]:3902"
       rootDomain: ".web.garage.tld"
       index: "index.html"
+  admin:
+    apiBindAddr: "[::]:3903"
+
+  # -- Additional configuration to append to garage.toml. Use a multi-line string for custom config.
+  # Example:
+  #  additionalTopLevelConfig: |-
+  #    data_fsync = true
+  additionalTopLevelConfig: ""
 
   # -- if not empty string, allow using an existing ConfigMap for the garage.toml,
   # if set, ignores garage.toml
@@ -101,13 +124,14 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-# -- additonal pod annotations
+# -- additional pod annotations
 podAnnotations: {}
 
 podSecurityContext:
   runAsUser: 1000
   runAsGroup: 1000
   fsGroup: 1000
+  fsGroupChangePolicy: "OnRootMismatch"
   runAsNonRoot: true
 
 securityContext:
@@ -189,7 +213,7 @@ ingress:
       #      - kubernetes.docker.internal
 
 resources: {}
-  # The following are indicative for a small-size deployement, for anything serious double them.
+  # The following are indicative for a small-size deployment, for anything serious double them.
   # limits:
   #   cpu: 100m
   #   memory: 1024Mi
@@ -201,14 +225,14 @@ resources: {}
 livenessProbe: {}
   #httpGet:
   #  path: /health
-  #  port: 3903
+  #  port: 3903 # or the port from garage.admin.apiBindAddr
   #initialDelaySeconds: 5
   #periodSeconds: 30
 # -- Specifies a readinessProbe
 readinessProbe: {}
   #httpGet:
   #  path: /health
-  #  port: 3903
+  #  port: 3903 # or the port from garage.admin.apiBindAddr
   #initialDelaySeconds: 5
   #periodSeconds: 30
 
@@ -217,6 +241,10 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# -- Optional priority class name to assign to the pods.
+# See https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+priorityClassName: ""
 
 environment: {}
 

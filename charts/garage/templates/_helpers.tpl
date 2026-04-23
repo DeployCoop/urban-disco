@@ -27,7 +27,7 @@ If release name contains chart name it will be used as a full name.
 Create the name of the rpc secret
 */}}
 {{- define "garage.rpcSecretName" -}}
-{{- printf "%s-rpc-secret" (include "garage.fullname" .) -}}
+{{- .Values.garage.existingRpcSecret | default (printf "%s-rpc-secret" (include "garage.fullname" .)) -}}
 {{- end }}
 
 {{/*
@@ -47,6 +47,9 @@ helm.sh/chart: {{ include "garage.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- with .Values.commonLabels }}
+{{- toYaml . | nindent 0 }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -66,6 +69,13 @@ Create the name of the service account to use
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
+{{- end }}
+
+{{/*
+Extract the trailing port number from a bind address like [::]:3900 or 0.0.0.0:3900.
+*/}}
+{{- define "garage.portFromBindAddr" -}}
+{{- regexFind "[0-9]+$" . -}}
 {{- end }}
 
 {{/*
