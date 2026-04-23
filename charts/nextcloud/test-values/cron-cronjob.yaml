@@ -1,3 +1,0 @@
-cronjob:
-  enabled: true
-  type: cronjob

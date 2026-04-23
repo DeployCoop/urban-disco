@@ -6,7 +6,7 @@ image:
   # -- Overrides the image tag whose default is the chart appVersion.
   tag: ""
   # -- Image digest.
-  digest: "sha256:82f5dd969ed74e3a9cfd6284045099a161778a0d85f9e01a234a62f15eb9d696"
+  digest: "sha256:1109b33fabac86809b06f831eef7359b12232f5708554aef39efd036dce40748"
 # -- Image Pull Secrets
 imagePullSecrets: []
 # -- Overrides the name of the chart.
@@ -138,6 +138,14 @@ basicAuthSecretName: ""
 spegel:
   # -- Minimum log level to output. Value should be DEBUG, INFO, WARN, or ERROR.
   logLevel: "INFO"
+  # Configuration for Spegel persistence on host used for keeping P2P identity between restarts.
+  persistence:
+    # -- If true Spegel will persist data on the host.
+    enabled: true
+    # -- Path in the container where host path is mounted.
+    path: "/var/lib/spegel"
+    # -- Path on host which is mounted to container.
+    hostPath: "/var/lib/spegel"
   # -- Registries for which mirror configuration will be created. Empty means all registires will be mirrored.
   mirroredRegistries: []
   # - https://docker.io
@@ -200,3 +208,9 @@ verticalPodAutoscaler:
 livenessProbe:
   # -- When enabled a liveness probe will be added to the registry.
   enabled: false
+# -- Add additional volumes to the daemonset. This can be helpful when adding custom init containers that need
+# host path mounts to different locations than the already configured ones.
+extraVolumes: []
+# -- Add additional initContainers *before* Spegel's own configuration init container
+# to run additional node init configuration tasks
+extraInitContainers: []

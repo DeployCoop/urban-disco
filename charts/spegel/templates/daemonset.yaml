@@ -41,6 +41,9 @@ spec:
       priorityClassName: {{ .Values.priorityClassName }}
       {{- if .Values.spegel.containerdMirrorAdd }}
       initContainers:
+      {{- with .Values.extraInitContainers }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
       - name: configuration
         image: "{{ include "spegel.image" . }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -104,7 +107,6 @@ spec:
           {{- end }}
           - --containerd-sock={{ .Values.spegel.containerdSock }}
           - --containerd-namespace={{ .Values.spegel.containerdNamespace }}
-          - --containerd-registry-config-path={{ .Values.spegel.containerdRegistryConfigPath }}
           - --bootstrap-kind=dns
           - --dns-bootstrap-domain={{ include "spegel.fullname" . }}-bootstrap.{{ include "spegel.namespace" . }}.svc.{{ .Values.clusterDomain }}
           {{- with .Values.spegel.registryFilters }}
@@ -117,9 +119,12 @@ spec:
           - --containerd-content-path={{ . }}
           {{- end }}
           - --debug-web-enabled={{ .Values.spegel.debugWebEnabled }}
+          {{- with .Values.spegel.persistence }}
+          {{- if .enabled }}
+          - --data-dir={{ .path }}
+          {{- end }}
+          {{- end }}
         env:
-        - name: DATA_DIR
-          value: ""
         {{- if ((.Values.resources).limits).memory }}
         - name: GOMEMLIMIT
           valueFrom:
@@ -136,9 +141,12 @@ spec:
             hostPort: {{ .Values.service.registry.hostPort }}
             {{- end }}
             protocol: TCP
-          - name: router
+          - name: router-tcp
             containerPort: {{ .Values.service.router.port }}
             protocol: TCP
+          - name: router-quic
+            containerPort: {{ .Values.service.router.port }}
+            protocol: UDP
           - name: metrics
             containerPort: {{ .Values.service.metrics.port }}
             protocol: TCP
@@ -166,6 +174,10 @@ spec:
             mountPath: "/etc/secrets/basic-auth"
             readOnly: true
           {{- end }}
+          {{- if .Values.spegel.persistence.enabled }}
+          - name: spegel-data
+            mountPath: {{ .Values.spegel.persistence.path }}
+          {{- end }}
           - name: containerd-sock
             mountPath: {{ .Values.spegel.containerdSock }}
           {{- with .Values.spegel.containerdContentPath }}
@@ -180,6 +192,12 @@ spec:
         - name: basic-auth
           secret:
             secretName: {{ . }}
+        {{- end }}
+        {{- if .Values.spegel.persistence.enabled }}
+        - name: spegel-data
+          hostPath:
+            path: {{ .Values.spegel.persistence.hostPath }}
+            type: DirectoryOrCreate
         {{- end }}
         - name: containerd-sock
           hostPath:
@@ -196,6 +214,9 @@ spec:
           hostPath:
             path: {{ .Values.spegel.containerdRegistryConfigPath }}
             type: DirectoryOrCreate
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
