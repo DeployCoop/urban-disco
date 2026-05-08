@@ -1,4 +1,0 @@
-controller:
-  kind: DaemonSet
-  unprivileged: true
-  allowPrivilegedPorts: true
