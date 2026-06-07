@@ -14,6 +14,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### Security
 ---
+## [3.6.0]
+### Added
+- Updated OpenSearch appVersion to 3.6.0
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+---
+## [3.5.0]
+### Added
+- Updated OpenSearch appVersion to 3.5.0
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+---
 ## [3.4.0]
 ### Added
 - Updated OpenSearch appVersion to 3.4.0
@@ -86,7 +104,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### Security
 
-[Unreleased]: https://github.com/opensearch-project/helm-charts/compare/opensearch-3.4.0...HEAD
+[Unreleased]: https://github.com/opensearch-project/helm-charts/compare/opensearch-3.6.0...HEAD
+[3.6.0]: https://github.com/opensearch-project/helm-charts/compare/opensearch-3.5.0...opensearch-3.6.0
+[3.5.0]: https://github.com/opensearch-project/helm-charts/compare/opensearch-3.4.0...opensearch-3.5.0
 [3.4.0]: https://github.com/opensearch-project/helm-charts/compare/opensearch-3.3.2...opensearch-3.4.0
 [3.3.2]: https://github.com/opensearch-project/helm-charts/compare/opensearch-3.3.1...opensearch-3.3.2
 [3.3.1]: https://github.com/opensearch-project/helm-charts/compare/opensearch-3.3.0...opensearch-3.3.1

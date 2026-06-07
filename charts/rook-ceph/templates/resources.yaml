@@ -475,6 +475,21 @@ spec:
                         as dataChunks so be aware that the larger the number of data chunks, the higher the cost of recovery.
                       minimum: 0
                       type: integer
+                    stripeUnit:
+                      anyOf:
+                        - type: integer
+                        - type: string
+                      description: |-
+                        Erasure code stripe size in bytes. Ceph default is 4096 bytes (4 KiB).
+                        Value must be a multiple of 4096 (4Ki).
+                      enum:
+                        - 4Ki
+                        - 16Ki
+                        - 64Ki
+                        - 256Ki
+                        - 1Mi
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
                   required:
                     - codingChunks
                     - dataChunks
@@ -1753,7 +1768,7 @@ spec:
                     pgHealthyRegex:
                       description: |-
                         PgHealthyRegex is the regular expression that is used to determine which PG states should be considered healthy.
-                        The default is `^(active\+clean|active\+clean\+scrubbing|active\+clean\+scrubbing\+deep)$`
+                        The default is `^active(\+(clean|deep|scrubbing|snaptrim|snaptrim_wait))+$`
                       type: string
                   type: object
                 external:
@@ -2205,6 +2220,30 @@ spec:
                       type: array
                     failureDomainLabel:
                       type: string
+                    floatingMon:
+                      description: |-
+                        FloatingMon is the specification of the floating monitor for two-node clusters.
+                        The floating mon is backed by a synchronously replicated store (e.g. DRBD)
+                        and can be scheduled on either node. Template variables are supplied via a ConfigMap.
+                      minProperties: 2
+                      properties:
+                        configmapName:
+                          description: |-
+                            ConfigMapName is the name of the ConfigMap containing key-value pairs
+                            of template variables for the floating mon deployment.
+                          maxLength: 253
+                          minLength: 1
+                          type: string
+                        name:
+                          description: Name is the identifier for the floating monitor (recommended "c")
+                          maxLength: 1
+                          minLength: 1
+                          pattern: ^[a-z]$
+                          type: string
+                      required:
+                        - configmapName
+                        - name
+                      type: object
                     stretchCluster:
                       description: StretchCluster is the stretch cluster specification
                       properties:
@@ -7738,6 +7777,21 @@ spec:
                               as dataChunks so be aware that the larger the number of data chunks, the higher the cost of recovery.
                             minimum: 0
                             type: integer
+                          stripeUnit:
+                            anyOf:
+                              - type: integer
+                              - type: string
+                            description: |-
+                              Erasure code stripe size in bytes. Ceph default is 4096 bytes (4 KiB).
+                              Value must be a multiple of 4096 (4Ki).
+                            enum:
+                              - 4Ki
+                              - 16Ki
+                              - 64Ki
+                              - 256Ki
+                              - 1Mi
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                         required:
                           - codingChunks
                           - dataChunks
@@ -7933,6 +7987,21 @@ spec:
                             as dataChunks so be aware that the larger the number of data chunks, the higher the cost of recovery.
                           minimum: 0
                           type: integer
+                        stripeUnit:
+                          anyOf:
+                            - type: integer
+                            - type: string
+                          description: |-
+                            Erasure code stripe size in bytes. Ceph default is 4096 bytes (4 KiB).
+                            Value must be a multiple of 4096 (4Ki).
+                          enum:
+                            - 4Ki
+                            - 16Ki
+                            - 64Ki
+                            - 256Ki
+                            - 1Mi
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       required:
                         - codingChunks
                         - dataChunks
@@ -9342,6 +9411,16 @@ spec:
                   type: string
                   x-kubernetes-validations:
                     - message: ClusterID is immutable
+                      rule: self == oldSelf
+                csiMetadataRadosNamespace:
+                  description: |-
+                    The RADOS namespace ceph-csi uses for additional metadata it stores in the metadata pool of the CephFS.
+                    If not specified the default of the ceph-csi driver is used.
+                  maxLength: 1024
+                  minLength: 1
+                  type: string
+                  x-kubernetes-validations:
+                    - message: CSIMetadataRadosNamespace is immutable
                       rule: self == oldSelf
                 dataPoolName:
                   description: The data pool name for the Ceph Filesystem subvolume group layout, if the default CephFS pool is not desired.
@@ -12575,6 +12654,128 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
     helm.sh/resource-policy: keep
+  name: cephobjectstoreaccounts.ceph.rook.io
+spec:
+  group: ceph.rook.io
+  names:
+    kind: CephObjectStoreAccount
+    listKind: CephObjectStoreAccountList
+    plural: cephobjectstoreaccounts
+    singular: cephobjectstoreaccount
+  scope: Namespaced
+  versions:
+    - additionalPrinterColumns:
+        - jsonPath: .status.phase
+          name: Phase
+          type: string
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v1
+      schema:
+        openAPIV3Schema:
+          description: CephObjectStoreAccount represent the RGW user account
+          properties:
+            apiVersion:
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+              type: string
+            kind:
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: ObjectStoreAccountSpec represent the spec of a RGW Account
+              properties:
+                accountID:
+                  description: |-
+                    AccountID uniquely identifies an account and resource ownership. Format should be RGW followed by 17 digits
+                    (e.g., RGW00889737169837717). If not specified, the ID will be automatically generated.
+                  maxLength: 20
+                  minLength: 20
+                  pattern: ^RGW\d{17}$
+                  type: string
+                  x-kubernetes-validations:
+                    - message: accountID is immutable
+                      rule: self == oldSelf
+                name:
+                  description: Name is the desired display name of the RGW account if different from the CephObjectStoreAccount CR name.
+                  maxLength: 2048
+                  minLength: 1
+                  pattern: ^[a-zA-Z0-9 ._-]+$
+                  type: string
+                rootUser:
+                  description: |-
+                    RootUser configures the root user for the account. The root user is created by default
+                    and has default permissions across all account resources.
+                  properties:
+                    displayName:
+                      description: DisplayName for the root user
+                      maxLength: 64
+                      minLength: 1
+                      pattern: ^[\w+=,.@-]+$
+                      type: string
+                    skipCreate:
+                      description: |-
+                        SkipCreate when set to true, the root user will not be created for this account.
+                        This can be useful if the user wants to manually manage the root user outside of Rook.
+                      type: boolean
+                  type: object
+                store:
+                  description: Store is the CephObjectStore the account will be associated with
+                  maxLength: 253
+                  minLength: 1
+                  type: string
+                  x-kubernetes-validations:
+                    - message: store is immutable
+                      rule: self == oldSelf
+              required:
+                - store
+              type: object
+            status:
+              description: ObjectStoreAccountStatus represents the status of a CephObjectStoreAccount resource
+              properties:
+                accountID:
+                  description: AccountID associated with the RGW user account
+                  maxLength: 20
+                  minLength: 20
+                  type: string
+                observedGeneration:
+                  description: ObservedGeneration is the latest generation observed by the controller.
+                  format: int64
+                  type: integer
+                phase:
+                  type: string
+                rootAccountSecretName:
+                  description: RootAccountSecretName is the name of the Kubernetes secret containing the root user's access credentials
+                  maxLength: 253
+                  minLength: 1
+                  type: string
+              type: object
+          required:
+            - metadata
+            - spec
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+    helm.sh/resource-policy: keep
   name: cephobjectstores.ceph.rook.io
 spec:
   group: ceph.rook.io
@@ -12730,6 +12931,21 @@ spec:
                             as dataChunks so be aware that the larger the number of data chunks, the higher the cost of recovery.
                           minimum: 0
                           type: integer
+                        stripeUnit:
+                          anyOf:
+                            - type: integer
+                            - type: string
+                          description: |-
+                            Erasure code stripe size in bytes. Ceph default is 4096 bytes (4 KiB).
+                            Value must be a multiple of 4096 (4Ki).
+                          enum:
+                            - 4Ki
+                            - 16Ki
+                            - 64Ki
+                            - 256Ki
+                            - 1Mi
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       required:
                         - codingChunks
                         - dataChunks
@@ -14372,6 +14588,21 @@ spec:
                             as dataChunks so be aware that the larger the number of data chunks, the higher the cost of recovery.
                           minimum: 0
                           type: integer
+                        stripeUnit:
+                          anyOf:
+                            - type: integer
+                            - type: string
+                          description: |-
+                            Erasure code stripe size in bytes. Ceph default is 4096 bytes (4 KiB).
+                            Value must be a multiple of 4096 (4Ki).
+                          enum:
+                            - 4Ki
+                            - 16Ki
+                            - 64Ki
+                            - 256Ki
+                            - 1Mi
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       required:
                         - codingChunks
                         - dataChunks
@@ -14565,6 +14796,26 @@ spec:
                   description: Security represents security settings
                   nullable: true
                   properties:
+                    cipherSuites:
+                      description: |-
+                        CipherSuites specifies the cipher suites used during the TLS handshake for TLS v1.3.
+                        Each value must be a valid OpenSSL cipher suite name.
+                        See https://docs.openssl.org/master/man1/openssl-ciphers/
+                      items:
+                        type: string
+                      maxItems: 1000
+                      minItems: 0
+                      type: array
+                    ciphers:
+                      description: |-
+                        Ciphers specifies the cipher suites used during the TLS handshake for TLS v1.2 and below.
+                        Each value must be a valid OpenSSL cipher suite name.
+                        See https://docs.openssl.org/master/man1/openssl-ciphers/
+                      items:
+                        type: string
+                      maxItems: 1000
+                      minItems: 0
+                      type: array
                     keyRotation:
                       description: KeyRotation defines options for Key Rotation.
                       nullable: true
@@ -14607,6 +14858,46 @@ spec:
                           description: TokenSecretName is the kubernetes secret containing the KMS token
                           type: string
                       type: object
+                    sslOptions:
+                      description: |-
+                        SslOptions sets the SSL context options for the Ceph RGW beast frontend.
+                        See https://docs.ceph.com/en/latest/radosgw/frontends/#options
+                      properties:
+                        defaultWorkarounds:
+                          description: defaultWorkarounds implements various bug workaround when true, or disables it when false. Default disabled.
+                          type: boolean
+                        noCompression:
+                          description: noCompression disables compression when true, or disables it when false. Default disabled.
+                          type: boolean
+                        singleDiffieHellmanUse:
+                          description: SingleDiffieHellmanUse always creates a new key when using tmp_dh parameters when true, or disables it when false. Default disabled.
+                          type: boolean
+                        sslv2:
+                          description: sslv2 enables SSL v2 when true, or disables it when false. Default disabled.
+                          type: boolean
+                        sslv3:
+                          description: sslv3 enables SSL v3 when true, or disables it when false. Default disabled.
+                          type: boolean
+                        tlsv1_0:
+                          description: tlsv1_0 enables TLS v1.0 when true, or disables it when false. Default disabled.
+                          type: boolean
+                        tlsv1_1:
+                          description: tlsv1_1 enables TLS v1.1 when true, or disables it when false. Default disabled.
+                          type: boolean
+                        tlsv1_2:
+                          description: tlsv1_2 enables TLS v1.2 when true, or disables it when false. Default enabled.
+                          type: boolean
+                      type: object
+                    tlsGroups:
+                      description: |-
+                        TlsGroups specifies one or more TLS Group strings separated by colons.
+                        Multiple suites are supported with ':' colon-separated.
+                        The pseudo group name DEFAULT can be used to select the OpenSSL built-in default list of groups.
+                        Other valid group names will depend on OpenSSL version
+                        See https://docs.openssl.org/master/man3/SSL_CTX_set1_curves/#description
+                      items:
+                        type: string
+                      type: array
                   type: object
                 sharedPools:
                   description: The pool information when configuring RADOS namespaces in existing pools.
@@ -14867,6 +15158,25 @@ spec:
             spec:
               description: ObjectStoreUserSpec represent the spec of an Objectstoreuser
               properties:
+                accountRef:
+                  description: |-
+                    AccountRef is a reference to a CephObjectStoreAccount to associate this user with.
+                    The referenced account must be in the same namespace as the user.
+                    When set, the user is created as an account user with no default permissions,
+                    and resources created by this user are owned by the account.
+                  properties:
+                    name:
+                      description: Name of the CephObjectStoreAccount CR
+                      maxLength: 2048
+                      minLength: 1
+                      pattern: ^[a-zA-Z0-9 ._-]+$
+                      type: string
+                  required:
+                    - name
+                  type: object
+                  x-kubernetes-validations:
+                    - message: accountRef is immutable
+                      rule: self == oldSelf
                 capabilities:
                   description: Additional admin-level capabilities for the Ceph object store user
                   nullable: true
@@ -15371,6 +15681,21 @@ spec:
                             as dataChunks so be aware that the larger the number of data chunks, the higher the cost of recovery.
                           minimum: 0
                           type: integer
+                        stripeUnit:
+                          anyOf:
+                            - type: integer
+                            - type: string
+                          description: |-
+                            Erasure code stripe size in bytes. Ceph default is 4096 bytes (4 KiB).
+                            Value must be a multiple of 4096 (4Ki).
+                          enum:
+                            - 4Ki
+                            - 16Ki
+                            - 64Ki
+                            - 256Ki
+                            - 1Mi
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       required:
                         - codingChunks
                         - dataChunks
@@ -15561,6 +15886,21 @@ spec:
                             as dataChunks so be aware that the larger the number of data chunks, the higher the cost of recovery.
                           minimum: 0
                           type: integer
+                        stripeUnit:
+                          anyOf:
+                            - type: integer
+                            - type: string
+                          description: |-
+                            Erasure code stripe size in bytes. Ceph default is 4096 bytes (4 KiB).
+                            Value must be a multiple of 4096 (4Ki).
+                          enum:
+                            - 4Ki
+                            - 16Ki
+                            - 64Ki
+                            - 256Ki
+                            - 1Mi
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                       required:
                         - codingChunks
                         - dataChunks

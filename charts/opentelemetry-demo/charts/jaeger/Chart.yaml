@@ -1,14 +1,12 @@
+annotations:
+  artifacthub.io/images: |
+    - name: jaeger
+      image: jaegertracing/jaeger:2.17.0
+      whitelisted: true
+      ignored: true
 apiVersion: v2
-appVersion: 2.14.1
+appVersion: 2.17.0
 dependencies:
-- condition: provisionDataStore.cassandra
-  name: cassandra
-  repository: https://charts.helm.sh/incubator
-  version: 0.15.3
-- condition: provisionDataStore.elasticsearch
-  name: elasticsearch
-  repository: https://helm.elastic.co
-  version: 8.5.1
 - name: common
   repository: https://charts.bitnami.com/bitnami
   version: 2.x.x
@@ -36,4 +34,4 @@ name: jaeger
 sources:
 - https://hub.docker.com/u/jaegertracing/
 type: application
-version: 4.3.0
+version: 4.7.0

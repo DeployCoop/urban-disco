@@ -84,6 +84,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Create a fully qualified name for image-renderer resources.
+We truncate at 47 chars to reserve space for the longest suffix (-image-renderer, 16 chars)
+so the Service name stays within the 63-char DNS label limit.
+*/}}
+{{- define "grafana.imageRenderer.fullname" -}}
+{{- include "grafana.fullname" . | trunc 47 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "grafana.imageRenderer.labels" -}}
@@ -106,36 +115,25 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Looks if there's an existing secret and reuse its password. If not it generates
 new password and use it.
 */}}
-{{- define "grafana.password" -}}
-{{- $secret := (lookup "v1" "Secret" (include "grafana.namespace" .) (include "grafana.fullname" .) ) }}
+{{- define "grafana.imageRenderer.token" -}}
+{{- $secret := (lookup "v1" "Secret" (include "grafana.namespace" .) (printf "%s-image-renderer" (include "grafana.imageRenderer.fullname" .)) ) }}
 {{- if $secret }}
-{{- index $secret "data" "admin-password" }}
+{{- index $secret "data" "token" }}
 {{- else }}
 {{- (randAlphaNum 40) | b64enc | quote }}
 {{- end }}
 {{- end }}
 
 {{/*
-Return the appropriate apiVersion for rbac.
+Looks if there's an existing secret and reuse its password. If not it generates
+new password and use it.
 */}}
-{{- define "grafana.rbac.apiVersion" -}}
-{{- if $.Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1" }}
-{{- print "rbac.authorization.k8s.io/v1" }}
+{{- define "grafana.password" -}}
+{{- $secret := (lookup "v1" "Secret" (include "grafana.namespace" .) (include "grafana.fullname" .) ) }}
+{{- if $secret }}
+{{- index $secret "data" "admin-password" }}
 {{- else }}
-{{- print "rbac.authorization.k8s.io/v1beta1" }}
-{{- end }}
-{{- end }}
-
-{{/*
-Return the appropriate apiVersion for ingress.
-*/}}
-{{- define "grafana.ingress.apiVersion" -}}
-{{- if and ($.Capabilities.APIVersions.Has "networking.k8s.io/v1") (semverCompare ">= 1.19-0" .Capabilities.KubeVersion.Version) }}
-{{- print "networking.k8s.io/v1" }}
-{{- else if $.Capabilities.APIVersions.Has "networking.k8s.io/v1beta1" }}
-{{- print "networking.k8s.io/v1beta1" }}
-{{- else }}
-{{- print "extensions/v1beta1" }}
+{{- (randAlphaNum 40) | b64enc | quote }}
 {{- end }}
 {{- end }}
 
@@ -150,39 +148,6 @@ Return the appropriate apiVersion for Horizontal Pod Autoscaler.
 {{- end }}
 {{- end }}
 
-{{/*
-Return the appropriate apiVersion for podDisruptionBudget.
-*/}}
-{{- define "grafana.podDisruptionBudget.apiVersion" -}}
-{{- if $.Values.podDisruptionBudget.apiVersion }}
-{{- print $.Values.podDisruptionBudget.apiVersion }}
-{{- else if $.Capabilities.APIVersions.Has "policy/v1/PodDisruptionBudget" }}
-{{- print "policy/v1" }}
-{{- else }}
-{{- print "policy/v1beta1" }}
-{{- end }}
-{{- end }}
-
-{{/*
-Return if ingress is stable.
-*/}}
-{{- define "grafana.ingress.isStable" -}}
-{{- eq (include "grafana.ingress.apiVersion" .) "networking.k8s.io/v1" }}
-{{- end }}
-
-{{/*
-Return if ingress supports ingressClassName.
-*/}}
-{{- define "grafana.ingress.supportsIngressClassName" -}}
-{{- or (eq (include "grafana.ingress.isStable" .) "true") (and (eq (include "grafana.ingress.apiVersion" .) "networking.k8s.io/v1beta1") (semverCompare ">= 1.18-0" .Capabilities.KubeVersion.Version)) }}
-{{- end }}
-
-{{/*
-Return if ingress supports pathType.
-*/}}
-{{- define "grafana.ingress.supportsPathType" -}}
-{{- or (eq (include "grafana.ingress.isStable" .) "true") (and (eq (include "grafana.ingress.apiVersion" .) "networking.k8s.io/v1beta1") (semverCompare ">= 1.18-0" .Capabilities.KubeVersion.Version)) }}
-{{- end }}
 
 {{/*
 Formats imagePullSecrets. Input is (dict "root" . "imagePullSecrets" .{specific imagePullSecrets})
@@ -200,8 +165,8 @@ Formats imagePullSecrets. Input is (dict "root" . "imagePullSecrets" .{specific 
 
 
 {{/*
- Checks whether or not the configSecret secret has to be created
- */}}
+  Checks whether or not the configSecret secret has to be created
+*/}}
 {{- define "grafana.shouldCreateConfigSecret" -}}
 {{- $secretFound := false -}}
 {{- range $key, $value := .Values.datasources }}
@@ -274,12 +239,12 @@ sensitiveKeys:
 {{- end -}}
 
 {{/*
- Sidecars health port
- */}}
+  Sidecars health port
+*/}}
 
 {{/*
- Give health port for alerts sidecar
- */}}
+  Give health port for alerts sidecar
+*/}}
 {{- define "grafana.sidecar.alerts.healthPort" -}}
 {{- $healthPort := 8081 -}}
 {{- if hasKey .Values.sidecar.alerts "startupProbe" -}}
@@ -293,8 +258,8 @@ sensitiveKeys:
 {{- end -}}
 
 {{/*
- Give health port for datasources sidecar
- */}}
+  Give health port for datasources sidecar
+*/}}
 {{- define "grafana.sidecar.datasources.healthPort" -}}
 {{- $healthPort := 8082 -}}
 {{- if hasKey .Values.sidecar.datasources "startupProbe" -}}
@@ -308,8 +273,8 @@ sensitiveKeys:
 {{- end -}}
 
 {{/*
- Give health port for notifiers sidecar
- */}}
+  Give health port for notifiers sidecar
+*/}}
 {{- define "grafana.sidecar.notifiers.healthPort" -}}
 {{- $healthPort := 8083 -}}
 {{- if hasKey .Values.sidecar.notifiers "startupProbe" -}}
@@ -323,8 +288,8 @@ sensitiveKeys:
 {{- end -}}
 
 {{/*
- Give health port for dashboards sidecar
- */}}
+  Give health port for dashboards sidecar
+*/}}
 {{- define "grafana.sidecar.dashboards.healthPort" -}}
 {{- $healthPort := 8084 -}}
 {{- if hasKey .Values.sidecar.dashboards "startupProbe" -}}

@@ -182,7 +182,7 @@ driver:
     image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.10.0
+    version: v0.11.0
     imagePullPolicy: IfNotPresent
     env: []
   env: []
@@ -211,7 +211,7 @@ toolkit:
   enabled: true
   repository: nvcr.io/nvidia/k8s
   image: container-toolkit
-  version: v1.19.0
+  version: v1.19.1
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -223,7 +223,7 @@ devicePlugin:
   enabled: true
   repository: nvcr.io/nvidia
   image: k8s-device-plugin
-  version: v0.19.0
+  version: v0.19.2
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   args: []
@@ -279,9 +279,10 @@ dcgm:
 
 dcgmExporter:
   enabled: true
+  annotations: {}
   repository: nvcr.io/nvidia/k8s
   image: dcgm-exporter
-  version: 4.5.1-4.8.0-distroless
+  version: 4.5.3-4.8.2-distroless
   imagePullPolicy: IfNotPresent
   env: []
   resources: {}
@@ -292,6 +293,15 @@ dcgmExporter:
   # hpcJobMapping:
   #   enabled: true
   #   directory: /var/lib/dcgm-exporter/job-mapping
+  # Enrich GPU metrics with pod metadata (UID, labels).
+  # Both flags are opt-in. When either is true, the operator creates a
+  # cluster-scoped ClusterRole/ClusterRoleBinding granting pods get/list/watch.
+  # Use podLabelAllowlistRegex to bound Prometheus cardinality.
+  enablePodLabels: false
+  enablePodUID: false
+  # podLabelAllowlistRegex:
+  #   - "^app$"
+  #   - "^kueue\\.x-k8s\\.io/.*$"
   service:
     internalTrafficPolicy: Cluster
   serviceMonitor:
@@ -330,7 +340,7 @@ gfd:
   enabled: true
   repository: nvcr.io/nvidia
   image: k8s-device-plugin
-  version: v0.19.0
+  version: v0.19.2
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -341,7 +351,7 @@ migManager:
   enabled: true
   repository: nvcr.io/nvidia/cloud-native
   image: k8s-mig-manager
-  version: v0.14.0
+  version: v0.14.2
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -445,7 +455,7 @@ vgpuManager:
     image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.10.0
+    version: v0.11.0
     imagePullPolicy: IfNotPresent
     env: []
    # kernel module configuration for vGPU manager
@@ -470,7 +480,7 @@ vfioManager:
   enabled: true
   repository: nvcr.io/nvidia/cloud-native
   image: k8s-driver-manager
-  version: v0.10.0
+  version: v0.11.0
   imagePullPolicy: IfNotPresent
   imagePullSecrets: []
   env: []
@@ -480,7 +490,7 @@ vfioManager:
     image: k8s-driver-manager
     # When choosing a different version of k8s-driver-manager, DO NOT downgrade to a version lower than v0.6.4
     # to ensure k8s-driver-manager stays compatible with gpu-operator starting from v24.3.0
-    version: v0.10.0
+    version: v0.11.0
     imagePullPolicy: IfNotPresent
     env: []
   hostNetwork: false

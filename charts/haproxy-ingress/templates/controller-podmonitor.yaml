@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if and (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") .Values.controller.podMonitor.enabled }}
+{{- if .Values.controller.podMonitor.enabled }}
+{{- if not .Values.controller.prometheus.enabled -}}
+{{- fail "controller.podMonitor.enabled=true requires controller.prometheus.enabled=true (the controller exposes /metrics only when --prometheus is set)" -}}
+{{- end }}
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
@@ -22,8 +25,8 @@ metadata:
   namespace: {{ include "kubernetes-ingress.namespace" . }}
   labels:
     {{- include "kubernetes-ingress.labels" . | nindent 4 }}
-    {{- if .Values.controller.podMonitor.extraLabels }}
-    {{ toYaml .Values.controller.podMonitor.extraLabels | nindent 4 }}
+    {{- with .Values.controller.podMonitor.extraLabels }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   podMetricsEndpoints:

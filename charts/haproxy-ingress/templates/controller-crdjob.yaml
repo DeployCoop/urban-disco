@@ -30,10 +30,8 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-{{- if or (.Capabilities.APIVersions.Has "batch/v1alpha1") (semverCompare ">=1.23.0-0" .Capabilities.KubeVersion.Version) }}
 {{- if .Values.crdjob.ttlSecondsAfterFinished }}
   ttlSecondsAfterFinished: {{ .Values.crdjob.ttlSecondsAfterFinished }}
-{{- end }}
 {{- end }}
   backoffLimit: 0
   template:
@@ -53,7 +51,7 @@ spec:
       {{- end }}
     spec:
       restartPolicy: Never
-      serviceAccountName: {{ include "kubernetes-ingress.serviceAccountName" . }}
+      serviceAccountName: {{ include "kubernetes-ingress.crdjob.serviceAccountName" . }}
 {{- if .Values.controller.imageCredentials.registry }}
       imagePullSecrets:
       - name: {{ include "kubernetes-ingress.fullname" . }}

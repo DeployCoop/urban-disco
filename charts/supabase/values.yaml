@@ -224,51 +224,72 @@ deployment:
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   auth:
     enabled: true
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   db:
     enabled: true
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
     extraInitContainers: []
 
   functions:
@@ -276,136 +297,192 @@ deployment:
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   imgproxy:
     enabled: true
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   kong:
     enabled: true
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   meta:
     enabled: true
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   minio:
     enabled: false
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   realtime:
     enabled: true
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   rest:
     enabled: true
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   storage:
     enabled: true
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
     extraInitContainers: []
 
   studio:
@@ -413,34 +490,48 @@ deployment:
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
   vector:
     enabled: true
     replicaCount: 1
     nameOverride: ""
     fullnameOverride: ""
-    livenessProbe: {}
-    readinessProbe: {}
+    annotations: {}
     podAnnotations: {}
     podSecurityContext:
     securityContext: {}
+    automountServiceAccountToken: true
+    terminationGracePeriodSeconds: 30
     nodeSelector: {}
-    tolerations: []
     affinity: {}
+    tolerations: []
+    priorityClassName: ""
+    envFrom: []
+    livenessProbe: {}
+    readinessProbe: {}
+    startupProbe: {}
+    lifecycle: {}
+    resources: {}
     volumeMounts: {}
     volumes: {}
-    resources: {}
 
 image:
   analytics:
@@ -512,7 +603,7 @@ image:
   studio:
     repository: supabase/studio
     pullPolicy: IfNotPresent
-    tag: "2026.04.08-sha-205cbe7"
+    tag: "2026.04.27-sha-5f60601"
     pullSecrets: []
 
   vector:
@@ -621,6 +712,9 @@ environment:
     KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
     KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
     KONG_LOG_LEVEL: warn
+
+    # Please see: https://github.com/supabase-community/supabase-kubernetes/issues/187
+    KONG_NGINX_WORKER_PROCESSES: "2"
 
   meta:
     DB_USER: supabase_admin
@@ -868,91 +962,91 @@ service:
 
 autoscaling:
   analytics:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   auth:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   db:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   functions:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   imgproxy:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   kong:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   meta:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   minio:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   realtime:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   rest:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   storage:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   studio:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
     # targetMemoryUtilizationPercentage: 80
 
   vector:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80

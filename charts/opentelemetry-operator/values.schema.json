@@ -48,6 +48,16 @@
         1
       ]
     },
+    "minReadySeconds": {
+      "type": "integer",
+      "default": 0,
+      "minimum": 0,
+      "title": "The minReadySeconds Schema",
+      "examples": [
+        0,
+        30
+      ]
+    },
     "nameOverride": {
       "type": "string",
       "default": "",
@@ -698,6 +708,14 @@
               "title": "The healthzPort Schema",
               "examples": [
                 8081
+              ]
+            },
+            "pprofPort": {
+              "type": "integer",
+              "default": 0,
+              "title": "The pprofPort Schema",
+              "examples": [
+                6060
               ]
             }
           },

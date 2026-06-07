@@ -8,6 +8,9 @@ fullnameOverride: ""
 # Valid values are "daemonset", "deployment", and "statefulset".
 mode: ""
 
+# Override the default apiVersion for custom controllers or for testing new API versions.
+apiVersion: "apps/v1"
+
 # Specify which namespace should be used to deploy the resources into
 namespaceOverride: ""
 
@@ -79,7 +82,6 @@ presets:
     enabled: false
     # When enabled with mode = daemonset, leader election is setup to prevent telemetry duplication.
     # disableLeaderElection: false
-
   # Configures the collector to collect logs and metrics from pods with specific annotations.
   # This preset can not be used together with the `logsCollection` preset.
   # Adds the receiver_creator receiver to the logs and metrics pipelines
@@ -91,6 +93,17 @@ presets:
       enabled: false
     metrics:
       enabled: false
+  # Configures the collector to collect profiling data.
+  # Adds profiles pipeline with the profiling receiver,
+  # and adds the necessary volumes, security context and host PID access.
+  #
+  # Warning: The profiling receiver requires privileged access and hostPID,
+  # so it should be used with a dedicated collector distribution (e.g. otelcol-ebpf-profiler)
+  # rather than the general-purpose k8s distribution. This avoids granting elevated privileges
+  # to the same collector that handles metrics, traces, and logs.
+  # See https://github.com/open-telemetry/opentelemetry-collector-releases/tree/main/distributions/otelcol-ebpf-profiler for more details.
+  profiling:
+    enabled: false
 
 configMap:
   # Specifies whether a configMap should be created (true by default)
@@ -185,6 +198,13 @@ config:
       endpoint: ${env:MY_POD_IP}:9411
   service:
     telemetry:
+      resource:
+        k8s.namespace.name: "${env:OTEL_K8S_NAMESPACE}"
+        k8s.node.name: "${env:OTEL_K8S_NODE_NAME}"
+        k8s.node.ip: "${env:OTEL_K8S_NODE_IP}"
+        k8s.pod.name: "${env:OTEL_K8S_POD_NAME}"
+        k8s.pod.ip: "${env:OTEL_K8S_POD_IP}"
+        host.name: "${env:OTEL_K8S_NODE_NAME}"
       metrics:
         readers:
           - pull:
@@ -316,6 +336,8 @@ priorityClassName: ""
 # Also useful for the pod security admissions plugins that rely on runtimeClassName
 runtimeClassName: ""
 
+terminationGracePeriodSeconds: 30
+
 extraEnvs: []
 extraEnvsFrom: []
 # This also supports template content, which will eventually be converted to yaml.
@@ -400,6 +422,10 @@ additionalLabels: {}
 
 # Host networking requested for this pod. Use the host's network namespace.
 hostNetwork: false
+
+# Enable sharing the host's PID namespace with the pod.
+# WARNING: This grants visibility into all host processes and should only be enabled when required.
+hostPID: false
 
 # Adding entries to Pod /etc/hosts with HostAliases
 # https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/
@@ -534,6 +560,7 @@ service:
   # enabled: true
 
   type: ClusterIP
+  # Supported values: PreferClose (deprecated in K8s 1.33+), PreferSameZone, PreferSameNode
   # trafficDistribution: PreferClose
   # type: LoadBalancer
   # loadBalancerIP: 1.2.3.4
@@ -612,7 +639,7 @@ serviceMonitor:
   relabelings: []
   metricRelabelings: []
 
-# PodDisruptionBudget is used only if deployment enabled
+# PodDisruptionBudget is used only if mode is "deployment" or "statefulset"
 podDisruptionBudget:
   enabled: false
 #   minAvailable: 2

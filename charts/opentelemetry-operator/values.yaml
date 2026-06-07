@@ -11,6 +11,11 @@ replicaCount: 1
 ##
 revisionHistoryLimit: 10
 
+## Minimum number of seconds for which a newly created pod should be ready
+## without any of its container crashing, for it to be considered available.
+##
+minReadySeconds: 0
+
 ## Provide a name in place of opentelemetry-operator (includes the chart's release name).
 ##
 nameOverride: ""
@@ -50,7 +55,7 @@ manager:
     imagePullPolicy: IfNotPresent
   collectorImage:
     repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
-    tag: 0.148.0
+    tag: 0.152.1
   opampBridgeImage:
     repository: ""
     tag: ""
@@ -107,6 +112,8 @@ manager:
     metricsPort: 8443
     webhookPort: 9443
     healthzPort: 8081
+  # Expose optionally a port for pprof profiling
+  #  pprofPort: 6060
   ## Metrics server configuration
   ## The operator uses controller-runtime built-in auth for the metrics server
   metrics:

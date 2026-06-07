@@ -40,6 +40,10 @@
         ""
       ]
     },
+    "apiVersion": {
+      "type": "string",
+      "description": "Override the default apiVersion for custom controllers or testing new API versions. Applies to daemonset, deployment, and statefulset modes."
+    },
     "namespaceOverride": {
       "type": "string",
       "description": "Name of the namespace to deploy the resources into."
@@ -147,6 +151,16 @@
                 "description": "Specifies whether the collector should collect metrics.",
                 "type": "boolean"
               }
+            }
+          }
+        },
+        "profiling": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Specifies whether the collector should collect profiling data.",
+              "type": "boolean"
             }
           }
         }
@@ -686,6 +700,9 @@
     "hostNetwork": {
       "type": "boolean"
     },
+    "hostPID": {
+      "type": "boolean"
+    },
     "hostAliases": {
       "type": "array",
       "items": {
@@ -727,7 +744,9 @@
         "trafficDistribution": {
           "type": "string",
           "enum": [
-            "PreferClose"
+            "PreferClose",
+            "PreferSameZone",
+            "PreferSameNode"
           ]
         },
         "type": {
@@ -1275,9 +1294,14 @@
     },
     "shareProcessNamespace": {
       "type": "boolean"
+    },
+    "terminationGracePeriodSeconds": {
+      "type": "integer",
+      "description": "Grace period in seconds for pod termination."
     }
   },
   "required": [
+    "apiVersion",
     "mode"
   ]
 }

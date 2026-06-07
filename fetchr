@@ -6,7 +6,7 @@
 main () {
   export THIS_CWD=$(pwd)
 
-  bash -eux repo_list
+  bash -ux repo_list
   helm repo update
 
   rm -Rf charts

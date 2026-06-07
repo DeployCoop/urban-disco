@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if and (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") .Values.controller.serviceMonitor.enabled }}
+{{- if .Values.controller.serviceMonitor.enabled }}
+{{- if not .Values.controller.prometheus.enabled -}}
+{{- fail "controller.serviceMonitor.enabled=true requires controller.prometheus.enabled=true (the controller exposes /metrics only when --prometheus is set)" -}}
+{{- end }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -22,8 +25,8 @@ metadata:
   namespace: {{ include "kubernetes-ingress.namespace" . }}
   labels:
     {{- include "kubernetes-ingress.labels" . | nindent 4 }}
-    {{- if .Values.controller.serviceMonitor.extraLabels }}
-    {{ toYaml .Values.controller.serviceMonitor.extraLabels | nindent 4 }}
+    {{- with .Values.controller.serviceMonitor.extraLabels }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   endpoints:
@@ -34,4 +37,5 @@ spec:
   selector:
     matchLabels:
       {{- include "kubernetes-ingress.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: metrics
 {{- end }}

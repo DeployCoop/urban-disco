@@ -227,7 +227,21 @@ rules:
     resources:
       - events
     verbs:
+      - create
       - list
+      - patch
+      - watch
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - httproutes
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
       - watch
   - apiGroups:
       - monitoring.coreos.com
@@ -384,6 +398,12 @@ rules:
       - update
       - patch
       - delete
+  - apiGroups:
+      - authentication.k8s.io
+    resources:
+      - tokenreviews
+    verbs:
+      - create
   - apiGroups:
       - authorization.k8s.io
     resources:

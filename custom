@@ -2,25 +2,28 @@
 : "${VERBOSITY:=0}"
 : "${FETCHR_CACHE:=/tmp}"
 
-main () {
+fetch_wrapper () {
+  WRAPPED_REPO_NAME=$1
+  WRAPPED_REPO_URL=$2
   cd ${FETCHR_CACHE}
-  if [[ ! -d ${FETCHR_CACHE}/supabase-kubernetes ]]; then 
-    git clone --depth=1 https://github.com/supabase-community/supabase-kubernetes.git
+  if [[ ! -d ${FETCHR_CACHE}/${WRAPPED_REPO_NAME} ]]; then 
+    git clone --filter=blob:none ${WRAPPED_REPO_URL}
+  else
+    cd ${FETCHR_CACHE}/${WRAPPED_REPO_NAME}
+    git pull
   fi
-  if [[ ! -d ${FETCHR_CACHE}/FOSSBilling-charts ]]; then 
-    git clone --depth=1 https://github.com/joshuacox/FOSSBilling-charts.git
-  fi
-  if [[ ! -d ${FETCHR_CACHE}/helm-drupal ]]; then 
-    git clone --depth=1 https://github.com/drupalwxt/helm-drupal.git
-  fi
-  if [[ ! -d ${FETCHR_CACHE}/garage ]]; then 
-    git clone --depth=1 https://git.deuxfleurs.fr/Deuxfleurs/garage
-  fi
-  if [[ ! -d ${FETCHR_CACHE}/cvat ]]; then 
-    git clone --depth=1 https://github.com/cvat-ai/cvat
-  fi
+}
+
+main () {
+  fetch_wrapper 'supabase-kubernetes' 'https://github.com/supabase-community/supabase-kubernetes.git'
+  fetch_wrapper 'vigil' 'https://github.com/Vigil-SOC/vigil.git'
+  fetch_wrapper 'FOSSBilling-charts' 'https://github.com/joshuacox/FOSSBilling-charts.git'
+  fetch_wrapper 'helm-drupal' 'https://github.com/drupalwxt/helm-drupal.git'
+  fetch_wrapper 'garage' 'https://git.deuxfleurs.fr/Deuxfleurs/garage'
+  fetch_wrapper 'cvat' 'https://github.com/cvat-ai/cvat'
+  cd ${FETCHR_CACHE}/vigil/helm
+  cp -av vigil ${THIS_CWD}/charts/
   cd ${FETCHR_CACHE}/cvat
-  git pull
   cp -av helm-chart ${THIS_CWD}/charts/cvat
   rm ${THIS_CWD}/charts/cvat/analytics
   cp -av components/analytics ${THIS_CWD}/charts/cvat/
