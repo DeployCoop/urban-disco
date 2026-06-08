@@ -22,6 +22,7 @@ main () {
   fetch_wrapper 'garage' 'https://git.deuxfleurs.fr/Deuxfleurs/garage'
   fetch_wrapper 'cvat' 'https://github.com/cvat-ai/cvat'
   cd ${FETCHR_CACHE}/vigil/helm
+  helm dependency build
   cp -av vigil ${THIS_CWD}/charts/
   cd ${FETCHR_CACHE}/cvat
   cp -av helm-chart ${THIS_CWD}/charts/cvat

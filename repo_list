@@ -34,3 +34,4 @@ helm repo add antmedia https://ant-media.github.io/helm
 helm repo add kubeshark https://helm.kubeshark.com
 helm repo add kubevela https://kubevela.github.io/charts/
 helm repo add harbor https://helm.goharbor.io
+helm repo add bitnami https://charts.bitnami.com/bitnami
