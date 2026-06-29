@@ -2,13 +2,13 @@
 
 Mayastor Helm chart for Kubernetes
 
-![Version: 2.10.0](https://img.shields.io/badge/Version-2.10.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.10.0](https://img.shields.io/badge/AppVersion-2.10.0-informational?style=flat-square)
+![Version: 2.11.1](https://img.shields.io/badge/Version-2.11.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 2.11.1](https://img.shields.io/badge/AppVersion-2.11.1-informational?style=flat-square)
 
 ## Installation Guide
 
 ### Prerequisites
 
- - Make sure the [system requirement pre-requisites](https://mayastor.gitbook.io/introduction/quickstart/prerequisites) are met.
+ - Make sure the [system requirement pre-requisites](https://openebs.io/docs/quickstart-guide/prerequisites#replicated-pv-mayastor-prerequisites) are met.
  - Label the storage nodes same as the mayastor.nodeSelector in values.yaml
  - Create the namespace you want the chart to be installed, or pass the `--create-namespace` flag in the `helm install` command.
    ```sh
@@ -54,13 +54,13 @@ This removes all the Kubernetes components associated with the chart and deletes
 
 | Repository | Name | Version |
 |------------|------|---------|
-|  | crds | 2.10.0 |
+|  | crds | 2.11.1 |
 | https://charts.bitnami.com/bitnami | etcd | 12.0.14 |
 | https://grafana.github.io/helm-charts | alloy | 1.0.1 |
 | https://grafana.github.io/helm-charts | loki | 6.29.0 |
 | https://jaegertracing.github.io/helm-charts | jaeger-operator | 2.50.1 |
 | https://nats-io.github.io/k8s/helm/charts/ | nats | 0.19.14 |
-| https://openebs.github.io/dynamic-localpv-provisioner | localpv-provisioner | 4.4.0 |
+| https://openebs.github.io/dynamic-localpv-provisioner | localpv-provisioner | 4.5.1 |
 
 ## Values
 
@@ -74,6 +74,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | agents.&ZeroWidthSpace;core.&ZeroWidthSpace;encryptedPoolsSoftScheduling | Prefer encrypted pools for volume replicas. If a volume wasn't provisioned with a encryption storageclass, we try to place the replicas of such volume on best-effort basis onto encrypted pools, if this global is set. This is effective subject to volume spec already modified via plugin to request encryption. | `false` |
 | agents.&ZeroWidthSpace;core.&ZeroWidthSpace;logLevel | Log level for the core service | `"info"` |
 | agents.&ZeroWidthSpace;core.&ZeroWidthSpace;minTimeouts | Enable minimal timeouts | `true` |
+| agents.&ZeroWidthSpace;core.&ZeroWidthSpace;nodeSelector | Set nodeSelector, overrides global | <pre>{<br><br>}</pre> |
 | agents.&ZeroWidthSpace;core.&ZeroWidthSpace;poolClusterSize | Default blobstore cluster size for diskpools, in bytes. This value is used as a default value of blobstore cluster size on diskpools. This is set to 4MiB internally by default, if nothing specified here. The value is also configurable via Diskpool CR, which takes precedence over this setting. This is an advanced configuration, please refer documentation to understand the usage and implications of this. | `""` |
 | agents.&ZeroWidthSpace;core.&ZeroWidthSpace;priorityClassName | Set PriorityClass, overrides global. If both local and global are not set, the final deployment manifest has a mayastor custom critical priority class assigned to the pod by default. Refer the `templates/_helpers.tpl` and `templates/mayastor/agents/core/agent-core-deployment.yaml` for more details. | `""` |
 | agents.&ZeroWidthSpace;core.&ZeroWidthSpace;rebuild.&ZeroWidthSpace;maxConcurrent | The maximum number of system-wide rebuilds permitted at any given time. If set to an empty string, there are no limits. | `""` |
@@ -92,6 +93,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | agents.&ZeroWidthSpace;ha.&ZeroWidthSpace;cluster.&ZeroWidthSpace;resources.&ZeroWidthSpace;requests.&ZeroWidthSpace;cpu | Cpu requests for ha cluster agent | `"100m"` |
 | agents.&ZeroWidthSpace;ha.&ZeroWidthSpace;cluster.&ZeroWidthSpace;resources.&ZeroWidthSpace;requests.&ZeroWidthSpace;memory | Memory requests for ha cluster agent | `"16Mi"` |
 | agents.&ZeroWidthSpace;ha.&ZeroWidthSpace;node.&ZeroWidthSpace;logLevel | Log level for the ha node service | `"info"` |
+| agents.&ZeroWidthSpace;ha.&ZeroWidthSpace;node.&ZeroWidthSpace;nodeSelector | Set nodeSelector, overrides global | <pre>{<br><br>}</pre> |
 | agents.&ZeroWidthSpace;ha.&ZeroWidthSpace;node.&ZeroWidthSpace;port | Container port for the ha-node service | `50053` |
 | agents.&ZeroWidthSpace;ha.&ZeroWidthSpace;node.&ZeroWidthSpace;priorityClassName | Set PriorityClass, overrides global | `""` |
 | agents.&ZeroWidthSpace;ha.&ZeroWidthSpace;node.&ZeroWidthSpace;resources.&ZeroWidthSpace;limits.&ZeroWidthSpace;cpu | Cpu limits for ha node agent | `"100m"` |
@@ -113,6 +115,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | apis.&ZeroWidthSpace;rest.&ZeroWidthSpace;healthProbes.&ZeroWidthSpace;readiness.&ZeroWidthSpace;periodSeconds | No. of seconds between readiness probe checks. | `20` |
 | apis.&ZeroWidthSpace;rest.&ZeroWidthSpace;healthProbes.&ZeroWidthSpace;readiness.&ZeroWidthSpace;timeoutSeconds | No. of seconds of timeout tolerance. | `5` |
 | apis.&ZeroWidthSpace;rest.&ZeroWidthSpace;logLevel | Log level for the rest service | `"info"` |
+| apis.&ZeroWidthSpace;rest.&ZeroWidthSpace;nodeSelector | Set nodeSelector, overrides global | <pre>{<br><br>}</pre> |
 | apis.&ZeroWidthSpace;rest.&ZeroWidthSpace;priorityClassName | Set PriorityClass, overrides global. If both local and global are not set, the final deployment manifest has a mayastor custom critical priority class assigned to the pod by default. Refer the `templates/_helpers.tpl` and `templates/mayastor/apis/rest/api-rest-deployment.yaml` for more details. | `""` |
 | apis.&ZeroWidthSpace;rest.&ZeroWidthSpace;replicaCount | Number of replicas of rest | `1` |
 | apis.&ZeroWidthSpace;rest.&ZeroWidthSpace;resources.&ZeroWidthSpace;limits.&ZeroWidthSpace;cpu | Cpu limits for rest | `"100m"` |
@@ -123,6 +126,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | apis.&ZeroWidthSpace;rest.&ZeroWidthSpace;tolerations | Set tolerations, overrides global | `[]` |
 | base.&ZeroWidthSpace;cache_poll_period | Cache timeout for core agent & diskpool deployment | `"30s"` |
 | base.&ZeroWidthSpace;default_req_timeout | Request timeout for rest & core agents | `"5s"` |
+| base.&ZeroWidthSpace;initContainers.&ZeroWidthSpace;image.&ZeroWidthSpace;registry | Image registry for init containers | `""` |
 | base.&ZeroWidthSpace;logging.&ZeroWidthSpace;color | Enable ansi color code for Pod StdOut/StdErr | `true` |
 | base.&ZeroWidthSpace;logging.&ZeroWidthSpace;format | Valid values for format are pretty, json and compact | `"pretty"` |
 | base.&ZeroWidthSpace;logging.&ZeroWidthSpace;silenceLevel | Silence specific module components | `nil` |
@@ -131,6 +135,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | crds.&ZeroWidthSpace;csi.&ZeroWidthSpace;volumeSnapshots.&ZeroWidthSpace;enabled | Install Volume Snapshot CRDs | `true` |
 | crds.&ZeroWidthSpace;enabled | Disables the installation of all CRDs if set to false | `true` |
 | csi.&ZeroWidthSpace;controller.&ZeroWidthSpace;logLevel | Log level for the csi controller | `"info"` |
+| csi.&ZeroWidthSpace;controller.&ZeroWidthSpace;nodeSelector | Set nodeSelector, overrides global | <pre>{<br><br>}</pre> |
 | csi.&ZeroWidthSpace;controller.&ZeroWidthSpace;preventVolumeModeConversion | Prevent modifying the volume mode when creating a PVC from an existing VolumeSnapshot | `true` |
 | csi.&ZeroWidthSpace;controller.&ZeroWidthSpace;priorityClassName | Set PriorityClass, overrides global | `""` |
 | csi.&ZeroWidthSpace;controller.&ZeroWidthSpace;resources.&ZeroWidthSpace;limits.&ZeroWidthSpace;cpu | Cpu limits for csi controller | `"32m"` |
@@ -148,6 +153,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | csi.&ZeroWidthSpace;image.&ZeroWidthSpace;snapshotControllerTag | csi-snapshot-controller image release tag | `"v8.2.0"` |
 | csi.&ZeroWidthSpace;image.&ZeroWidthSpace;snapshotterTag | csi-snapshotter image release tag | `"v8.2.0"` |
 | csi.&ZeroWidthSpace;node.&ZeroWidthSpace;kubeletDir | The kubeletDir directory for the csi-node plugin | `"/var/lib/kubelet"` |
+| csi.&ZeroWidthSpace;node.&ZeroWidthSpace;nodeSelector | Set nodeSelector, overrides global | <pre>{<br><br>}</pre> |
 | csi.&ZeroWidthSpace;node.&ZeroWidthSpace;nvme.&ZeroWidthSpace;ctrl_loss_tmo | The ctrl_loss_tmo (controller loss timeout) in seconds | `"1980"` |
 | csi.&ZeroWidthSpace;node.&ZeroWidthSpace;nvme.&ZeroWidthSpace;tcpFallback | Fallback to nvme-tcp if nvme-rdma is enabled for Mayastor but rdma is not available on a particular csi-node | `true` |
 | csi.&ZeroWidthSpace;node.&ZeroWidthSpace;port | Container port for the csi-node service | `10199` |
@@ -167,6 +173,8 @@ This removes all the Kubernetes components associated with the chart and deletes
 | etcd.&ZeroWidthSpace;localpvScConfig.&ZeroWidthSpace;basePath | Host path where local etcd data is stored in. | `"/var/local/{{ .Release.Name }}/localpv-hostpath/etcd"` |
 | etcd.&ZeroWidthSpace;localpvScConfig.&ZeroWidthSpace;reclaimPolicy | ReclaimPolicy of etcd's localpv hostpath storage class. | `"Delete"` |
 | etcd.&ZeroWidthSpace;localpvScConfig.&ZeroWidthSpace;volumeBindingMode | VolumeBindingMode of etcd's localpv hostpath storage class. | `"WaitForFirstConsumer"` |
+| etcd.&ZeroWidthSpace;metrics.&ZeroWidthSpace;enabled | Expose etcd metrics. | `true` |
+| etcd.&ZeroWidthSpace;metrics.&ZeroWidthSpace;useSeparateEndpoint | Use a separate endpoint for exposing metrics, override the default port (9090) by setting containerPorts.metrics. | `true` |
 | etcd.&ZeroWidthSpace;persistence.&ZeroWidthSpace;enabled | If true, use a Persistent Volume Claim. If false, use emptyDir. | `true` |
 | etcd.&ZeroWidthSpace;persistence.&ZeroWidthSpace;size | Volume size | `"2Gi"` |
 | etcd.&ZeroWidthSpace;persistence.&ZeroWidthSpace;storageClass | Will define which storageClass to use in etcd's StatefulSets. Options: <p> - `"manual"` - Will provision a hostpath PV on the same node. <br> - `""` (empty) - Will use the default StorageClass on the cluster. </p> | `"mayastor-etcd-localpv"` |
@@ -174,18 +182,35 @@ This removes all the Kubernetes components associated with the chart and deletes
 | etcd.&ZeroWidthSpace;podAntiAffinityPreset | Pod anti-affinity preset Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity | `"hard"` |
 | etcd.&ZeroWidthSpace;removeMemberOnContainerTermination | Use a PreStop hook to remove the etcd members from the etcd cluster on container termination Ignored if lifecycleHooks is set or replicaCount=1 | `false` |
 | etcd.&ZeroWidthSpace;replicaCount | Number of replicas of etcd | `3` |
-| image.&ZeroWidthSpace;pullPolicy | ImagePullPolicy for our images | `"IfNotPresent"` |
+| global.&ZeroWidthSpace;analytics.&ZeroWidthSpace;enabled | Global overide for call home | `nil` |
+| global.&ZeroWidthSpace;imagePullPolicy | Global overide for image pull policy | `""` |
+| global.&ZeroWidthSpace;imagePullSecrets | Global override for image pull secrets - secret | `[]` |
+| global.&ZeroWidthSpace;imageRegistry | Global override for image registry | `""` |
+| image.&ZeroWidthSpace;pullPolicy | ImagePullPolicy for our images | `"Always"` |
 | image.&ZeroWidthSpace;pullSecrets | docker-secrets required to pull images if the container registry from image.registry is protected | `[]` |
 | image.&ZeroWidthSpace;registry | Image registry to pull our product images | `"docker.io"` |
 | image.&ZeroWidthSpace;repo | Image registry's namespace | `"openebs"` |
-| image.&ZeroWidthSpace;tag | Release tag for our images | `"v2.10.0"` |
+| image.&ZeroWidthSpace;tag | Release tag for our images | `"release-2.11"` |
 | io_engine.&ZeroWidthSpace;coreList | If not empty, overrides the cpuCount and explicitly sets the list of cores. Example: --set='io_engine.coreList={30,31}' | `[]` |
 | io_engine.&ZeroWidthSpace;cpuCount | The number of cores that each io-engine instance will bind to. | `"2"` |
 | io_engine.&ZeroWidthSpace;envcontext | Pass additional arguments to the Environment Abstraction Layer. Example: --set {product}.envcontext=iova-mode=pa | `""` |
+| io_engine.&ZeroWidthSpace;interruptMode | SPDK interrupt mode for io-engine reactors. When enabled, reactors sleep on epoll/timerfd instead of busy-polling, which dramatically reduces idle CPU usage. NVMe I/O queues are still polled, but on a periodic timer rather than continuously. | <pre>{<br>"enabled":false,<br>"nvmeIoQueuePollPeriod":"100us"<br>}</pre> |
+| io_engine.&ZeroWidthSpace;interruptMode.&ZeroWidthSpace;enabled | Enable interrupt mode by setting ENABLE_INTERRUPT_MODE=true on the io-engine container (equivalent to passing the --enable-interrupt-mode CLI flag). | `false` |
+| io_engine.&ZeroWidthSpace;interruptMode.&ZeroWidthSpace;nvmeIoQueuePollPeriod | NVMe I/O queue poll period (SPDK NVME_IOQ_POLL_PERIOD). A value of "0" disables timed polling (busy poll). Typical values: "100us", "1000us". Higher values reduce CPU further at the cost of latency. | `"100us"` |
 | io_engine.&ZeroWidthSpace;logLevel | Log level for the io-engine service | `"info"` |
 | io_engine.&ZeroWidthSpace;nodeSelector | Node selectors to designate storage nodes for diskpool creation Note that if multi-arch images support 'kubernetes.io/arch: amd64' should be removed. | <pre>{<br>"kubernetes.io/arch":"amd64",<br>"openebs.io/engine":"mayastor"<br>}</pre> |
 | io_engine.&ZeroWidthSpace;nvme.&ZeroWidthSpace;ioTimeout | Timeout for IOs The default here is exaggerated for local disks, but we've observed that in shared virtual environments having a higher timeout value is beneficial. Please adjust this according to your hardware and needs. | `"110s"` |
+| io_engine.&ZeroWidthSpace;nvme.&ZeroWidthSpace;rdma.&ZeroWidthSpace;bufCacheSize | The number of shared buffers to reserve for each poll group | `"64"` |
+| io_engine.&ZeroWidthSpace;nvme.&ZeroWidthSpace;rdma.&ZeroWidthSpace;numSharedBuf | The number of pooled data buffers available to the transport | `"2047"` |
+| io_engine.&ZeroWidthSpace;nvme.&ZeroWidthSpace;tcp.&ZeroWidthSpace;bufCacheSize | The number of shared buffers to reserve for each poll group | `"64"` |
+| io_engine.&ZeroWidthSpace;nvme.&ZeroWidthSpace;tcp.&ZeroWidthSpace;maxQpairsPerCtrl | Max number of IO qpairs per controller | `"32"` |
 | io_engine.&ZeroWidthSpace;nvme.&ZeroWidthSpace;tcp.&ZeroWidthSpace;maxQueueDepth | You may need to increase this for a higher outstanding IOs per volume | `"32"` |
+| io_engine.&ZeroWidthSpace;nvme.&ZeroWidthSpace;tcp.&ZeroWidthSpace;numSharedBuf | The number of pooled data buffers available to the transport | `"2047"` |
+| io_engine.&ZeroWidthSpace;nvme.&ZeroWidthSpace;transportTos | NVMe Transport Type of Service (ToS) value for RDMA QoS/DSCP marking. When using NVMe-oF over RDMA (RoCEv2), set this to mark target (responder) side RDMA traffic with a DSCP value (e.g. 104 for DSCP 26 / AF31) so that switches and NICs can classify storage traffic into a Priority Flow Control (PFC) enabled queue for lossless transport. A value of 0 (the default) means no marking (best-effort QoS). | `""` |
+| io_engine.&ZeroWidthSpace;pool.&ZeroWidthSpace;ioAlerts.&ZeroWidthSpace;errorThreshold | After this many errors a pool alert is raised as Warning. | `64` |
+| io_engine.&ZeroWidthSpace;pool.&ZeroWidthSpace;ioAlerts.&ZeroWidthSpace;stallDeadline | If an I/O is stuck longer than this period, then the pool is considered stalled and a Critical alert is raised. The pool disk will also be reset and the stall will be cleared once complete and I/O flows again. default: .Values.io_engine.nvme.ioTimeout * 2 | `nil` |
+| io_engine.&ZeroWidthSpace;pool.&ZeroWidthSpace;ioAlerts.&ZeroWidthSpace;stallTransitionThreshold | After this many transitions within the stallTransitionWindow, a pool alert is raised as Warning. | `3` |
+| io_engine.&ZeroWidthSpace;pool.&ZeroWidthSpace;ioAlerts.&ZeroWidthSpace;stallTransitionWindow | Time window during which stall ↔ resume state transitions are tracked for flakiness detection. | `"3h"` |
 | io_engine.&ZeroWidthSpace;port | Container port for the io-engine service | `10124` |
 | io_engine.&ZeroWidthSpace;priorityClassName | Set PriorityClass, overrides global | `""` |
 | io_engine.&ZeroWidthSpace;pstorRetries | Number of retries for pstor persistence before the volume target self shutdowns | `300` |
@@ -199,6 +224,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | io_engine.&ZeroWidthSpace;resources.&ZeroWidthSpace;requests.&ZeroWidthSpace;memory | Memory requests for the io-engine | `"1Gi"` |
 | io_engine.&ZeroWidthSpace;runtimeClassName | Runtime class to use. Defaults to cluster standard | `""` |
 | io_engine.&ZeroWidthSpace;target.&ZeroWidthSpace;nvmf.&ZeroWidthSpace;iface | NVMF target interface (ip, mac, name or subnet) If RDMA is enabled, please set iface to an RDMA capable netdev name from host network. Example, if an rdma device mlx5_0 is available on a netdev eth0 on RNIC, as can be seen from `rdma link` command output, then this field should be set to eth0. | `""` |
+| io_engine.&ZeroWidthSpace;target.&ZeroWidthSpace;nvmf.&ZeroWidthSpace;maxNamespaces | Maximum number of NVMe namespaces which a given io-engine node can expose. As of today, there's a 1-1 mapping of namespaces to volume targets. | `4096` |
 | io_engine.&ZeroWidthSpace;target.&ZeroWidthSpace;nvmf.&ZeroWidthSpace;ptpl | Reservations Persist Through Power Loss State | `true` |
 | io_engine.&ZeroWidthSpace;target.&ZeroWidthSpace;nvmf.&ZeroWidthSpace;rdma | Enable RDMA Capability of Mayastor nvmf target to take RDMA connections if the cluster nodes have RDMA device(s) configured from RNIC. | <pre>{<br>"enabled":false<br>}</pre> |
 | io_engine.&ZeroWidthSpace;tolerations | Set tolerations, overrides global | `[]` |
@@ -214,6 +240,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | nodeSelector | Node labels for pod assignment ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ Note that if multi-arch images support 'kubernetes.io/arch: amd64' should be removed and set 'nodeSelector' to empty '{}' as default value. | <pre>{<br>"kubernetes.io/arch":"amd64"<br>}</pre> |
 | obs.&ZeroWidthSpace;callhome.&ZeroWidthSpace;enabled | Enable callhome | `true` |
 | obs.&ZeroWidthSpace;callhome.&ZeroWidthSpace;logLevel | Log level for callhome | `"info"` |
+| obs.&ZeroWidthSpace;callhome.&ZeroWidthSpace;nodeSelector | Set nodeSelector, overrides global | <pre>{<br><br>}</pre> |
 | obs.&ZeroWidthSpace;callhome.&ZeroWidthSpace;priorityClassName | Set PriorityClass, overrides global | `""` |
 | obs.&ZeroWidthSpace;callhome.&ZeroWidthSpace;resources.&ZeroWidthSpace;limits.&ZeroWidthSpace;cpu | Cpu limits for callhome | `"100m"` |
 | obs.&ZeroWidthSpace;callhome.&ZeroWidthSpace;resources.&ZeroWidthSpace;limits.&ZeroWidthSpace;memory | Memory limits for callhome | `"32Mi"` |
@@ -227,6 +254,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | obs.&ZeroWidthSpace;stats.&ZeroWidthSpace;resources.&ZeroWidthSpace;requests.&ZeroWidthSpace;memory | Memory requests for stats | `"16Mi"` |
 | obs.&ZeroWidthSpace;stats.&ZeroWidthSpace;service.&ZeroWidthSpace;type | Rest K8s service type | `"ClusterIP"` |
 | operators.&ZeroWidthSpace;pool.&ZeroWidthSpace;logLevel | Log level for diskpool operator service | `"info"` |
+| operators.&ZeroWidthSpace;pool.&ZeroWidthSpace;nodeSelector | Set nodeSelector, overrides global | <pre>{<br><br>}</pre> |
 | operators.&ZeroWidthSpace;pool.&ZeroWidthSpace;priorityClassName | Set PriorityClass, overrides global | `""` |
 | operators.&ZeroWidthSpace;pool.&ZeroWidthSpace;resources.&ZeroWidthSpace;limits.&ZeroWidthSpace;cpu | Cpu limits for diskpool operator | `"100m"` |
 | operators.&ZeroWidthSpace;pool.&ZeroWidthSpace;resources.&ZeroWidthSpace;limits.&ZeroWidthSpace;memory | Memory limits for diskpool operator | `"32Mi"` |
@@ -239,6 +267,7 @@ This removes all the Kubernetes components associated with the chart and deletes
 | preUpgradeHook.&ZeroWidthSpace;image.&ZeroWidthSpace;repo | The container repository for the hook job | `"openebs/kubectl"` |
 | preUpgradeHook.&ZeroWidthSpace;image.&ZeroWidthSpace;tag | The container image tag for the hook job | `"1.25.15"` |
 | preUpgradeHook.&ZeroWidthSpace;imagePullSecrets | Optional array of imagePullSecrets containing private registry credentials # Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/ | `[]` |
+| preUpgradeHook.&ZeroWidthSpace;rolloutTimeout | Set how long we should wait for the Etcd cluster to finish rolling out before giving up. | `"600s"` |
 | preUpgradeHook.&ZeroWidthSpace;tolerations | Node tolerations for server scheduling to nodes with taints # Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ # | `[]` |
 | priorityClassName | Pod scheduling priority. Setting this value will apply to all components except the external Chart dependencies. If any component has `priorityClassName` set, then this value would be overridden for that component. For external components like etcd, jaeger or loki, PriorityClass can only be set at component level. | `""` |
 | storageClass.&ZeroWidthSpace;allowVolumeExpansion | Enable volume expansion for the default StorageClass. | `true` |

@@ -1,0 +1,73 @@
+[package]
+name = "garage-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+arbitrary = { workspace = true, features = ["derive"]}
+libfuzzer-sys = { workspace = true }
+
+garage_db.workspace = true
+garage_table.workspace = true
+garage_util.workspace = true
+garage_model = { workspace = true, default-features = false, features = ["arbitrary", "k2v"] }
+
+[[bin]]
+name = "version_crdt"
+path = "fuzz_targets/version_crdt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mpu_crdt"
+path = "fuzz_targets/mpu_crdt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bucket_crdt"
+path = "fuzz_targets/bucket_crdt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "block_ref_crdt"
+path = "fuzz_targets/block_ref_crdt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "admin_api_token_crdt"
+path = "fuzz_targets/admin_api_token_crdt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "key_crdt"
+path = "fuzz_targets/key_crdt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bucket_alias_crdt"
+path = "fuzz_targets/bucket_alias_crdt.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "k2v_item_crdt"
+path = "fuzz_targets/k2v_item_crdt.rs"
+test = false
+doc = false
+bench = false

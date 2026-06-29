@@ -124,18 +124,19 @@ spec:
             defaultMode: 0777
       containers:
         - name: mayastor-pre-upgrade-hook
-          image: {{ .Values.preUpgradeHook.image.registry }}/{{ .Values.preUpgradeHook.image.repo }}:{{ .Values.preUpgradeHook.image.tag }}
-          imagePullPolicy: {{ .Values.preUpgradeHook.image.pullPolicy }}
+          image: {{ default .Values.preUpgradeHook.image.registry .Values.global.imageRegistry }}/{{ .Values.preUpgradeHook.image.repo }}:{{ .Values.preUpgradeHook.image.tag }}
+          imagePullPolicy: {{ default .Values.preUpgradeHook.image.pullPolicy .Values.global.imagePullPolicy }}
           command:
             - "sh"
             - "-c"
           args:
-            - "/scripts/label-etcd-for-helm-release.sh {{ .Release.Name }} -n {{ .Release.Namespace }}"
+            - "/scripts/label-etcd-for-helm-release.sh {{ .Release.Name }} -n {{ .Release.Namespace }} --rollout-timeout {{ .Values.preUpgradeHook.rolloutTimeout }}"
           volumeMounts:
             - name: scripts
               mountPath: /scripts
-      {{- if .Values.preUpgradeHook.imagePullSecrets }}
-      imagePullSecrets: {{ toYaml .Values.preUpgradeHook.imagePullSecrets | nindent 8 }}
+      {{- if or .Values.global.imagePullSecrets .Values.preUpgradeHook.imagePullSecrets }}
+      imagePullSecrets:
+{{- include "mayastor.preUpgradeHook.pullSecrets" . | indent 8 }}
       {{- end }}
 {{- end }}
 {{- end }}

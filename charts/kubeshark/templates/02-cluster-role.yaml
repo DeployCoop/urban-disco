@@ -44,12 +44,6 @@ rules:
     - create
     - update
     - delete
-  - apiGroups:
-    - authentication.k8s.io
-    resources:
-    - tokenreviews
-    verbs:
-    - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -92,18 +86,3 @@ rules:
     verbs:
       - create
       - get
-  - apiGroups:
-      - ""
-    resources:
-      - persistentvolumeclaims
-    verbs:
-      - create
-      - get
-      - list
-      - delete
-  - apiGroups:
-      - batch
-    resources:
-      - jobs
-    verbs:
-      - "*"

@@ -1,0 +1,57 @@
+[package]
+name = "garage_rpc"
+version = "2.3.0"
+authors = ["Alex Auvolat <alex@adnab.me>"]
+edition = "2018"
+license = "AGPL-3.0"
+description = "Cluster membership management and RPC protocol for the Garage object store"
+repository = "https://git.deuxfleurs.fr/Deuxfleurs/garage"
+readme = "../../README.md"
+
+[lib]
+path = "lib.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+format_table.workspace = true
+garage_util.workspace = true
+garage_net.workspace = true
+
+arc-swap.workspace = true
+bytesize.workspace = true
+gethostname.workspace = true
+hex.workspace = true
+ipnet.workspace = true
+tracing.workspace = true
+rand.workspace = true
+itertools.workspace = true
+sodiumoxide.workspace = true
+nix.workspace = true
+
+async-trait.workspace = true
+serde.workspace = true
+serde_bytes.workspace = true
+serde_json.workspace = true
+utoipa.workspace = true
+thiserror = { workspace = true, optional = true }
+
+# newer version requires rust edition 2021
+kube = { workspace = true, optional = true }
+k8s-openapi = { workspace = true, optional = true }
+schemars = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
+
+pnet_datalink.workspace = true
+
+futures.workspace = true
+tokio.workspace = true
+opentelemetry.workspace = true
+
+[features]
+kubernetes-discovery = ["kube", "k8s-openapi", "schemars"]
+consul-discovery = ["reqwest", "thiserror"]
+system-libs = ["sodiumoxide/use-pkg-config"]
+
+[lints]
+workspace = true

@@ -7,6 +7,16 @@ crds:
       enabled: true
 
 global:
+  # -- Global override for image registry
+  imageRegistry: ""
+  # -- Global overide for image pull policy
+  imagePullPolicy: ""
+  # -- Global override for image pull secrets
+  # - secret
+  imagePullSecrets: []
+  analytics:
+    # -- Global overide for call home
+    enabled:
   security:
     allowInsecureImages: true
 
@@ -16,7 +26,7 @@ image:
   # -- Image registry's namespace
   repo: openebs
   # -- Release tag for our images
-  tag: v2.10.0
+  tag: v2.11.1
   repoTags:
     # Note: Below image tag configuration is optional and typically should never be
     #       used. Setting specific image tags for the different repositories proves useful
@@ -71,8 +81,10 @@ base:
     enabled: true
     image:
       name: alpine-sh
-      tag: 4.3.0
+      tag: 4.5.0
       pullPolicy: IfNotPresent
+      # -- Image registry for init containers
+      registry: ""
     containers:
       - name: agent-core-grpc-probe
         command: ['sh', '-c', 'trap "exit 1" TERM; until nc -vzw 5 {{ .Release.Name }}-agent-core 50051; do date; echo "Waiting for agent-core-grpc services..."; sleep 1; done;']
@@ -133,6 +145,8 @@ operators:
         memory: "16Mi"
     # -- Set tolerations, overrides global
     tolerations: []
+    # -- Set nodeSelector, overrides global
+    nodeSelector: {}
     # -- Set PriorityClass, overrides global
     priorityClassName: ""
 jaeger-operator:
@@ -207,6 +221,8 @@ agents:
         memory: "32Mi"
     # -- Set tolerations, overrides global
     tolerations: []
+    # -- Set nodeSelector, overrides global
+    nodeSelector: {}
     # -- Set PriorityClass, overrides global.
     # If both local and global are not set, the final deployment manifest has a mayastor custom critical priority class assigned to the pod by default.
     # Refer the `templates/_helpers.tpl` and `templates/mayastor/agents/core/agent-core-deployment.yaml` for more details.
@@ -242,6 +258,8 @@ agents:
           memory: "64Mi"
       # -- Set tolerations, overrides global
       tolerations: []
+      # -- Set nodeSelector, overrides global
+      nodeSelector: {}
       # -- Set PriorityClass, overrides global
       priorityClassName: ""
       # -- Container port for the ha-node service
@@ -314,6 +332,8 @@ apis:
         https: 30010
     # -- Set tolerations, overrides global
     tolerations: []
+    # -- Set nodeSelector, overrides global
+    nodeSelector: {}
     # -- Set PriorityClass, overrides global.
     # If both local and global are not set, the final deployment manifest has a mayastor custom critical priority class assigned to the pod by default.
     # Refer the `templates/_helpers.tpl` and `templates/mayastor/apis/rest/api-rest-deployment.yaml` for more details.
@@ -356,6 +376,8 @@ csi:
         memory: "64Mi"
     # -- Set tolerations, overrides global
     tolerations: []
+    # -- Set nodeSelector, overrides global
+    nodeSelector: {}
     # -- Set PriorityClass, overrides global
     priorityClassName: ""
     # -- Prevent modifying the volume mode when creating a PVC from an existing VolumeSnapshot
@@ -404,6 +426,8 @@ csi:
       enabled: true
     # -- Set tolerations, overrides global
     tolerations: []
+    # -- Set nodeSelector, overrides global
+    nodeSelector: {}
     # -- Set PriorityClass, overrides global
     priorityClassName: ""
     initContainers:
@@ -436,7 +460,17 @@ io_engine:
       hostCmdRetryDelay:
         # A command retry delay in milliseconds. A value of 0 means no delay, host may retry immediately
         crdt1: 30
+      # -- Maximum number of NVMe namespaces which a given io-engine node can expose.
+      # As of today, there's a 1-1 mapping of namespaces to volume targets.
+      maxNamespaces: 4096
   nvme:
+    # -- NVMe Transport Type of Service (ToS) value for RDMA QoS/DSCP marking.
+    # When using NVMe-oF over RDMA (RoCEv2), set this to mark target (responder)
+    # side RDMA traffic with a DSCP value (e.g. 104 for DSCP 26 / AF31) so that
+    # switches and NICs can classify storage traffic into a Priority Flow Control
+    # (PFC) enabled queue for lossless transport.
+    # A value of 0 (the default) means no marking (best-effort QoS).
+    transportTos: ""
     # -- Timeout for IOs
     # The default here is exaggerated for local disks, but we've observed that in
     # shared virtual environments having a higher timeout value is beneficial.
@@ -450,13 +484,35 @@ io_engine:
       # -- Max size setting (both initiator and target) for an NVMe queue
       # -- You may need to increase this for a higher outstanding IOs per volume
       maxQueueDepth: "32"
-      # Max qpairs per controller.
+      # -- Max number of IO qpairs per controller
       maxQpairsPerCtrl: "32"
+      # -- The number of pooled data buffers available to the transport
+      numSharedBuf: "2047"
+      # -- The number of shared buffers to reserve for each poll group
+      bufCacheSize: "64"
+    rdma:
+      # -- The number of pooled data buffers available to the transport
+      numSharedBuf: "2047"
+      # -- The number of shared buffers to reserve for each poll group
+      bufCacheSize: "64"
   # -- Pass additional arguments to the Environment Abstraction Layer.
   # Example: --set {product}.envcontext=iova-mode=pa
   envcontext: ""
   reactorFreezeDetection:
     enabled: false
+  # -- SPDK interrupt mode for io-engine reactors.
+  # When enabled, reactors sleep on epoll/timerfd instead of busy-polling,
+  # which dramatically reduces idle CPU usage. NVMe I/O queues are still
+  # polled, but on a periodic timer rather than continuously.
+  interruptMode:
+    # -- Enable interrupt mode by setting ENABLE_INTERRUPT_MODE=true on the
+    # io-engine container (equivalent to passing the --enable-interrupt-mode
+    # CLI flag).
+    enabled: false
+    # -- NVMe I/O queue poll period (SPDK NVME_IOQ_POLL_PERIOD). A value of
+    # "0" disables timed polling (busy poll). Typical values: "100us",
+    # "1000us". Higher values reduce CPU further at the cost of latency.
+    nvmeIoQueuePollPeriod: "100us"
   # -- The number of cores that each io-engine instance will bind to.
   cpuCount: "2"
   # -- If not empty, overrides the cpuCount and explicitly sets the list of cores.
@@ -497,12 +553,33 @@ io_engine:
   pstorRetries: 300
   # -- Container port for the io-engine service
   port: 10124
+  pool:
+    ioAlerts:
+      # -- After this many errors a pool alert is raised as Warning.
+      errorThreshold: 64
+      # -- If an I/O is stuck longer than this period, then the pool is considered stalled and a
+      # Critical alert is raised.
+      # The pool disk will also be reset and the stall will be cleared once complete and I/O flows
+      # again.
+      # default: .Values.io_engine.nvme.ioTimeout * 2
+      stallDeadline:
+      # -- After this many transitions within the stallTransitionWindow, a pool alert is raised
+      # as Warning.
+      stallTransitionThreshold: 3
+      # -- Time window during which stall ↔ resume state transitions are tracked for flakiness
+      # detection.
+      stallTransitionWindow: "3h"
 etcd:
   # -- Disable when using an external etcd cluster.
   enabled: true
   # -- (string) Url of the external etcd cluster. Note, etcd.enable must be set to false.
   externalUrl: ""
   # Configuration for etcd's localpv hostpath storage class.
+  metrics:
+    # -- Expose etcd metrics.
+    enabled: true
+    # -- Use a separate endpoint for exposing metrics, override the default port (9090) by setting containerPorts.metrics.
+    useSeparateEndpoint: true
   localpvScConfig:
     enabled: true
     # Name of etcd's localpv hostpath storage class.
@@ -574,7 +651,7 @@ etcd:
     image:
       registry: docker.io
       repository: openebs/alpine-bash
-      tag: 4.3.0
+      tag: 4.5.0
       pullSecrets: []
   image:
     registry: docker.io
@@ -659,6 +736,7 @@ loki:
     limits_config:
       ingestion_burst_size_mb: 1000
       ingestion_rate_mb: 10000
+      max_label_names_per_series: 20
   singleBinary:
     replicas: 3
     drivesPerNode: 1
@@ -731,16 +809,18 @@ alloy:
     configMap:
       create: true
       content: |
+        {{- $releaseName := .Release.Name | replace "-" "_" -}}
+
         livedebugging {
           enabled = {{ .Values.logging_config.debugging }}
         }
 
-        discovery.kubernetes "{{ .Release.Name }}_pods_name" {
+        discovery.kubernetes "{{ $releaseName }}_pods_name" {
           role = "pod"
         }
 
-        discovery.relabel "{{ .Release.Name }}_pods_name" {
-          targets = discovery.kubernetes.{{ .Release.Name }}_pods_name.targets
+        discovery.relabel "{{ $releaseName }}_pods_name" {
+          targets = discovery.kubernetes.{{ $releaseName }}_pods_name.targets
 
           {{- $labels := .Values.logging_config.labels }}
           {{- if $labels }}
@@ -798,16 +878,16 @@ alloy:
           }
         }
 
-        local.file_match "{{ .Release.Name }}_pod_files" {
-          path_targets = discovery.relabel.{{ .Release.Name }}_pods_name.output
+        local.file_match "{{ $releaseName }}_pod_files" {
+          path_targets = discovery.relabel.{{ $releaseName }}_pods_name.output
         }
 
-        loki.source.file "{{ .Release.Name }}_pod_logs" {
-          targets    = local.file_match.{{ .Release.Name }}_pod_files.targets
-          forward_to = [loki.process.{{ .Release.Name }}_process_logs.receiver]
+        loki.source.file "{{ $releaseName }}_pod_logs" {
+          targets    = local.file_match.{{ $releaseName }}_pod_files.targets
+          forward_to = [loki.process.{{ $releaseName }}_process_logs.receiver]
         }
 
-        loki.process "{{ .Release.Name }}_process_logs" {
+        loki.process "{{ $releaseName }}_process_logs" {
           forward_to = [loki.write.default.receiver]
 
           stage.docker { }
@@ -917,6 +997,8 @@ obs:
         memory: "16Mi"
     # -- Set tolerations, overrides global
     tolerations: []
+    # -- Set nodeSelector, overrides global
+    nodeSelector: {}
     # -- Set PriorityClass, overrides global
     priorityClassName: ""
   # Eventing component enabled/disabled based on obs.callhome.enabled value
@@ -955,7 +1037,13 @@ storageClass:
 localpv-provisioner:
   # -- Enables the openebs dynamic-localpv-provisioner. If disabled, modify etcd and loki storage class accordingly.
   enabled: true
+  globalImageRegistryOverride: true
+  helperPod:
+    image:
+      registry: "docker.io"
   localpv:
+    image:
+      registry: "docker.io"
     # -- Set the PriorityClass for the LocalPV Hostpath provisioner Deployment.
     priorityClassName: "{{ .Release.Name }}-cluster-critical"
   hostpathClass:
@@ -966,6 +1054,8 @@ localpv-provisioner:
 preUpgradeHook:
   # -- Enable/Disable mayastor pre-upgrade hook
   enabled: true
+  # -- Set how long we should wait for the Etcd cluster to finish rolling out before giving up.
+  rolloutTimeout: "600s"
   # -- Node tolerations for server scheduling to nodes with taints
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
   ##

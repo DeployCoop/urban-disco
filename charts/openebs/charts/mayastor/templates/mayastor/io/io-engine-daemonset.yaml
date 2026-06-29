@@ -28,7 +28,9 @@ spec:
       hostNetwork: true
       # To resolve services in the namespace
       dnsPolicy: ClusterFirstWithHostNet
-      nodeSelector: {{- .Values.io_engine.nodeSelector | toYaml | nindent 8 }}
+      {{- if $nodeSelector := include "node_selector" (dict "template" . "localNodeSelector" .Values.io_engine.nodeSelector) }}
+      nodeSelector: {{ $nodeSelector }}
+      {{- end }}
       {{- if $pcName := include "priority_class_with_default" (dict "template" . "localPriorityClass" .Values.io_engine.priorityClassName) }}
       priorityClassName: {{ $pcName }}
       {{- end }}
@@ -42,21 +44,33 @@ spec:
         {{- include "base_init_containers" . }}
       containers:
       - name: io-engine
-        image: "{{ .Values.image.registry }}/{{ .Values.image.repo }}/{{ include "image_prefix" . }}-io-engine:{{ default .Values.image.tag .Values.image.repoTags.dataPlane }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        image: "{{ default .Values.image.registry .Values.global.imageRegistry }}/{{ .Values.image.repo }}/{{ include "image_prefix" . }}-io-engine:{{ default .Values.image.tag .Values.image.repoTags.dataPlane }}"
+        imagePullPolicy: {{ default .Values.image.pullPolicy .Values.global.imagePullPolicy }}
         env:
         - name: RUST_LOG
           value: {{ .Values.io_engine.logLevel }}
+        - name: NVMF_TCP_NUM_SHARED_BUF
+          value: "{{ .Values.io_engine.nvme.tcp.numSharedBuf }}"
+        - name: NVMF_TCP_BUF_CACHE_SIZE
+          value: "{{ .Values.io_engine.nvme.tcp.bufCacheSize }}"
         - name: NVMF_TCP_MAX_QPAIRS_PER_CTRL
           value: "{{ .Values.io_engine.nvme.tcp.maxQpairsPerCtrl }}"
         - name: NVMF_TCP_MAX_QUEUE_DEPTH
           value: "{{ .Values.io_engine.nvme.tcp.maxQueueDepth }}"
+        {{- if .Values.io_engine.target.nvmf.rdma.enabled }}
+        - name: NVMF_RDMA_NUM_SHARED_BUF
+          value: "{{ .Values.io_engine.nvme.rdma.numSharedBuf }}"
+        - name: NVMF_RDMA_BUF_CACHE_SIZE
+          value: "{{ .Values.io_engine.nvme.rdma.bufCacheSize }}"
+        {{- end }}
         - name: NVME_TIMEOUT
           value: "{{ .Values.io_engine.nvme.ioTimeout }}"
         - name: NVME_TIMEOUT_ADMIN
           value: "{{ .Values.io_engine.nvme.adminTimeout }}"
         - name: NVME_KATO
           value: "{{ .Values.io_engine.nvme.keepAliveTimeout }}"
+        - name: NVME_MAX_NAMESPACES
+          value: "{{ default 4096 .Values.io_engine.target.nvmf.maxNamespaces }}"
         - name: MY_NODE_NAME
           valueFrom:
             fieldRef:
@@ -69,9 +83,19 @@ spec:
           value: "1"
         - name: NEXUS_NVMF_RESV_ENABLE
           value: "1"
+        {{- if .Values.io_engine.nvme.transportTos }}
+        - name: NVME_TRANSPORT_TOS
+          value: "{{ .Values.io_engine.nvme.transportTos }}"
+        {{- end }}
         {{- if $safeMount := .Values.base.safeMount }}
         - name: USE_SAFE_MOUNT
           value: {{ $safeMount | quote }}
+        {{- end }}
+        {{- if .Values.io_engine.interruptMode.enabled }}
+        - name: ENABLE_INTERRUPT_MODE
+          value: "true"
+        - name: NVME_IOQ_POLL_PERIOD
+          value: {{ .Values.io_engine.interruptMode.nvmeIoQueuePollPeriod | quote }}
         {{- end }}
         args:
         # The -l argument accepts cpu-list. Indexing starts at zero.
@@ -95,6 +119,10 @@ spec:
         - "--events-url=nats://{{ .Release.Name }}-nats:4222"
         - "--events-replicas={{ include "events_replicas" . }}"{{ end }}
         - "--ps-retries={{ default 300 .Values.io_engine.pstorRetries }}"
+        - "--pool-io-error-threshold={{ default 64 .Values.io_engine.pool.ioAlerts.errorThreshold }}"
+        - "--pool-io-stall-deadline={{ default (printf "%s%s" .Values.io_engine.nvme.ioTimeout .Values.io_engine.nvme.ioTimeout) .Values.io_engine.pool.ioAlerts.stallDeadline }}"
+        - "--pool-io-stall-transition-threshold={{ default 3 .Values.io_engine.pool.ioAlerts.stallTransitionThreshold }}"
+        - "--pool-io-stall-transition-window={{ default "3h" .Values.io_engine.pool.ioAlerts.stallTransitionWindow }}"
         command:
         - io-engine
         securityContext:
@@ -131,8 +159,8 @@ spec:
           name: io-engine
       {{- if .Values.base.metrics.enabled }}
       - name: metrics-exporter-io-engine
-        image: "{{ .Values.image.registry }}/{{ .Values.image.repo }}/{{ include "image_prefix" . }}-metrics-exporter-io-engine:{{ default .Values.image.tag .Values.image.repoTags.extensions }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        image: "{{ default .Values.image.registry .Values.global.imageRegistry }}/{{ .Values.image.repo }}/{{ include "image_prefix" . }}-metrics-exporter-io-engine:{{ default .Values.image.tag .Values.image.repoTags.extensions }}"
+        imagePullPolicy: {{ default .Values.image.pullPolicy .Values.global.imagePullPolicy }}
         env:
         - name: MY_NODE_NAME
           valueFrom:
@@ -151,6 +179,7 @@ spec:
           - "--grpc-port={{ default 10124 .Values.io_engine.port }}"
           - "--fmt-style={{ include "logFormat" . }}"
           - "--ansi-colors={{ .Values.base.logging.color }}"
+          - "--rest-endpoint=http://{{ .Release.Name }}-api-rest:8081"
       {{- end }}
       volumes:
       - name: device

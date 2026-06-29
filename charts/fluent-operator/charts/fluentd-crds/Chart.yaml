@@ -1,5 +1,0 @@
-apiVersion: v2
-appVersion: 3.5.0
-description: A Helm chart delivering fluentd controller CRDS
-name: fluentd-crds
-version: 3.5.0

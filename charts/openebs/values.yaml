@@ -1,6 +1,16 @@
+global:
+  # -- Global override for container image registry
+  imageRegistry: ""
+  # -- Global image pull secrets (merged with local imagePullSecrets and not overridden)
+  # - secret
+  imagePullSecrets: []
+  # -- Global override for image pull policy
+  imagePullPolicy: ""
+
 openebs-crds:
   csi:
     volumeSnapshots:
+      # -- Enable/Disable installation of Volume Snapshot CRD's
       enabled: true
       keep: true
 
@@ -8,6 +18,13 @@ openebs-crds:
 localpv-provisioner:
   rbac:
     create: true
+  globalImageRegistryOverride: true
+  helperPod:
+    image:
+      registry: "docker.io"
+  localpv:
+    image:
+      registry: "docker.io"
 
 # Refer to https://github.com/openebs/zfs-localpv/blob/v2.7.1/deploy/helm/charts/values.yaml for complete set of values.
 zfs-localpv:
@@ -83,17 +100,25 @@ preUpgradeHook:
 engines:
   local:
     lvm:
+      # -- Enable/Disable LocalPV LVM Storage Engine
       enabled: true
     zfs:
+      # -- Enable/Disable LocalPV ZFS Storage Engine
       enabled: true
     rawfile:
       # Disabled by default since rawfile is not marked as stable yet.
+      # -- Enable/Disable LocalPV Rawfile Storage Engine
       enabled: false
+    hostpath:
+      # -- Enable/Disable Dynamic LocalPV Provisioner
+      enabled: true
   replicated:
     mayastor:
+      # -- Enable/Disable Replicated PV Mayastor Storage Engine
       enabled: true
 
 loki:
+  # -- Enable/Disable loki.
   enabled: true
   # NOTE: For all possible storage options for loki, check https://github.com/openebs/openebs/blob/HEAD/charts/loki-storage.md
   # Configuration for loki's localpv hostpath storage class.
@@ -164,10 +189,11 @@ loki:
       size: 2Gi
 
   minio:
+    # -- Specify the number of Minio Replicas.
     replicas: 3
     drivesPerNode: 1
     mode: distributed
-    # Disable this if you want to enabled external s3 bucket, and uncomment the storage section above.
+    # -- Disable this if you want to enable external s3 bucket, and uncomment the storage section above.
     enabled: true
     persistence:
       # -- Enabled persistence for minio
@@ -224,6 +250,7 @@ loki:
       repository: docker.io/kiwigrid/k8s-sidecar
 
 alloy:
+  # -- Enable/Disable Alloy.
   enabled: true
 
   logging_config:

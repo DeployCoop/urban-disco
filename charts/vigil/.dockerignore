@@ -1,0 +1,104 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.tox/
+.hypothesis/
+tests/
+*.test
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Documentation
+*.md
+docs/
+archive/
+*.txt
+LICENSE
+# requirements.txt is needed by Dockerfile.backend + Dockerfile.daemon;
+# the wildcard above would otherwise exclude it.
+!requirements.txt
+# The submodule packages are pip-installed during the image build, and their
+# build backends read README.md for metadata (mempalace's pyproject declares
+# `readme = "README.md"`, which hard-fails if the file is absent). The `*.md`
+# wildcard above would otherwise strip them from the build context.
+!deeptempo-core/README.md
+!mcp-servers/README.md
+!mempalace/README.md
+
+# Logs
+logs/
+*.log
+*.pid
+
+# Frontend (not needed in backend image)
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Evidence files
+evidence/
+
+# Large data files
+*.csv
+*.json.gz
+*.parquet
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+

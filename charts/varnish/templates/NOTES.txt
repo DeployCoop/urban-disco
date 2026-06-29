@@ -1,2 +1,0 @@
-
-Point your Ingress Controller to the {{ include "varnish.fullname" . }} service

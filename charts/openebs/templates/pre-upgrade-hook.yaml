@@ -1,4 +1,4 @@
-{{- if .Values.preUpgradeHook.enabled }}
+{{- if and .Values.preUpgradeHook.enabled .Values.engines.local.hostpath.enabled }}
 {{- if .Release.IsUpgrade }}
 {{- if include "hostpath_is_v3" . }}
 apiVersion: v1
@@ -100,15 +100,16 @@ spec:
       restartPolicy: Never
       containers:
       - name: pre-upgrade-job
-        image: {{ .Values.preUpgradeHook.image.registry }}/{{ .Values.preUpgradeHook.image.repo }}:{{ .Values.preUpgradeHook.image.tag }}
-        imagePullPolicy: {{ .Values.preUpgradeHook.image.pullPolicy }}
+        image: {{ include "openebs.common.image" (dict "imageRoot" .Values.preUpgradeHook.image "global" .Values.global) }}
+        imagePullPolicy: {{ default .Values.preUpgradeHook.image.pullPolicy .Values.global.imagePullPolicy }}
         command:
         - "/bin/sh"
         - "-c"
         args:
         - "(kubectl annotate --overwrite crd volumesnapshots.snapshot.storage.k8s.io volumesnapshotclasses.snapshot.storage.k8s.io volumesnapshotcontents.snapshot.storage.k8s.io helm.sh/resource-policy=keep || true) && (kubectl -n {{ .Release.Namespace }} delete deploy -l openebs.io/component-name=openebs-localpv-provisioner --ignore-not-found)"
-      {{- if .Values.preUpgradeHook.imagePullSecrets }}
-      imagePullSecrets: {{ toYaml .Values.preUpgradeHook.imagePullSecrets | nindent 8 }}
+      {{- if or .Values.global.imagePullSecrets .Values.preUpgradeHook.imagePullSecrets }}
+      imagePullSecrets:
+      {{- include "openebs.common.pullSecrets" (dict "images" (list .Values.preUpgradeHook) "global" .Values.global) | indent 6 }}
       {{- end }}
 {{- end }}
 {{- end }}

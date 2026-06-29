@@ -1,0 +1,330 @@
+%\nonstopmode
+\documentclass[aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+% \usepackage[frenchb]{babel}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{breqn}
+\usepackage{multirow}
+\usetheme{boxes}
+\usepackage{graphicx}
+%\useoutertheme[footline=authortitle,subsection=false]{miniframes}
+
+\beamertemplatenavigationsymbolsempty
+
+\definecolor{TitleOrange}{RGB}{255,137,0}
+\setbeamercolor{title}{fg=TitleOrange}
+\setbeamercolor{frametitle}{fg=TitleOrange}
+
+\definecolor{ListOrange}{RGB}{255,145,5}
+\setbeamertemplate{itemize item}{\color{ListOrange}$\blacktriangleright$}
+
+\definecolor{verygrey}{RGB}{70,70,70}
+\setbeamercolor{normal text}{fg=verygrey}
+
+
+\usepackage{tabu}
+\usepackage{multicol}
+\usepackage{vwcol}
+\usepackage{stmaryrd}
+\usepackage{graphicx}
+
+\usepackage[normalem]{ulem}
+
+\title{Garage Object Storage: 2.0 update and best practices}
+\subtitle{a new storage platform for self-hosted geo-distributed clusters}
+\author{Maximilien Richer, Deuxfleurs}
+\date{FOSDEM '26}
+
+\begin{document}
+
+\begin{frame}
+	\centering
+	\includegraphics[width=.3\linewidth]{../../sticker/Garage.pdf}
+	\vspace{1em}
+
+	{\large\bf Maximilien Richer, Deuxfleurs}
+	\vspace{1em}
+
+	\url{https://garagehq.deuxfleurs.fr/}
+	Matrix channel: \texttt{\#garage:deuxfleurs.fr}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Our objective at Deuxfleurs}
+
+	\begin{center}
+	    French association promoting digital sovereignty and privacy\\
+		through self-hosting hosting \textbf{as an alternative to large cloud providers}
+	\end{center}
+	\vspace{2em}
+
+	\vspace{2em}
+	\begin{center}
+		\textbf{This requires \underline{resilience}}\\
+		{\footnotesize (we want good uptime/availability with low supervision)}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{But what is Garage, exactly?}
+	\textbf{Garage is a self-hosted drop-in replacement for the Amazon S3 object store}\\
+	\vspace{.5em}
+	that implements resilience through geographical redundancy on commodity hardware
+		\begin{center}
+			\includegraphics[width=.8\linewidth]{assets/garageuses.png}
+		\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{What makes Garage different?}
+	\textbf{Coordination-free:}
+			\vspace{2em}
+	\begin{itemize}
+		\item No Raft or Paxos
+			\vspace{1em}
+		\item Internal data types are CRDTs
+			\vspace{1em}
+		\item All nodes are equivalent (no master/leader/index node)
+	\end{itemize}
+			\vspace{2em}
+	$\to$ less sensitive to higher latencies between nodes
+\end{frame}
+
+\begin{frame}
+	\frametitle{What makes Garage different?}
+		\begin{center}
+		    TODO update with latest garage and minio versions
+			\includegraphics[width=.9\linewidth]{assets/endpoint-latency-dc.png}
+		\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{What makes Garage different?}
+	\textbf{Consistency model:}
+			\vspace{2em}
+	\begin{itemize}
+		\item Not ACID (not required by S3 spec) / not linearizable
+			\vspace{1em}
+		\item \textbf{Read-after-write consistency}\\
+			{\footnotesize (stronger than eventual consistency)}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{What makes Garage different?}
+	\textbf{Location-aware:}
+	\vspace{2em}
+		\begin{center}
+			\includegraphics[width=\linewidth]{assets/location-aware.png}
+		\end{center}
+	\vspace{2em}
+	Garage replicates data on different zones when possible
+\end{frame}
+
+\begin{frame}
+	\frametitle{What makes Garage different?}
+		\begin{center}
+			\includegraphics[width=.8\linewidth]{assets/map.png}
+		\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{An ever-increasing compatibility list}
+		\begin{center}
+			\includegraphics[width=.7\linewidth]{assets/compatibility.png}
+		\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Version history and roadmap}
+	\begin{itemize}
+		\item v0.3: initial beta release (2021)
+		\item v0.7: first released version (2022)
+		\item v1.0: stable release (2024), will be deprecated in summer 2026 1y after v2.0 was released
+        \item v2.0: stable release (2025)
+        \begin{itemize}
+        \item new HTTP admin API
+        \item reworded replication configuration: \texttt{replication\_mode} changed to \texttt{replication\_factor} \& \texttt{consistency\_policy}
+        \end{itemize}
+        \item
+	\end{itemize}
+	\begin{center}
+	    v3.0: TBA may include versionning support, tag on buckets and objets, retention policies...
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\centering
+	{\large\bf Best practices for Garage deployments}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Things you should know}
+	\begin{itemize}
+		\item no TLS support, use your own proxy
+		\item no anonymous access (use website endpoint)
+		\item you need to assign roles to nodes manually
+        \item the replication factor cannot be changed easily
+        \item the default region is \texttt{garage} and not \texttt{us-east-1}
+        \item only use the \texttt{degraded} consistency policy for data recovery!
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{What hardware should I use?}
+	\begin{itemize}
+	    \item do NOT use network file storage (NFS, SMB, etc.) for \texttt{\/metadata}
+		\item get a \textbf{write-intensive flash disk} for the \texttt{\/metadata} folder
+		\item set \texttt{metadata} on a RAID1 if possible, with a COW filesystem (e.g. Btrfs or ZFS)
+		\item get large HDDs for the \texttt{\/data} folder
+		\item use XFS and garage multi-hdd mode for best performance
+		\item you can use a RAID for data but you'll leave a lot of performance on the table
+	\end{itemize}
+	\center\textit{Garage doesn't require a powerful CPUs nor much RAM, but your performance will depend on your disks!}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Picking a metadata engine}
+	All files-to-block mappings are stored in the metadata engine, including bucket and object metadata. Files below 3KB are stored directly in the metadata engine.
+    \vspace{1em}
+	\begin{itemize}
+        \item Sled: removed in 1.x, move to SQLite or LMDB
+	    \item \textbf{SQLite}: safer, \textbf{recommended for small clusters and single-node}
+        \item LMDB: faster, recommended for large clusters with metadata redundancy
+        \begin{itemize}
+            \item Warning: limited to 480 bytes per key with LMDB (not an issue in practice)
+        \end{itemize}
+        \item Fjall: experimental but promising rust-native engine, test it and let us know!
+	\end{itemize}
+	\center{Metadata engine can be set node per node, and changed later with a migration tool}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Single-node deployment}
+	\begin{itemize}
+		\item garage was initially designed for multi-node deployments
+		\item single-node deployments are possible, but you will lose resilience
+		\item \textbf{If you do please ensure you have backups} (especially for metadata)
+		\begin{itemize}
+            \item set up \texttt{metadata\_auto\_snapshot\_interval}
+        \end{itemize}
+		\item use sqlite to minimize data loss risks on powercuts
+		\item or use a UPS!
+	\end{itemize}
+	\vspace{1em}
+	Use \texttt{github.com/bikeshedder/garage-single-node} for an easy single-node setup!
+\end{frame}
+
+\begin{frame}
+	\frametitle{Multi-node deployment}
+	\begin{itemize}
+		\item try to have geo-distributed zones
+		\item multiple nodes per zone to add more capacity
+		\item at least 3 zones for best resilience
+		\item keep in mind your available network and IO bandwidth
+		\item \textbf{Rebalancing a cluster can take multiple weeks with large HDDs and slow network links}
+		\item monitor your nodes with Prometheus + Grafana
+	\end{itemize}
+	\center{Deuxfleurs has been running a 9TB (3TB usable) 8-nodes cluster (3+3+2) over retail fiber (10ms site-to-site latency) for close to 5 years now. We heard there are petabyte clusters out there!}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Deploying and administering garage at scale}
+	\begin{itemize}
+		\item deploy with your favorite tool (eg. Ansible) and system manager (eg. systemd)
+		\item or use Docker, docker-compose, Kubernetes or Nomad
+		\item Kubernetes and Consul are supported for node-to-node discovery
+		\begin{itemize}
+		\item you'll still have to manage the layout manually!
+        \end{itemize}
+		\item use gateway nodes to optimize network usage
+		\item ajust \texttt{resync-tranquility} and \texttt{scrub-tranquility} to your ressources
+	\end{itemize}
+	\center{Kubernetes storage controller: \texttt{github.com/bmarinov/garage-storage-controller}}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Community UI available!}
+	\begin{center}
+			\includegraphics[width=0.9\linewidth]{assets/community-ui.png}\\
+			\vspace{-1em}
+		\url{https://github.com/khairul169/garage-webui}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Official Embedded UI comming later this year!}
+	\begin{center}
+	    \includegraphics[width=0.9\linewidth]{assets/Garage Web Admin - Dashboard@2x.png}\\
+			\vspace{-1em}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Official Embedded UI comming this year!}
+	\begin{center}
+	    \includegraphics[width=0.9\linewidth]{assets/Garage Web Admin - Bucket details page@2x.png}\\
+			\vspace{-1em}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{How to make sense of garage metrics?}
+	\begin{center}
+	    \includegraphics[width=0.7\linewidth]{assets/garage-stats.png}\\
+			\vspace{-1em}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{What if things go wrong?}
+	\begin{itemize}
+	    \item set logs to debug with \texttt{RUST_LOG=garage_api_common=debug,garage_api_s3=debug,garage=debug}
+		\item auth issues: check your reverse proxy configuration
+		\item slow resync: check your network and disk IO usage, and \texttt{resync-tranquility} worker configuration
+		\item big LMDB database: stop garage and compact with \texttt{mdb\_copy -c}
+		\item ask us on matrix \texttt{\#garage:deuxfleurs.fr} or open an issue on git.deuxfleurs.fr!
+		\begin{itemize}
+		\item provide the output of \texttt{garage status}, \texttt{garage stats} and relevant metrics and logs
+        \end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Moving from Minio}
+	\begin{itemize}
+		\item list your buckets and your keys
+		\item create buckets and keys on the garage cluster
+		\begin{itemize}
+		\item you cannot import non-garage keys yet, patch to come soon!
+		\end{itemize}
+		\item loop over buckets, copy with rclone
+		\begin{itemize}
+		\item see doc \url{https://garagehq.deuxfleurs.fr/documentation/connect/cli/}
+		\end{itemize}
+		\item blog post coming soon!
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Demo time!}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Get Garage now!}
+	\begin{center}
+			\includegraphics[width=.3\linewidth]{../../logo/garage_hires.png}\\
+			\vspace{-1em}
+		\url{https://garagehq.deuxfleurs.fr/}\\
+		Matrix channel: \texttt{\#garage:deuxfleurs.fr}
+
+		\vspace{2em}
+			\includegraphics[width=.09\linewidth]{assets/rust_logo.png}
+			\includegraphics[width=.2\linewidth]{assets/AGPLv3_Logo.png}
+	\end{center}
+\end{frame}
+
+\end{document}
+
+%% vim: set ts=4 sw=4 tw=0 noet spelllang=fr :

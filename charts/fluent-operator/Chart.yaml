@@ -1,15 +1,15 @@
 annotations:
   artifacthub.io/changes: |-
     - kind: added
-      description: "Operator deployment now includes configurable liveness and readiness probes (hitting /healthz and /readyz) (#1956)."
+      description: "fluentd.forward."
+    - kind: added
+      description: "fluentbit.metadata."
     - kind: changed
-      description: "Hardened default podSecurityContext and securityContext for the operator: runAsNonRoot, runAsUser/Group 65532, readOnlyRootFilesystem, drop ALL capabilities, seccompProfile: RuntimeDefault (#1956)."
+      description: "Bumped default Fluent Bit image tag to 5.0."
     - kind: changed
-      description: "Bumped default Fluent Bit image tag to v5.0."
-    - kind: changed
-      description: "Bumped fluent-operator to v3.8."
+      description: "Bumped fluent-operator to v3.9."
 apiVersion: v2
-appVersion: 3.8.0
+appVersion: 3.9.0
 description: Kubernetes operator for Fluent Bit and Fluentd—define collectors, pipelines,
   and outputs as custom resources.
 home: https://github.com/fluent/fluent-operator
@@ -30,4 +30,4 @@ maintainers:
 name: fluent-operator
 sources:
 - https://github.com/fluent/fluent-operator
-version: 4.1.0
+version: 4.2.0

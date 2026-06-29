@@ -1,0 +1,199 @@
+[workspace]
+resolver = "2"
+members = [
+	"src/db",
+	"src/util",
+	"src/net",
+	"src/rpc",
+	"src/table",
+	"src/block",
+	"src/model",
+	"src/api/common",
+	"src/api/s3",
+	"src/api/k2v",
+	"src/api/admin",
+	"src/web",
+	"src/garage",
+	"src/k2v-client",
+	"src/format-table",
+    "fuzz",
+]
+
+default-members = ["src/garage"]
+
+[workspace.dependencies]
+
+# Internal Garage crates
+format_table = { version = "0.1.1", path = "src/format-table" }
+garage_api_common = { version = "2.3.0", path = "src/api/common" }
+garage_api_admin = { version = "2.3.0", path = "src/api/admin" }
+garage_api_s3 = { version = "2.3.0", path = "src/api/s3" }
+garage_api_k2v = { version = "2.3.0", path = "src/api/k2v" }
+garage_block = { version = "2.3.0", path = "src/block" }
+garage_db = { version = "2.3.0", path = "src/db", default-features = false }
+garage_model = { version = "2.3.0", path = "src/model", default-features = false }
+garage_net = { version = "2.3.0", path = "src/net" }
+garage_rpc = { version = "2.3.0", path = "src/rpc" }
+garage_table = { version = "2.3.0", path = "src/table" }
+garage_util = { version = "2.3.0", path = "src/util" }
+garage_web = { version = "2.3.0", path = "src/web" }
+k2v-client = { version = "0.0.4", path = "src/k2v-client" }
+
+# External crates from crates.io
+arc-swap = "1.8"
+arbitrary = { version = "1.4.2"}
+argon2 = "0.5"
+async-trait = "0.1"
+backtrace = "0.3"
+base64 = "0.22"
+blake2 = "0.10"
+bytes = "1.11"
+bytesize = "2.3"
+cfg-if = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+crc-fast = "1.9"
+crypto-common = "0.1"
+fundu = "2.0"
+fundu-systemd = "0.3"
+gethostname = "1.1"
+git-version = "0.3"
+hex = "0.4"
+hexdump = "0.1"
+html-escape = "0.2.13"
+hmac = "0.12"
+itertools = "0.14"
+ipnet = "2.11"
+lazy_static = "1.5"
+libfuzzer-sys = "0.4"
+md-5 = "0.10"
+mktemp = "0.5"
+nix = { version = "0.31", default-features = false, features = ["fs"] }
+nom = "8.0"
+parking_lot = "0.12"
+paste = "1.0"
+pin-project = "1.1"
+pnet_datalink = "0.35"
+rand = "0.9"
+sha1 = "0.10"
+sha2 = "0.10"
+timeago = { version = "0.5", default-features = false }
+xxhash-rust = { version = "0.8", default-features = false, features = ["xxh3"] }
+
+aes-gcm = { version = "0.10", features = ["aes", "stream"] }
+sodiumoxide = { version = "0.2.5-0", package = "kuska-sodiumoxide" }
+kuska-handshake = { version = "0.2.0", features = ["default", "async_std"] }
+
+clap = { version = "4.5", features = ["derive", "env"] }
+pretty_env_logger = "0.5"
+structopt = { version = "0.3", default-features = false }
+syslog-tracing = "0.3"
+tracing = "0.1"
+tracing-journald = "0.3"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+heed = { version = "0.22", default-features = false, features = [] }
+rusqlite = { version = "0.38", features = ["fallible_uint"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.32"
+fjall = "2.11"
+
+async-compression = { version = "0.4", features = ["tokio", "zstd"] }
+zstd = { version = "0.13", default-features = false }
+
+quick-xml = { version = "0.39", features = ["serialize"] }
+rmp-serde = "1.3"
+serde = { version = "1.0", default-features = false, features = ["derive", "rc"] }
+serde_bytes = "0.11"
+serde_json = "1.0"
+toml = { version = "0.9", default-features = false, features = ["parse", "serde"] }
+utoipa = { version = "5.4", features = ["chrono"] }
+
+# newer version requires rust edition 2021
+k8s-openapi = { version = "0.27", features = ["v1_35"] }
+kube = { version = "3.0", default-features = false, features = [
+    "runtime",
+    "derive",
+    "client",
+    "rustls-tls",
+] }
+schemars = "1.2"
+reqwest = { version = "0.13", default-features = false, features = [
+    "rustls-no-provider",
+    "json",
+] }
+
+form_urlencoded = "1.2"
+http = "1.4"
+httpdate = "1.0"
+http-range = "0.1"
+http-body-util = "0.1"
+hyper = { version = "1.8", default-features = false }
+hyper-util = { version = "0.1", features = ["full"] }
+multer = "3.1"
+percent-encoding = "2.3"
+roxmltree = "0.21"
+url = "2.5"
+
+futures = "0.3"
+futures-util = "0.3"
+tokio = { version = "1.49", default-features = false, features = [
+    "rt",
+    "rt-multi-thread",
+    "io-util",
+    "net",
+    "time",
+    "macros",
+    "sync",
+    "signal",
+    "fs",
+] }
+tokio-util = { version = "0.7", features = ["compat", "io"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+socket2 = { version = "0.6", features = ["all"] }
+
+opentelemetry = { version = "0.17", features = ["rt-tokio", "metrics", "trace"] }
+opentelemetry-prometheus = "0.10"
+opentelemetry-otlp = "0.10"
+opentelemetry-contrib = "0.9"
+prometheus = "0.13"
+
+# used by the k2v-client crate only
+aws-sigv4 = { version = "1.3", default-features = false }
+hyper-rustls = { version = "0.27", default-features = false, features = [
+    "http1",
+    "http2",
+    "ring",
+    "rustls-native-certs",
+] }
+log = "0.4"
+thiserror = "2.0"
+
+# ---- used only as build / dev dependencies ----
+assert-json-diff = "2.0"
+rustc_version = "0.4"
+static_init = "1.0"
+aws-smithy-runtime = { version = "1.9", default-features = false, features = [
+    "tls-rustls",
+] }
+aws-sdk-config = { version = "1.99", default-features = false }
+aws-sdk-s3 = { version = "1.121", default-features = false, features = [
+    "rt-tokio",
+] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 16
+opt-level = 3
+strip = "debuginfo"
+
+[workspace.lints.clippy]
+# pedantic lints configuration
+doc_markdown = "warn"
+format_collect = "warn"
+manual_midpoint = "warn"
+semicolon_if_nothing_returned = "warn"
+unnecessary_semicolon = "warn"
+unnecessary_wraps = "warn"
+
+# nursery lints configuration
+# or_fun_call = "warn" # enable it to help detect non trivial code used in `_or` method

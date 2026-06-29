@@ -1,0 +1,79 @@
+labels:
+  nix: "enabled"
+
+when:
+  event:
+  - deployment
+  - cron
+
+matrix:
+  include:
+    - ARCH: amd64
+      TARGET: x86_64-unknown-linux-musl
+    - ARCH: i386
+      TARGET: i686-unknown-linux-musl
+    - ARCH: arm64
+      TARGET: aarch64-unknown-linux-musl
+    - ARCH: arm
+      TARGET: armv6l-unknown-linux-musleabihf
+
+steps:
+  - name: build
+    image: nixpkgs/nix:nixos-24.05
+    commands:
+      - nix-build --attr releasePackages.${ARCH} --argstr git_version ${CI_COMMIT_TAG:-$CI_COMMIT_SHA}
+
+  - name: check is static binary
+    image: nixpkgs/nix:nixos-24.05
+    commands:
+      - nix-shell --attr ci --run "./script/not-dynamic.sh result/bin/garage"
+
+  - name: integration tests
+    image: nixpkgs/nix:nixos-24.05
+    commands:
+      - nix-shell --attr ci --run ./script/test-smoke.sh || (cat /tmp/garage.log; false)
+    when:
+      - matrix:
+          ARCH: amd64
+      - matrix:
+          ARCH: i386
+
+  - name: upgrade tests from v1.0.0
+    image: nixpkgs/nix:nixos-24.05
+    commands:
+      - nix-shell --attr ci --run "./script/test-upgrade.sh v1.0.0 x86_64-unknown-linux-musl" || (cat /tmp/garage.log; false)
+    when:
+      - matrix:
+          ARCH: amd64
+
+  - name: upgrade tests from v0.8.4
+    image: nixpkgs/nix:nixos-24.05
+    commands:
+      - nix-shell --attr ci --run "./script/test-upgrade.sh v0.8.4 x86_64-unknown-linux-musl" || (cat /tmp/garage.log; false)
+    when:
+      - matrix:
+          ARCH: amd64
+
+  - name: push static binary
+    image: nixpkgs/nix:nixos-24.05
+    environment:
+      TARGET: "${TARGET}"
+      AWS_ACCESS_KEY_ID:
+        from_secret: garagehq_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: garagehq_aws_secret_access_key
+    commands:
+      - nix-shell --attr ci --run "to_s3"
+
+  - name: docker build and publish
+    image: nixpkgs/nix:nixos-24.05
+    environment:
+      DOCKER_PLATFORM: "linux/${ARCH}"
+      CONTAINER_NAME: "dxflrs/${ARCH}_garage"
+      DOCKER_AUTH:
+        from_secret: docker_auth
+    commands:
+      - mkdir -p /root/.docker
+      - echo $DOCKER_AUTH > /root/.docker/config.json
+      - export CONTAINER_TAG=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}
+      - nix-shell --attr ci --run "to_docker"

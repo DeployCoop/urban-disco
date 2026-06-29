@@ -91,3 +91,50 @@ Usage:
     {{- end -}}
   {{- end -}}
 {{- end -}}
+
+{{/*
+Concatenates imagepullsecrets and handles different formats (example - secret or - name: secret)
+*/}}
+{{- define "openebs.common.pullSecrets" -}}
+{{- $names := list -}}
+{{- range ((.global).imagePullSecrets) -}}
+  {{- if kindIs "map" . }}
+    {{- if and (hasKey . "name") (not (empty .name)) -}}
+      {{ $names = append $names .name }}
+    {{- end -}}
+  {{- else if not (empty .) -}}
+    {{ $names = append $names . -}}
+  {{- end -}}
+{{- end -}}
+{{- range .images -}}
+  {{- range .imagePullSecrets }}
+    {{- if kindIs "map" . -}}
+      {{- if and (hasKey . "name") (not (empty .name)) -}}
+        {{- $names = append $names .name }}
+      {{- end -}}
+    {{- else if not (empty .) -}}
+      {{- $names = append $names . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $names = uniq $names -}}
+{{- if $names -}}
+  {{- range $names }}
+- name: {{ . }}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Creates the image URL ie registry/repository:tag
+*/}}
+{{- define "openebs.common.image" -}}
+{{- $registryName := default .imageRoot.registry ((.global).imageRegistry) | trimSuffix "/" -}}
+{{- $repositoryName := .imageRoot.repo -}}
+{{- $termination := .imageRoot.tag | toString -}}
+{{- if $registryName }}
+    {{- printf "%s/%s:%s" $registryName $repositoryName $termination -}}
+{{- else -}}
+    {{- printf "%s:%s"  $repositoryName $termination -}}
+{{- end -}}
+{{- end -}}

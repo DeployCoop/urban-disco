@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: 0.12.0
+appVersion: 0.14.1
 dependencies:
 - condition: crds.enabled
   name: crds
@@ -20,4 +20,4 @@ name: rawfile-localpv
 sources:
 - https://github.com/openebs/rawfile-localpv
 type: application
-version: 0.12.0
+version: 0.14.1

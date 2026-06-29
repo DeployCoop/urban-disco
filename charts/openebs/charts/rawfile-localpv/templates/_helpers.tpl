@@ -65,52 +65,33 @@ Create the name of the service account to use
 {{/*
 Some helpers to handle image global information
 */}}
-{{- define "rawfile-localpv.controller-image-tag" -}}
-{{- $imageTag := .Values.controller.image.tag | default .Values.image.tag | default (printf "v%s" .Chart.AppVersion) }}
-{{- printf "%s" $imageTag }}
-{{- end }}
-
-{{- define "rawfile-localpv.controller-image-repository" -}}
-{{- printf "%s" .Values.controller.image.repository | default .Values.image.repository }}
-{{- end }}
-
-{{- define "rawfile-localpv.controller-image" -}}
-{{- $imageRegistry := .Values.image.registry | default .Values.global.imageRegistry }}
-{{- printf "%s/%s:%s" $imageRegistry (include "rawfile-localpv.controller-image-repository" .) (include "rawfile-localpv.controller-image-tag" .) }}
-{{- end }}
-
-{{- define "rawfile-localpv.controller-pull-policy" -}}
-{{- printf "%s" (.Values.controller.image.pullPolicy | default .Values.image.pullPolicy | default .Values.global.imagePullPolicy) }}
-{{- end }}
 
 {{- define "rawfile-localpv.controller-resources" -}}
 {{- toYaml (.Values.controller.resources) }}
 {{- end }}
 
-{{- define "rawfile-localpv.node-image-tag" -}}
-{{- $imageTag := .Values.node.image.tag | default .Values.image.tag | default (printf "v%s" .Chart.AppVersion) }}
-{{- printf "%s" $imageTag }}
-{{- end }}
-
-{{- define "rawfile-localpv.node-image-registry" -}}
-{{- printf "%s" .Values.image.registry | default .Values.global.imageRegistry }}
-{{- end }}
-
-{{- define "rawfile-localpv.node-image-repository" -}}
-{{- printf "%s" .Values.node.image.repository | default .Values.image.repository }}
-{{- end }}
-
-{{- define "rawfile-localpv.node-image" -}}
-{{- $imageRegistry := .Values.image.registry | default .Values.global.imageRegistry }}
-{{- printf "%s/%s:%s" $imageRegistry (include "rawfile-localpv.node-image-repository" .) (include "rawfile-localpv.node-image-tag" .) }}
-{{- end }}
-
-{{- define "rawfile-localpv.node-pull-policy" -}}
-{{- printf "%s" (.Values.node.image.pullPolicy | default .Values.image.pullPolicy | default .Values.global.imagePullPolicy) }}
+{{- define "rawfile-localpv.controller-external-resizer-resources" -}}
+{{- toYaml (.Values.controller.externalResizer.resources) }}
 {{- end }}
 
 {{- define "rawfile-localpv.node-resources" -}}
 {{- toYaml (.Values.node.resources) }}
+{{- end }}
+
+{{- define "rawfile-localpv.node-driver-registrar-resources" -}}
+{{- toYaml (.Values.node.driverRegistrar.resources) }}
+{{- end }}
+
+{{- define "rawfile-localpv.node-external-provisioner-resources" -}}
+{{- toYaml (.Values.node.externalProvisioner.resources) }}
+{{- end }}
+
+{{- define "rawfile-localpv.node-external-snapshotter-resources" -}}
+{{- toYaml (.Values.node.externalSnapshotter.resources) }}
+{{- end }}
+
+{{- define "rawfile-localpv.node-snapshot-controller-resources" -}}
+{{- toYaml (.Values.node.snapshotController.resources) }}
 {{- end }}
 
 {{- define "rawfile-localpv.node-kubelet-path" -}}
@@ -120,3 +101,83 @@ Some helpers to handle image global information
 {{- define "rawfile-localpv.metadata-dir-path" -}}
 {{- tpl .Values.node.metadataDirPath . }}
 {{- end }}
+
+{{- define "rawfile-localpv.pool-volumes" -}}
+{{- if not .Values.node.storagePools }}
+- name: data-dir
+  hostPath:
+    path: {{ tpl .Values.node.dataDirPath . }}
+    type: DirectoryOrCreate
+{{- else }}
+{{- range $name, $pool := .Values.node.storagePools }}
+- name: pool-{{ $name }}
+  hostPath:
+    path: {{ tpl $pool.path . }}
+    type: DirectoryOrCreate
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "rawfile-localpv.pool-volume-mounts" -}}
+{{- if not .Values.node.storagePools }}
+- name: data-dir
+  mountPath: {{ tpl .Values.node.dataDirPath . }}
+{{- else }}
+{{- range $name, $pool := .Values.node.storagePools }}
+- name: pool-{{ $name }}
+  mountPath: {{ tpl $pool.path . }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+
+{{/*
+Creates the image URL ie registry/repository:tag
+*/}}
+{{- define "rawfile-localpv.common.image" -}}
+{{- $registryName := ((.global).imageRegistry) | default ((.imageRoot).registry) | default ((.csiSideCars).registry) | trimSuffix "/" -}}
+{{- $repositoryName := .imageRoot.repository -}}
+{{- $separator := ":" -}}
+{{- $chartVersion := .chartVersion -}}
+{{- $termination := .imageRoot.tag | default (printf "v%s" $chartVersion) | toString -}}
+{{- if $registryName }}
+    {{- printf "%s/%s%s%s" $registryName $repositoryName $separator $termination -}}
+{{- else }}
+    {{- printf "%s%s%s"  $repositoryName $separator $termination -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Concatenates imagepullsecrets and handles different formats (example - secret or - name: secret)
+*/}}
+{{- define "rawfile-localpv.common.pullSecrets" -}}
+{{- $names := list -}}
+{{- with .Values.global.imagePullSecrets -}}
+  {{- range . -}}
+    {{- if kindIs "map" . }}
+      {{- if and (hasKey . "name") (not (empty .name)) -}}
+        {{ $names = append $names .name }}
+      {{- end -}}
+    {{- else if not (empty .) -}}
+      {{ $names = append $names . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- with .Values.imagePullSecrets -}}
+  {{- range . }}
+    {{- if kindIs "map" . -}}
+      {{- if and (hasKey . "name") (not (empty .name)) -}}
+        {{- $names = append $names .name }}
+      {{- end -}}
+    {{- else if not (empty .) -}}
+      {{- $names = append $names . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $names = uniq $names -}}
+{{- if $names -}}
+{{- range $names }}
+- name: {{ . }}
+{{- end -}}
+{{- end -}}
+{{- end -}}

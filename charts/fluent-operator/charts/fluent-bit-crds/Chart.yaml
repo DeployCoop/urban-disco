@@ -1,5 +1,0 @@
-apiVersion: v2
-appVersion: 3.5.0
-description: A Helm chart delivering fluenbt-bit controller CRDS
-name: fluent-bit-crds
-version: 3.5.0

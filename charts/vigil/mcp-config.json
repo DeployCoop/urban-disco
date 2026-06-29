@@ -1,0 +1,345 @@
+{
+  "$schema": "https://github.com/anthropics/anthropic-quickstarts/blob/main/mcp/config-schema.json",
+
+  "_comment_overview": "MCP Server Modernization: Official/community servers replace legacy tools/* where available. Tier 4 tools (no replacement) remain as custom implementations. Set env vars in .env or shell before starting.",
+
+  "mcpServers": {
+
+    "_comment_official_mcp": "--- Official MCP Reference Servers ---",
+
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+
+    "_comment_memory": "--- Persistent Memory Layer ---",
+
+    "mempalace": {
+      "command": "python3",
+      "args": ["-m", "mempalace.mcp_server"],
+      "env": {
+        "MEMPALACE_PALACE_PATH": "${MEMPALACE_PALACE_PATH:-${HOME}/.vigil/mempalace/palace}"
+      }
+    },
+
+    "_comment_internal": "--- DeepTempo Internal Servers ---",
+
+    "deeptempo-findings": {
+      "command": "python3",
+      "args": ["mcp-servers/servers/deeptempo_findings.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "tempo-flow": {
+      "command": "python3",
+      "args": ["mcp-servers/servers/tempo_flow.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "approval": {
+      "command": "python3",
+      "args": ["mcp-servers/servers/approval.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "attack-layer": {
+      "command": "python3",
+      "args": ["mcp-servers/servers/attack_layer.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "security-detections": {
+      "command": "npx",
+      "args": ["-y", "security-detections-mcp"],
+      "env": {
+        "SIGMA_PATHS": "${HOME}/security-detections/sigma/rules",
+        "SPLUNK_PATHS": "${HOME}/security-detections/security_content/detections",
+        "ELASTIC_PATHS": "${HOME}/security-detections/detection-rules/rules",
+        "KQL_PATHS": "${HOME}/security-detections/Hunting-Queries-Detection-Rules",
+        "STORY_PATHS": "${HOME}/security-detections/security_content/stories"
+      }
+    },
+
+    "_comment_tier1": "--- Tier 1: Official Vendor MCP Servers (replacing legacy tools/*) ---",
+
+    "crowdstrike": {
+      "command": "uvx",
+      "args": ["falcon-mcp"],
+      "env": {
+        "FALCON_CLIENT_ID": "${FALCON_CLIENT_ID}",
+        "FALCON_CLIENT_SECRET": "${FALCON_CLIENT_SECRET}",
+        "FALCON_BASE_URL": "https://api.crowdstrike.com"
+      }
+    },
+
+    "sentinelone": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/Sentinel-One/purple-mcp.git", "purple-mcp", "--mode", "stdio"],
+      "env": {
+        "PURPLEMCP_CONSOLE_TOKEN": "${SENTINELONE_API_TOKEN}",
+        "PURPLEMCP_CONSOLE_BASE_URL": "${SENTINELONE_CONSOLE_URL}"
+      }
+    },
+
+    "azure-sentinel": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://sentinelmcp.microsoft.com/v1/mcp"],
+      "env": {
+        "_setup_note": "Microsoft Sentinel MCP (GA Nov 2025). Requires: (1) Onboarding to Microsoft Sentinel data lake, (2) Microsoft Entra OAuth. See: https://learn.microsoft.com/en-us/azure/sentinel/datalake/sentinel-mcp-get-started"
+      }
+    },
+
+    "splunk": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "${SPLUNK_MCP_URL}"],
+      "env": {
+        "_setup_note": "Splunk Official MCP Server. Deploy via Azure Marketplace (Splunk-hosted) or self-managed. See: https://www.splunk.com/en_us/blog/artificial-intelligence/unlocking-ai-driven-operations-with-splunk-mcp-server-on-azure-marketplace.html",
+        "SPLUNK_MCP_URL": "${SPLUNK_MCP_URL}"
+      }
+    },
+
+    "splunk-selfhosted": {
+      "command": "python3",
+      "args": ["tools/splunk.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "_setup_note": "Self-hosted Splunk via REST API. Set SPLUNK_URL (e.g., https://splunk.example.com:8089), SPLUNK_USERNAME, and SPLUNK_PASSWORD in .env. Port 8089 uses HTTPS by default."
+      }
+    },
+
+    "elastic": {
+      "command": "python3",
+      "args": ["tools/elastic.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "_setup_note": "Elastic Security via Elasticsearch REST API. Set ELASTIC_HOST (e.g., https://elasticsearch.example.com:9200), ELASTIC_API_KEY or ELASTIC_USERNAME/ELASTIC_PASSWORD, and optionally ELASTIC_KIBANA_URL in .env."
+      }
+    },
+
+    "pagerduty": {
+      "command": "uvx",
+      "args": ["pagerduty-mcp", "--enable-write-tools"],
+      "env": {
+        "PAGERDUTY_USER_API_KEY": "${PAGERDUTY_API_KEY}",
+        "PAGERDUTY_API_HOST": "https://api.pagerduty.com"
+      }
+    },
+
+    "okta": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm",
+        "-e", "OKTA_DOMAIN=${OKTA_DOMAIN}",
+        "-e", "OKTA_API_TOKEN=${OKTA_API_TOKEN}",
+        "mcp/okta-mcp-fctr"
+      ],
+      "env": {}
+    },
+
+    "jira": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/mcp"],
+      "env": {
+        "_setup_note": "Atlassian Rovo MCP Server (official). Covers Jira + Confluence + Compass. Uses OAuth 2.1 via browser flow. See: https://github.com/atlassian/atlassian-mcp-server"
+      }
+    },
+
+    "joe-sandbox": {
+      "command": "uv",
+      "args": ["--directory", "${HOME}/mcp-servers/joesandboxMCP", "run", "main.py"],
+      "env": {
+        "_setup_note": "Clone first: git clone https://github.com/joesecurity/joesandboxMCP.git ~/mcp-servers/joesandboxMCP && cd ~/mcp-servers/joesandboxMCP && uv venv && uv pip install -e .",
+        "JBXAPIKEY": "${JOE_SANDBOX_API_KEY}",
+        "ACCEPTTAC": "TRUE"
+      }
+    },
+
+    "_comment_tier2": "--- Tier 2: Community / Semi-Official MCP Servers ---",
+
+    "virustotal": {
+      "command": "npx",
+      "args": ["-y", "@burtthecoder/mcp-virustotal"],
+      "env": {
+        "VIRUSTOTAL_API_KEY": "${VIRUSTOTAL_API_KEY}"
+      }
+    },
+
+    "shodan": {
+      "command": "npx",
+      "args": ["-y", "@burtthecoder/mcp-shodan"],
+      "env": {
+        "SHODAN_API_KEY": "${SHODAN_API_KEY}"
+      }
+    },
+
+    "gcp-secops": {
+      "command": "uvx",
+      "args": ["--from", "google-secops-mcp", "secops_mcp"],
+      "env": {
+        "CHRONICLE_PROJECT_ID": "${CHRONICLE_PROJECT_ID}",
+        "CHRONICLE_CUSTOMER_ID": "${CHRONICLE_CUSTOMER_ID}",
+        "CHRONICLE_REGION": "${CHRONICLE_REGION}"
+      }
+    },
+
+    "gcp-threat-intel": {
+      "command": "uvx",
+      "args": ["gti_mcp"],
+      "env": {
+        "VT_APIKEY": "${VIRUSTOTAL_API_KEY}"
+      }
+    },
+
+    "gcp-scc": {
+      "command": "uvx",
+      "args": ["scc_mcp"],
+      "env": {}
+    },
+
+    "aws-security": {
+      "command": "uvx",
+      "args": ["awslabs.well-architected-security-mcp-server@latest"],
+      "env": {
+        "_setup_note": "AWS Well-Architected Security Assessment MCP. Covers GuardDuty, Security Hub, Inspector, IAM Access Analyzer. Requires AWS credentials. See: https://awslabs.github.io/mcp/servers/well-architected-security-mcp-server",
+        "AWS_REGION": "${AWS_REGION}",
+        "AWS_PROFILE": "${AWS_PROFILE}"
+      }
+    },
+
+    "cribl-stream": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/pebbletek/cribl-mcp.git", "cribl-mcp"],
+      "env": {
+        "_setup_note": "Cribl Stream MCP (community, MIT). See: https://docs.cribl.io/copilot/cribl-mcp-server/",
+        "CRIBL_BASE_URL": "${CRIBL_BASE_URL}",
+        "CRIBL_CLIENT_ID": "${CRIBL_CLIENT_ID}",
+        "CRIBL_CLIENT_SECRET": "${CRIBL_CLIENT_SECRET}"
+      }
+    },
+
+    "alienvault-otx": {
+      "command": "python3",
+      "args": ["tools/alienvault_otx.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "_note": "Kept as custom tool. Consider consolidating with FastMCP ThreatIntel (multi-source: OTX + VT + AbuseIPDB + IPinfo) when available as a stable package."
+      }
+    },
+
+    "_comment_tier3_evaluate": "--- Tier 3: Vendor MCP Exists But Scope Differs (evaluate) ---",
+
+    "palo-alto": {
+      "command": "python3",
+      "args": ["tools/palo_alto.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "_note": "Kept as custom tool. Prisma AIRS MCP (official, Jan 2026) focuses on securing AI agents, not PAN-OS firewall management. Evaluate if it covers block_ip/get_threats use cases."
+      }
+    },
+
+    "slack": {
+      "command": "python3",
+      "args": ["tools/slack.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "_note": "Kept as custom tool. Slack Platform MCP Server (official, in development) focuses on app development, not SOC alerting. Monitor for slack_send_alert support."
+      }
+    },
+
+    "_comment_tier4": "--- Tier 4: No Official/Community MCP Server (keep custom) ---",
+
+    "carbon-black": {
+      "command": "python3",
+      "args": ["tools/carbon_black.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "vstrike": {
+      "command": "python3",
+      "args": ["tools/vstrike.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "_setup_note": "CloudCurrent VStrike network topology fusion layer. Set VSTRIKE_BASE_URL and VSTRIKE_API_KEY in .env, or configure in Settings > Integrations.",
+        "VSTRIKE_BASE_URL": "${VSTRIKE_BASE_URL}",
+        "VSTRIKE_API_KEY": "${VSTRIKE_API_KEY}",
+        "VSTRIKE_VERIFY_SSL": "${VSTRIKE_VERIFY_SSL}"
+      }
+    },
+
+    "microsoft-defender": {
+      "command": "python3",
+      "args": ["tools/microsoft_defender.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "_note": "Partially covered by Microsoft Sentinel MCP (shared Defender data lake). Evaluate if azure-sentinel entry above can replace this."
+      }
+    },
+
+    "microsoft-teams": {
+      "command": "python3",
+      "args": ["tools/microsoft_teams.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "azure-ad": {
+      "command": "python3",
+      "args": ["tools/azure_ad.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "_note": "Microsoft Entra (Azure AD rebrand) may be accessible via Sentinel MCP or Okta MCP for identity use cases. Evaluate."
+      }
+    },
+
+    "misp": {
+      "command": "python3",
+      "args": ["tools/misp.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "hybrid-analysis": {
+      "command": "python3",
+      "args": ["tools/hybrid_analysis.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "anyrun": {
+      "command": "python3",
+      "args": ["tools/anyrun.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "cape-sandbox": {
+      "command": "python3",
+      "args": ["tools/cape_sandbox.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "CAPE_SANDBOX_URL": "${CAPE_SANDBOX_URL}",
+        "CAPE_SANDBOX_API_KEY": "${CAPE_SANDBOX_API_KEY}"
+      }
+    },
+
+    "ip-geolocation": {
+      "command": "python3",
+      "args": ["tools/ip_geolocation.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "url-analysis": {
+      "command": "python3",
+      "args": ["tools/url_analysis.py"],
+      "cwd": "${workspaceFolder}"
+    },
+
+    "cloudflare": {
+      "command": "python3",
+      "args": ["tools/cloudflare.py"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "_setup_note": "Cloudflare WAF, Zero Trust Gateway, and Access response actions plus read-only IP/domain threat lookups. Configure api_token (and optional account_id, zone_id) in Settings → Integrations. Tools are no-ops until the integration is enabled.",
+        "_note": "Cloudforce One threat-intel feeds are ingested separately by daemon/threat_feed_poller.py and enrich findings via daemon/processor.py — no MCP tool surface required for v1."
+      }
+    }
+  }
+}

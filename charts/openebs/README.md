@@ -10,7 +10,7 @@ OpenEBS turns any storage available on the Kubernetes worker nodes into local or
 
 #### Local PV
 
-Local Volumes are accessible only from a single node in the cluster. Pods using Local Volume have to be scheduled on the node where volume is provisioned. Local Volumes are typically preferred for distributed workloads like Cassandra, MongoDB, Elastic, etc that are distributed in nature and have high availability built into them. Depending on the type of storage attached to the Kubernetes worker, OpenEBS offers different flavors of Local PV - Hostpath, LVM and ZFS.
+Local Volumes are accessible only from a single node in the cluster. Pods using Local Volume have to be scheduled on the node where volume is provisioned. Local Volumes are typically preferred for distributed workloads like Cassandra, MongoDB, Elastic, etc that are distributed in nature and have high availability built into them. Depending on the type of storage attached to the Kubernetes worker, OpenEBS offers different flavors of Local PV - Hostpath, LVM, ZFS and Rawfile.
 
 #### Replicated PV
 
@@ -31,15 +31,16 @@ openebs
 ├── (default) Local PV HostPath
 ├── (default) Local PV LVM
 ├── (default) Local PV ZFS
+├── (default) Local PV Rawfile
 └── (default) Replicated PV Mayastor
 ```
 
 ### Prerequisites
 
-- [Local PV Hostpath Prerequisites](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-hostpath/hostpath-installation#prerequisites)
-- [Local PV LVM Prerequisites](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-lvm/lvm-installation#prerequisites)
-- [Local PV ZFS Prerequisites](https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-zfs/zfs-installation#prerequisites)
-- [Replicated PV Mayastor Prerequisites](https://openebs.io/docs/user-guides/replicated-storage-user-guide/replicated-pv-mayastor/rs-installation#prerequisites)
+- [Local PV Hostpath Prerequisites](https://openebs.io/docs/quickstart-guide/prerequisites#local-pv-hostpath-prerequisites)
+- [Local PV LVM Prerequisites](https://openebs.io/docs/quickstart-guide/prerequisites#local-pv-lvm-prerequisites)
+- [Local PV ZFS Prerequisites](https://openebs.io/docs/quickstart-guide/prerequisites#local-pv-zfs-prerequisites)
+- [Replicated PV Mayastor Prerequisites](https://openebs.io/docs/quickstart-guide/prerequisites#replicated-pv-mayastor-prerequisites)
 
 ### Setup Helm Repository
 
@@ -66,15 +67,6 @@ Replicated PV Mayastor can be excluded during the installation with the followin
 helm install openebs --namespace openebs openebs/openebs --set engines.replicated.mayastor.enabled=false --create-namespace
 ```
 
-To view the chart and get the following output.
-
-```bash
-helm ls -n openebs
-
-NAME    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
-openebs openebs         1               2025-01-10 09:13:00.903321318 +0000 UTC deployed        openebs-4.4.0   4.4.0
-```
-
 As a next step [verify the installation](https://openebs.io/docs/quickstart-guide/installation#verifying-openebs-installation) and do the [post installation](https://openebs.io/docs/quickstart-guide/installation#post-installation-considerations) steps.
 
 For more details on customizing and installing OpenEBS please see the [chart values](https://github.com/openebs/openebs/tree/HEAD/charts/README.md).
@@ -82,48 +74,61 @@ For more details on customizing and installing OpenEBS please see the [chart val
 ### To uninstall/delete instance with release name
 
 ```bash
-helm ls --all
 helm delete `<RELEASE NAME>` -n `<RELEASE NAMESPACE>`
 ```
 
 > **Tip**: Prior to deleting the Helm chart, make sure all the storage volumes and pools are deleted.
 
-## Requirements
+## Chart Dependencies
 
 | Repository | Name | Version |
 |------------|------|---------|
-|  | openebs-crds | 4.4.0 |
+|  | openebs-crds | 4.5.1-prerelease |
 | https://grafana.github.io/helm-charts | alloy | 1.0.1 |
 | https://grafana.github.io/helm-charts | loki | 6.29.0 |
-| https://openebs.github.io/dynamic-localpv-provisioner | localpv-provisioner | 4.4.0 |
-| https://openebs.github.io/lvm-localpv | lvm-localpv | 1.8.0 |
-| https://openebs.github.io/mayastor-extensions | mayastor | 2.10.0 |
-| https://openebs.github.io/rawfile-localpv | rawfile-localpv | 0.12.0 |
-| https://openebs.github.io/zfs-localpv | zfs-localpv | 2.9.0 |
+| https://openebs.github.io/dynamic-localpv-provisioner | localpv-provisioner | 4.5.1 |
+| https://openebs.github.io/lvm-localpv | lvm-localpv | 1.9.1 |
+| https://openebs.github.io/mayastor-extensions | mayastor | 2.11.1 |
+| https://openebs.github.io/rawfile-localpv | rawfile-localpv | 0.14.1 |
+| https://openebs.github.io/zfs-localpv | zfs-localpv | 2.10.1 |
 
 ## Values
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| lvm-localpv.crds.csi.volumeSnapshots.enabled | bool | `false` |  |
-| lvm-localpv.crds.lvmLocalPv.enabled | bool | `true` |  |
-| mayastor.alloy.enabled | bool | `false` |  |
-| mayastor.crds.enabled | bool | `false` |  |
-| mayastor.csi.node.initContainers.enabled | bool | `true` |  |
-| mayastor.etcd.clusterDomain | string | `"cluster.local"` | Kubernetes Cluster Domain |
-| mayastor.localpv-provisioner.enabled | bool | `false` |  |
-| mayastor.loki.enabled | bool | `false` |  |
-| openebs-crds.csi.volumeSnapshots.enabled | bool | `true` |  |
-| openebs-crds.csi.volumeSnapshots.keep | bool | `true` |  |
-| preUpgradeHook.annotations."helm.sh/hook-delete-policy" | string | `"hook-succeeded,before-hook-creation"` |  |
-| preUpgradeHook.enabled | bool | `true` | Enable/Disable openebs pre-upgrade hook |
-| preUpgradeHook.image.pullPolicy | string | `"IfNotPresent"` | The imagePullPolicy for the container |
-| preUpgradeHook.image.registry | string | `"docker.io"` | The container image registry URL for the hook job |
-| preUpgradeHook.image.repo | string | `"openebs/kubectl"` | The container repository for the hook job |
-| preUpgradeHook.image.tag | string | `"1.25.15"` | The container image tag for the hook job |
-| preUpgradeHook.imagePullSecrets | list | `[]` | Optional array of imagePullSecrets containing private registry credentials # Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/ |
-| preUpgradeHook.podLabels."openebs.io/logging" | string | `"true"` |  |
-| preUpgradeHook.tolerations | list | `[]` | Node tolerations for server scheduling to nodes with taints # Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ # |
-| rawfile-localpv.crds.csi.volumeSnapshots.enabled | bool | `false` |  |
-| zfs-localpv.crds.csi.volumeSnapshots.enabled | bool | `false` |  |
-| zfs-localpv.crds.zfsLocalPv.enabled | bool | `true` |  |
+| Key | Description | Default |
+|:----|:------------|:--------|
+| alloy.&ZeroWidthSpace;enabled | Enable/Disable Alloy. | `true` |
+| alloy.&ZeroWidthSpace;logging_config.&ZeroWidthSpace;labels | Labels to enable scraping on, at-least one of these labels should be present. | <pre>{<br>"openebs.io/logging":true<br>}</pre> |
+| alloy.&ZeroWidthSpace;logging_config.&ZeroWidthSpace;tenant_id | X-Scope-OrgID to pe populated which pushing logs. Make sure the caller also uses the same. | `"openebs"` |
+| engines.&ZeroWidthSpace;local.&ZeroWidthSpace;hostpath.&ZeroWidthSpace;enabled | Enable/Disable Dynamic LocalPV Provisioner | `true` |
+| engines.&ZeroWidthSpace;local.&ZeroWidthSpace;lvm.&ZeroWidthSpace;enabled | Enable/Disable LocalPV LVM Storage Engine | `true` |
+| engines.&ZeroWidthSpace;local.&ZeroWidthSpace;rawfile.&ZeroWidthSpace;enabled | Enable/Disable LocalPV Rawfile Storage Engine | `false` |
+| engines.&ZeroWidthSpace;local.&ZeroWidthSpace;zfs.&ZeroWidthSpace;enabled | Enable/Disable LocalPV ZFS Storage Engine | `true` |
+| engines.&ZeroWidthSpace;replicated.&ZeroWidthSpace;mayastor.&ZeroWidthSpace;enabled | Enable/Disable Replicated PV Mayastor Storage Engine | `true` |
+| global.&ZeroWidthSpace;imagePullPolicy | Global override for image pull policy | `""` |
+| global.&ZeroWidthSpace;imagePullSecrets | Global image pull secrets (merged with local imagePullSecrets and not overridden) - secret | `[]` |
+| global.&ZeroWidthSpace;imageRegistry | Global override for container image registry | `""` |
+| loki.&ZeroWidthSpace;enabled | Enable/Disable loki. | `true` |
+| loki.&ZeroWidthSpace;localpvScConfig.&ZeroWidthSpace;loki.&ZeroWidthSpace;basePath | Host path where local loki data is stored in. | `"/var/local/{{ .Release.Name }}/localpv-hostpath/loki"` |
+| loki.&ZeroWidthSpace;localpvScConfig.&ZeroWidthSpace;loki.&ZeroWidthSpace;reclaimPolicy | ReclaimPolicy of loki's localpv hostpath storage class. | `"Delete"` |
+| loki.&ZeroWidthSpace;localpvScConfig.&ZeroWidthSpace;loki.&ZeroWidthSpace;volumeBindingMode | VolumeBindingMode of loki's localpv hostpath storage class. | `"WaitForFirstConsumer"` |
+| loki.&ZeroWidthSpace;localpvScConfig.&ZeroWidthSpace;minio.&ZeroWidthSpace;basePath | Host path where local minio data is stored in. | `"/var/local/{{ .Release.Name }}/localpv-hostpath/minio"` |
+| loki.&ZeroWidthSpace;localpvScConfig.&ZeroWidthSpace;minio.&ZeroWidthSpace;reclaimPolicy | ReclaimPolicy of minio's localpv hostpath storage class. | `"Delete"` |
+| loki.&ZeroWidthSpace;localpvScConfig.&ZeroWidthSpace;minio.&ZeroWidthSpace;volumeBindingMode | VolumeBindingMode of minio's localpv hostpath storage class. | `"WaitForFirstConsumer"` |
+| loki.&ZeroWidthSpace;minio.&ZeroWidthSpace;enabled | Disable this if you want to enable external s3 bucket, and uncomment the storage section above. | `true` |
+| loki.&ZeroWidthSpace;minio.&ZeroWidthSpace;persistence.&ZeroWidthSpace;enabled | Enabled persistence for minio | `true` |
+| loki.&ZeroWidthSpace;minio.&ZeroWidthSpace;persistence.&ZeroWidthSpace;size | Size of minio local storage volume | `"2Gi"` |
+| loki.&ZeroWidthSpace;minio.&ZeroWidthSpace;persistence.&ZeroWidthSpace;storageClass | Storage class for minio storage | `"openebs-minio-localpv"` |
+| loki.&ZeroWidthSpace;minio.&ZeroWidthSpace;replicas | Specify the number of Minio Replicas. | `3` |
+| loki.&ZeroWidthSpace;singleBinary.&ZeroWidthSpace;persistence.&ZeroWidthSpace;enabled | Enabled persistence for loki | `true` |
+| loki.&ZeroWidthSpace;singleBinary.&ZeroWidthSpace;persistence.&ZeroWidthSpace;size | Size of loki local storage volume | `"2Gi"` |
+| loki.&ZeroWidthSpace;singleBinary.&ZeroWidthSpace;persistence.&ZeroWidthSpace;storageClass | Storage class for loki storage | `"openebs-loki-localpv"` |
+| mayastor.&ZeroWidthSpace;etcd.&ZeroWidthSpace;clusterDomain | Kubernetes Cluster Domain | `"cluster.local"` |
+| openebs-crds.&ZeroWidthSpace;csi.&ZeroWidthSpace;volumeSnapshots.&ZeroWidthSpace;enabled | Enable/Disable installation of Volume Snapshot CRD's | `true` |
+| preUpgradeHook.&ZeroWidthSpace;enabled | Enable/Disable openebs pre-upgrade hook | `true` |
+| preUpgradeHook.&ZeroWidthSpace;image.&ZeroWidthSpace;pullPolicy | The imagePullPolicy for the container | `"IfNotPresent"` |
+| preUpgradeHook.&ZeroWidthSpace;image.&ZeroWidthSpace;registry | The container image registry URL for the hook job | `"docker.io"` |
+| preUpgradeHook.&ZeroWidthSpace;image.&ZeroWidthSpace;repo | The container repository for the hook job | `"openebs/kubectl"` |
+| preUpgradeHook.&ZeroWidthSpace;image.&ZeroWidthSpace;tag | The container image tag for the hook job | `"1.25.15"` |
+| preUpgradeHook.&ZeroWidthSpace;imagePullSecrets | Optional array of imagePullSecrets containing private registry credentials # Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/ | `[]` |
+| preUpgradeHook.&ZeroWidthSpace;tolerations | Node tolerations for server scheduling to nodes with taints # Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/ # | `[]` |
+

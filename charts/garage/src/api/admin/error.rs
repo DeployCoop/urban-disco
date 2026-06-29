@@ -1,0 +1,116 @@
+use std::convert::TryFrom;
+
+use hyper::header::HeaderValue;
+use hyper::{HeaderMap, StatusCode};
+use thiserror::Error;
+
+pub use garage_model::helper::error::Error as HelperError;
+
+use garage_api_common::common_error::{commonErrorDerivative, CommonError};
+pub use garage_api_common::common_error::{
+	CommonErrorDerivative, OkOrBadRequest, OkOrInternalError,
+};
+use garage_api_common::generic_server::ApiError;
+use garage_api_common::helpers::*;
+
+/// Errors of this crate
+#[derive(Debug, Error)]
+pub enum Error {
+	#[error("{0}")]
+	/// Error from common error
+	Common(#[from] CommonError),
+
+	// Category: cannot process
+	/// The admin API token does not exist
+	#[error("Admin token not found: {0}")]
+	NoSuchAdminToken(String),
+
+	/// The API access key does not exist
+	#[error("Access key not found: {0}")]
+	NoSuchAccessKey(String),
+
+	/// The requested block does not exist
+	#[error("Block not found: {0}")]
+	NoSuchBlock(String),
+
+	/// The requested worker does not exist
+	#[error("Worker not found: {0}")]
+	NoSuchWorker(u64),
+
+	/// The object requested don't exists
+	#[error("Key not found")]
+	NoSuchKey,
+
+	/// In Import key, the key already exists
+	#[error("Key {0} already exists in data store. Even if it is deleted, we can't let you create a new key with the same ID. Sorry.")]
+	KeyAlreadyExists(String),
+}
+
+commonErrorDerivative!(Error);
+
+/// FIXME: helper errors are transformed into their corresponding variants
+/// in the Error struct, but in many case a helper error should be considered
+/// an internal error.
+impl From<HelperError> for Error {
+	fn from(err: HelperError) -> Error {
+		match CommonError::try_from(err) {
+			Ok(ce) => Self::Common(ce),
+			Err(HelperError::NoSuchAccessKey(k)) => Self::NoSuchAccessKey(k),
+			Err(_) => unreachable!(),
+		}
+	}
+}
+
+impl Error {
+	pub fn code(&self) -> &'static str {
+		match self {
+			Error::Common(c) => c.aws_code(),
+			Error::NoSuchAdminToken(_) => "NoSuchAdminToken",
+			Error::NoSuchAccessKey(_) => "NoSuchAccessKey",
+			Error::NoSuchWorker(_) => "NoSuchWorker",
+			Error::NoSuchBlock(_) => "NoSuchBlock",
+			Error::KeyAlreadyExists(_) => "KeyAlreadyExists",
+			Error::NoSuchKey => "NoSuchKey",
+		}
+	}
+}
+
+impl ApiError for Error {
+	/// Get the HTTP status code that best represents the meaning of the error for the client
+	fn http_status_code(&self) -> StatusCode {
+		match self {
+			Error::Common(c) => c.http_status_code(),
+			Error::NoSuchAdminToken(_)
+			| Error::NoSuchAccessKey(_)
+			| Error::NoSuchWorker(_)
+			| Error::NoSuchBlock(_)
+			| Error::NoSuchKey => StatusCode::NOT_FOUND,
+			Error::KeyAlreadyExists(_) => StatusCode::CONFLICT,
+		}
+	}
+
+	fn add_http_headers(&self, header_map: &mut HeaderMap<HeaderValue>) {
+		use hyper::header;
+		header_map.append(header::CONTENT_TYPE, "application/json".parse().unwrap());
+		header_map.append(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
+	}
+
+	fn http_body(&self, garage_region: &str, path: &str) -> ErrorBody {
+		let error = CustomApiErrorBody {
+			code: self.code().to_string(),
+			message: format!("{}", self),
+			path: path.to_string(),
+			region: garage_region.to_string(),
+		};
+		let error_str = serde_json::to_string_pretty(&error).unwrap_or_else(|_| {
+			r#"
+{
+	"code": "InternalError",
+	"message": "JSON encoding of error failed"
+}
+			"#
+			.into()
+		});
+		error_body(error_str)
+	}
+}

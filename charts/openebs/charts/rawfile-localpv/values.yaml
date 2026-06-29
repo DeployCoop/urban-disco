@@ -1,3 +1,23 @@
+global:
+  # -- Global override for image registry
+  imageRegistry: ""
+  # -- Global override for image pull policy
+  imagePullPolicy: ""
+  # -- Global image pull secrets (merged with local imagePullSecrets and not overridden)
+  # - secret
+  imagePullSecrets: []
+  analytics:
+    # -- Global override for GA analytics
+    enabled:
+
+# -- Image registry for CSI Sidecars
+csiSideCars:
+  image:
+    # -- Image registry for csi sidecars
+    registry: "registry.k8s.io"
+    # -- Image pull policy for csi sidecars
+    pullPolicy: IfNotPresent
+
 # -- Name of the registered CSI Driver in the cluster
 provisionerName: "rawfile.csi.openebs.io"
 
@@ -6,50 +26,36 @@ logLevel: INFO
 # -- Format of the logs (json, pretty)
 logFormat: json
 
-# -- Used to reserve capacity on each node for data dir storage on each host (Supports percentage and size) [e.g. `25%` or `50GB` or `10MiB`]
+# -- Used to reserve capacity on each node for data dir storage on each host (Supports percentage and size) [e.g. `25%` or `50GB` or `10MiB`] (Deprecated, use storagePools.reservedCapacity instead)
 reservedCapacity: ""
-# -- Overrides total capacity of the storage for data dir storage on each host (Support size values) [e.g. `50GB` or `10MiB`]
-capacityOverride: ""
 
 auth:
   # -- Enables authentication for internal gRPC server
   enabled: true
   # -- Sets authentication token for internal gRPC server, will generate one if nothing provided
   token: ""
-
-global:
-  # -- Default image registry for Images from DockerHub
-  imageRegistry: docker.io
-  # -- Default image registry for Images from Kubernetes (registry.k8s.io)
-  k8sImageRegistry: registry.k8s.io
-  # -- Default pull policy for images
-  imagePullPolicy: IfNotPresent
-  # -- Default image pull secret for images
-  imagePullSecrets: []
-  analytics:
-    # -- Enable OpenEBS analytics which help track engine traction and usage.
-    enabled: true
+  # -- If managing secrets outside the chart, use this to reference the secret name; otherwise, leave empty.
+  secretName: ""
 
 image:
-  # -- Image registry for rawfile-localpv (default is global.imageRegistry)
-  registry: ""
+  # -- Image registry for rawfile-localpv (can be overridden by global.imageRegistry)
+  registry: "docker.io"
   # -- Image repository for rawfile-localpv
   repository: openebs/rawfile-localpv
   # -- Default image tag for node and controller components (uses AppVersion if empty)
-  tag: ""
+  tag:
   # -- Default image pull policy for node and controller components
   pullPolicy: IfNotPresent
 
-controller:
-  image:
-    # -- Overrides default image repository for node component
-    repository: ""
-    # -- Overrides default image tag for node component
-    tag: ""
-    # -- Overrides default image pull policy for node component
-    pullPolicy: ""
+analytics:
+  # -- Enable OpenEBS analytics which help track engine traction and usage.
+  enabled: true
 
+controller:
   externalResizer:
+    # -- Sets compute resources for external-resizer container
+    resources:
+      {}
     image:
       # -- Image registry for `csi-resizer`
       registry: ""
@@ -57,6 +63,8 @@ controller:
       repository: sig-storage/csi-resizer
       # -- Image tag for `csi-resizer`
       tag: v1.13.2
+      # -- Image pull policy for `csi-resizer`
+      pullPolicy:
 
   # -- Sets compute resources for controller component
   resources:
@@ -78,19 +86,23 @@ controller:
       value: "true"
       effect: NoSchedule
 
+  # -- nodeSelector for controller component
+  nodeSelector:
+
+  # -- Affinities for controller component
+  affinity:
+
   # -- Number of gRPC workers for controller component
   grpcWorkers: 10
 
 node:
-  image:
-    # -- Overrides default image repository for node component
-    repository: ""
-    # -- Overrides default image tag for node component
-    tag: ""
-    # -- Overrides default image pull policy for node component
-    pullPolicy: ""
+  # -- Enables hostNetwork for node component
+  hostNetwork: false
 
   driverRegistrar:
+    # -- Sets compute resources for driver-registrar container
+    resources:
+      {}
     image:
       # -- Image Registry for `csi-node-driver-registrar`
       registry: ""
@@ -98,8 +110,16 @@ node:
       repository: sig-storage/csi-node-driver-registrar
       # -- Image Tag for `csi-node-driver-registrar`
       tag: v2.13.0
+      # -- Image pull policy for `csi-node-driver-registrar`
+      pullPolicy:
+
+    # -- Healthcheck port for driver-registrar
+    healthzPort: 9809
 
   externalProvisioner:
+    # -- Sets compute resources for external-provisioner container
+    resources:
+      {}
     image:
       # -- Image Registry for `csi-provisioner`
       registry: ""
@@ -107,8 +127,15 @@ node:
       repository: sig-storage/csi-provisioner
       # -- Image Tag for `csi-provisioner`
       tag: v5.2.0
+      # -- Image pull policy for `csi-provisioner`
+      pullPolicy:
+    # -- Sets capacity poll interval for `csi-provisioner`, determining how long the external-provisioner waits before checking for storage capacity changes.
+    capacityPollInterval: "1m"
 
   externalSnapshotter:
+    # -- Sets compute resources for external-snapshotter container
+    resources:
+      {}
     image:
       # -- Image Registry for `csi-snapshotter`
       registry: ""
@@ -116,8 +143,13 @@ node:
       repository: sig-storage/csi-snapshotter
       # -- Image Tag for `csi-snapshotter`
       tag: v8.2.1
+      # -- Image pull policy for `csi-snapshotter`
+      pullPolicy:
 
   snapshotController:
+    # -- Sets compute resources for snapshot-controller container
+    resources:
+      {}
     image:
       # -- Image Registry for `snapshot-controller`
       registry: ""
@@ -125,9 +157,25 @@ node:
       repository: sig-storage/snapshot-controller
       # -- Image Tag for `snapshot-controller`
       tag: v8.2.1
+      # -- Image pull policy for `snapshot-controller`
+      pullPolicy:
 
-  # -- Data dir path for provisioner to be used by provisioner
+  # -- Default filesystem type for rawfile volumes (Currently supports `btrfs`, `xfs` and `ext4` [which is default])
+  defaultFs: ext4
+
+  # -- Path to store data dir (Deprecated, use storagePools.path instead)
   dataDirPath: /var/csi/rawfile
+
+  # -- Default storage pool name
+  # defaultPool: default
+  # -- Storage pools configuration
+  # storagePools:
+  #   default:
+  #     path: /var/local/openebs/rawfile/default-pool/
+  # -- Reserved capacity outside of the storage pool, can be specified in bytes or percentage of the underlying device capacity
+  #     reservedCapacity: ""
+  # -- Reserved capacity mode. `Plain` means it's taken as-is, `subtract-from-total` means it's subtracted from underlying device capacity. Example: if reservedCapacity is 100GiB, then `plain` means the pool can grow until 100GiB is left, and `subtract-from-total` means it can grow up to 100GiB. Default: `plain`
+  #     reservedCapacityMode: "plain" | "subtract-from-total"
 
   # -- Metadata dir path for rawfile volumes metadata and tasks store file
   metadataDirPath: /var/local/openebs/rawfile/{{ .Release.Name }}/meta
@@ -138,12 +186,6 @@ node:
   # -- Sets compute resources for node component
   resources:
     {}
-    # limits:
-    #   cpu: 1
-    #   memory: 100Mi
-    # requests:
-    #   cpu: 10m
-    #   memory: 100Mi
   metrics:
     enabled: false
 
@@ -152,6 +194,15 @@ node:
 
   # -- Tolerations for node component
   tolerations:
+
+  # -- nodeSelector for node component
+  nodeSelector:
+
+  # -- Affinities for node component
+  affinity:
+
+  # -- Annotations for the node DaemonSet pods
+  podAnnotations: {}
 
   # -- Number of gRPC workers for node component
   grpcWorkers: 10
@@ -201,6 +252,8 @@ storageClasses:
     copyOnWrite: ""
     # -- Enables FreezeFS on storage class can be used to enable snapshotting of inused volumes when CoW is disabled/not supported (False by default)
     freezeFs: ""
+    # -- Sets storage pool used for volumes
+    storagePool: ""
 
 snapshotClasses:
   - # -- Name of the SnapshotClass
@@ -219,3 +272,11 @@ crds:
     volumeSnapshots:
       # -- Install Volume Snapshot CRDs
       enabled: true
+
+capabilities:
+  snapshots:
+    # -- Sets whether taking volume snapshots is enabled. Required for volume cloning. Runs externalSnapshotter and snapshotController containers.
+    enabled: true
+  resize:
+    # -- Sets whether volume resizing is enabled. If disabled, don't deploy controller statefulset
+    enabled: true

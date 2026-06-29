@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
-    app.kubeshark.com/app: worker
+    app.kubeshark.co/app: worker
     sidecar.istio.io/inject: "false"
     {{- include "kubeshark.labels" . | nindent 4 }}
   {{- if .Values.tap.annotations }}
@@ -15,13 +15,12 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubeshark.com/app: worker
+      app.kubeshark.co/app: worker
       {{- include "kubeshark.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app.kubeshark.com/app: worker
-        kubeshark.io/internal-auth: "true"
+        app.kubeshark.co/app: worker
         {{- include "kubeshark.labels" . | nindent 8 }}
       name: kubeshark-worker-daemon-set
       namespace: kubeshark
@@ -100,16 +99,10 @@ spec:
             - '{{ .Values.tap.misc.resolutionStrategy }}'
             - -staletimeout
             - '{{ .Values.tap.misc.staleTimeoutSeconds }}'
-            - -tcp-flow-full-timeout
-            - '{{ .Values.tap.misc.tcpFlowTimeout }}'
-            - -udp-flow-full-timeout
-            - '{{ .Values.tap.misc.udpFlowTimeout }}'
             - -storage-size
             - '{{ .Values.tap.storageLimit }}'
             - -capture-db-max-size
             - '{{ .Values.tap.capture.dbMaxSize }}'
-            - -cloud-api-url
-            - '{{ .Values.cloudApiUrl }}'
         {{- if .Values.tap.docker.overrideImage.worker }}
           image: '{{ .Values.tap.docker.overrideImage.worker }}'
         {{- else if .Values.tap.docker.overrideTag.worker }}
@@ -132,14 +125,12 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          - name: NODE_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
           - name: TCP_STREAM_CHANNEL_TIMEOUT_MS
             value: '{{ .Values.tap.misc.tcpStreamChannelTimeoutMs }}'
           - name: TCP_STREAM_CHANNEL_TIMEOUT_SHOW
             value: '{{ .Values.tap.misc.tcpStreamChannelTimeoutShow }}'
+          - name: KUBESHARK_CLOUD_API_URL
+            value: 'https://api.kubeshark.co'
           - name: PROFILING_ENABLED
             value: '{{ .Values.tap.pprof.enabled }}'
           - name: SENTRY_ENABLED
@@ -232,9 +223,6 @@ spec:
               mountPropagation: HostToContainer
             - mountPath: /app/data
               name: data
-{{- if .Values.tap.persistentStorage }}
-              subPathExpr: $(NODE_NAME)
-{{- end }}
       {{- if .Values.tap.tls }}
         - command:
             - ./tracer
@@ -265,10 +253,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-          - name: NODE_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
           - name: PROFILING_ENABLED
             value: '{{ .Values.tap.pprof.enabled }}'
           - name: SENTRY_ENABLED
@@ -340,9 +324,6 @@ spec:
               mountPropagation: HostToContainer
             - mountPath: /app/data
               name: data
-{{- if .Values.tap.persistentStorage }}
-              subPathExpr: $(NODE_NAME)
-{{- end }}
             - mountPath: /etc/os-release
               name: os-release
               readOnly: true
@@ -352,7 +333,7 @@ spec:
               readOnly: true
       {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
-      hostNetwork: {{ .Values.tap.hostNetwork }}
+      hostNetwork: true
       serviceAccountName: {{ include "kubeshark.serviceAccountName" . }}
       {{- if .Values.tap.priorityClass }}
       priorityClassName: {{ .Values.tap.priorityClass | quote }}
@@ -421,8 +402,8 @@ spec:
         - hostPath:
             path: /
           name: root
-        {{- end }}
         - name: data
+        {{- end }}
 {{- if .Values.tap.persistentStorage }}
           persistentVolumeClaim:
             claimName: kubeshark-persistent-volume-claim

@@ -1,3 +1,4 @@
+# find a detailed description here: https://github.com/kubeshark/kubeshark/blob/master/helm-chart/README.md
 tap:
   docker:
     registry: docker.io/kubeshark
@@ -26,54 +27,22 @@ tap:
   excludedNamespaces: []
   bpfOverride: ""
   capture:
-    dissection:
-      enabled: true
-      stopAfter: 5m
-    captureSelf: false
+    stopped: false
+    stopAfter: 5m
     raw:
-      enabled: true
+      enabled: false
       storageSize: 1Gi
-    dbMaxSize: 500Mi
-  delayedDissection:
-    cpu: "1"
-    memory: 4Gi
-    storageSize: ""
-    storageClass: ""
-  snapshots:
-    local:
-      storageClass: ""
-      storageSize: 20Gi
-    cloud:
-      provider: ""
-      prefix: ""
-      configMaps: []
-      secrets: []
-      s3:
-        bucket: ""
-        region: ""
-        accessKey: ""
-        secretKey: ""
-        roleArn: ""
-        externalId: ""
-      azblob:
-        storageAccount: ""
-        container: ""
-        storageKey: ""
-      gcs:
-        bucket: ""
-        project: ""
-        credentialsJson: ""
+    dbMaxSize: ""
   release:
-    repo: https://helm.kubeshark.com
+    repo: https://helm.kubeshark.co
     name: kubeshark
     namespace: default
-    helmChartPath: ""
   persistentStorage: false
   persistentStorageStatic: false
   persistentStoragePvcVolumeMode: FileSystem
   efsFileSytemIdAndPath: ""
   secrets: []
-  storageLimit: 10Gi
+  storageLimit: 5Gi
   storageClass: standard
   dryRun: false
   dns:
@@ -153,26 +122,23 @@ tap:
   auth:
     enabled: false
     type: saml
-    roles:
-      admin:
-        filter: ""
-        canDownloadPCAP: true
-        canUseScripting: true
-        scriptingPermissions:
-          canSave: true
-          canActivate: true
-          canDelete: true
-        canUpdateTargetedPods: true
-        canStopTrafficCapturing: true
-        canControlDissection: true
-        showAdminConsoleLink: true
-    rolesClaim: role
-    defaultRole: ""
-    defaultFilter: ""
     saml:
       idpMetadataUrl: ""
       x509crt: ""
       x509key: ""
+      roleAttribute: role
+      roles:
+        admin:
+          filter: ""
+          canDownloadPCAP: true
+          canUseScripting: true
+          scriptingPermissions:
+            canSave: true
+            canActivate: true
+            canDelete: true
+          canUpdateTargetedPods: true
+          canStopTrafficCapturing: true
+          showAdminConsoleLink: true
   ingress:
     enabled: false
     className: ""
@@ -187,10 +153,8 @@ tap:
   ipv6: true
   debug: false
   dashboard:
-    streamingType: connect-rpc
+    streamingType: ""
     completeStreamingEnabled: true
-    clusterWideMapEnabled: false
-    entriesLimit: "300000"
   telemetry:
     enabled: true
   resourceGuard:
@@ -203,6 +167,7 @@ tap:
     enabled: false
     environment: production
   defaultFilter: ""
+  liveConfigMapChangesDisabled: false
   globalFilter: ""
   enabledDissectors:
   - amqp
@@ -210,19 +175,11 @@ tap:
   - http
   - icmp
   - kafka
-  - mongodb
-  - mysql
-  - postgresql
   - redis
   - ws
-  - tlsx
   - ldap
   - radius
   - diameter
-  - udp-flow
-  - tcp-flow
-  - udp-conn
-  - tcp-conn
   portMapping:
     http:
     - 80
@@ -233,12 +190,6 @@ tap:
     - 5672
     kafka:
     - 9092
-    mongodb:
-    - 27017
-    mysql:
-    - 3306
-    postgresql:
-    - 5432
     redis:
     - 6379
     ldap:
@@ -255,8 +206,8 @@ tap:
     view: flamegraph
   misc:
     jsonTTL: 5m
-    pcapTTL: "0"
-    pcapErrorTTL: "0"
+    pcapTTL: 10s
+    pcapErrorTTL: 60s
     trafficSampleRate: 100
     tcpStreamChannelTimeoutMs: 10000
     tcpStreamChannelTimeoutShow: false
@@ -264,8 +215,6 @@ tap:
     duplicateTimeframe: 200ms
     detectDuplicates: false
     staleTimeoutSeconds: 30
-    tcpFlowTimeout: 1200
-    udpFlowTimeout: 1200
   securityContext:
     privileged: true
     appArmorProfile:
@@ -290,12 +239,11 @@ tap:
       - SYS_RESOURCE
       - IPC_LOCK
   mountBpf: true
-  hostNetwork: true
 logs:
   file: ""
   grep: ""
 pcapdump:
-  enabled: false
+  enabled: true
   timeInterval: 1m
   maxTime: 1h
   maxSize: 500MB
@@ -308,14 +256,13 @@ kube:
 dumpLogs: false
 headless: false
 license: ""
-cloudApiUrl: https://api.kubeshark.com
 cloudLicenseEnabled: true
+aiAssistantEnabled: true
 demoModeEnabled: false
 supportChatEnabled: false
 betaEnabled: false
 internetConnectivity: true
 scripting:
-  enabled: false
   env: {}
   source: ""
   sources: []

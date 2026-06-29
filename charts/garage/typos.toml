@@ -1,0 +1,6 @@
+[default.extend-words]
+PN = "PN"
+substituters = "substituters"
+
+[files]
+extend-exclude = ["CHANGELOG.md", "**.js", "**.svg", "doc/talks/*", "fuzz/*"]

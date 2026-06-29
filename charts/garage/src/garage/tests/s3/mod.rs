@@ -1,0 +1,10 @@
+mod cors;
+mod list;
+mod multipart;
+mod objects;
+mod presigned;
+mod signature_encoding;
+mod simple;
+mod ssec;
+mod streaming_signature;
+mod website;

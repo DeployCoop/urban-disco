@@ -1,0 +1,6 @@
+/target
+/tmp
+/pki
+**/*.rs.bk
+*.swp
+/.direnv

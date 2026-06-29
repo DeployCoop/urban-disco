@@ -15,39 +15,39 @@ annotations:
     - name: prometheus-nats-exporter
       image: docker.io/natsio/prometheus-nats-exporter:0.11.0
     - name: alpine-bash
-      image: docker.io/openebs/alpine-bash:4.3.0
-    - name: alpine-sh
-      image: docker.io/openebs/alpine-sh:4.3.0
+      image: docker.io/openebs/alpine-bash:4.5.0
     - name: etcd
       image: docker.io/openebs/etcd:3.6.4-debian-12-r0
     - name: kubectl
       image: docker.io/openebs/kubectl:1.25.15
     - name: linux-utils
-      image: docker.io/openebs/linux-utils:4.3.0
-    - name: mayastor-agent-core
-      image: docker.io/openebs/mayastor-agent-core:v2.10.0
-    - name: mayastor-agent-ha-cluster
-      image: docker.io/openebs/mayastor-agent-ha-cluster:v2.10.0
-    - name: mayastor-agent-ha-node
-      image: docker.io/openebs/mayastor-agent-ha-node:v2.10.0
-    - name: mayastor-api-rest
-      image: docker.io/openebs/mayastor-api-rest:v2.10.0
-    - name: mayastor-csi-controller
-      image: docker.io/openebs/mayastor-csi-controller:v2.10.0
-    - name: mayastor-csi-node
-      image: docker.io/openebs/mayastor-csi-node:v2.10.0
-    - name: mayastor-io-engine
-      image: docker.io/openebs/mayastor-io-engine:v2.10.0
-    - name: mayastor-metrics-exporter-io-engine
-      image: docker.io/openebs/mayastor-metrics-exporter-io-engine:v2.10.0
-    - name: mayastor-obs-callhome-stats
-      image: docker.io/openebs/mayastor-obs-callhome-stats:v2.10.0
-    - name: mayastor-obs-callhome
-      image: docker.io/openebs/mayastor-obs-callhome:v2.10.0
-    - name: mayastor-operator-diskpool
-      image: docker.io/openebs/mayastor-operator-diskpool:v2.10.0
+      image: docker.io/openebs/linux-utils:4.5.0
     - name: provisioner-localpv
-      image: docker.io/openebs/provisioner-localpv:4.4.0
+      image: docker.io/openebs/provisioner-localpv:4.5.1
+    - name: alpine-sh
+      image: ghcr.io/openebs/mayastor/dev/alpine-sh:4.5.0
+    - name: mayastor-agent-core
+      image: ghcr.io/openebs/mayastor/dev/mayastor-agent-core:v2.11.1
+    - name: mayastor-agent-ha-cluster
+      image: ghcr.io/openebs/mayastor/dev/mayastor-agent-ha-cluster:v2.11.1
+    - name: mayastor-agent-ha-node
+      image: ghcr.io/openebs/mayastor/dev/mayastor-agent-ha-node:v2.11.1
+    - name: mayastor-api-rest
+      image: ghcr.io/openebs/mayastor/dev/mayastor-api-rest:v2.11.1
+    - name: mayastor-csi-controller
+      image: ghcr.io/openebs/mayastor/dev/mayastor-csi-controller:v2.11.1
+    - name: mayastor-csi-node
+      image: ghcr.io/openebs/mayastor/dev/mayastor-csi-node:v2.11.1
+    - name: mayastor-io-engine
+      image: ghcr.io/openebs/mayastor/dev/mayastor-io-engine:v2.11.1
+    - name: mayastor-metrics-exporter-io-engine
+      image: ghcr.io/openebs/mayastor/dev/mayastor-metrics-exporter-io-engine:v2.11.1
+    - name: mayastor-obs-callhome-stats
+      image: ghcr.io/openebs/mayastor/dev/mayastor-obs-callhome-stats:v2.11.1
+    - name: mayastor-obs-callhome
+      image: ghcr.io/openebs/mayastor/dev/mayastor-obs-callhome:v2.11.1
+    - name: mayastor-operator-diskpool
+      image: ghcr.io/openebs/mayastor/dev/mayastor-operator-diskpool:v2.11.1
     - name: mc
       image: quay.io/minio/mc:RELEASE.2024-11-21T17-21-54Z
     - name: minio
@@ -67,12 +67,12 @@ annotations:
     - name: snapshot-controller
       image: registry.k8s.io/sig-storage/snapshot-controller:v8.2.0
 apiVersion: v2
-appVersion: 2.10.0
+appVersion: 2.11.1
 dependencies:
 - condition: crds.enabled
   name: crds
   repository: ""
-  version: 2.10.0
+  version: 2.11.1
 - condition: etcd.enabled
   name: etcd
   repository: https://charts.bitnami.com/bitnami
@@ -96,8 +96,20 @@ dependencies:
 - condition: localpv-provisioner.enabled
   name: localpv-provisioner
   repository: https://openebs.github.io/dynamic-localpv-provisioner
-  version: 4.4.0
+  version: 4.5.1
 description: Mayastor Helm chart for Kubernetes
+home: https://www.openebs.io/
+icon: https://raw.githubusercontent.com/cncf/artwork/HEAD/projects/openebs/icon/color/openebs-icon-color.png
+keywords:
+- cloud-native-storage
+- block-storage
+- NVMe
+- SPDK
 name: mayastor
+sources:
+- https://github.com/openebs/mayastor
+- https://github.com/openebs/mayastor-control-plane
+- https://github.com/openebs/mayastor-extensions
+- https://github.com/openebs/mayastor-dependencies
 type: application
-version: 2.10.0
+version: 2.11.1

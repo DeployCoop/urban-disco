@@ -83,9 +83,21 @@ Usage:
 {{ include "base_pull_secrets" . }}
 */}}
 {{- define "base_pull_secrets" -}}
-    {{- if (not (empty .Values.image.pullSecrets)) }}
-        {{- range .Values.image.pullSecrets | uniq -}}
+    {{- if (not (empty .Values.global.imagePullSecrets)) }}
+        {{- range .Values.global.imagePullSecrets | uniq -}}
+            {{- if kindIs "map" . -}}
+            {{ nindent 8 "- name:" }} {{ .name }}
+            {{- else -}}
             {{ nindent 8 "- name:" }} {{ . }}
+            {{- end }}
+        {{- end }}
+    {{- else if (not (empty .Values.image.pullSecrets)) }}
+        {{- range .Values.image.pullSecrets | uniq -}}
+            {{- if kindIs "map" . -}}
+            {{ nindent 8 "- name:" }} {{ .name }}
+            {{- else -}}
+            {{ nindent 8 "- name:" }} {{ . }}
+            {{- end }}
         {{- end }}
     {{- else -}}
         {{- if .Values.base.imagePullSecrets }}
@@ -98,6 +110,41 @@ Usage:
             {{- end }}
         {{- end }}
     {{- end }}
+{{- end -}}
+
+{{/*
+Concatenates imagepullsecrets for preupgradehook and handles different formats (example - secret or - name: secret)
+*/}}
+{{- define "mayastor.preUpgradeHook.pullSecrets" -}}
+{{- $names := list -}}
+{{- with .Values.global.imagePullSecrets -}}
+  {{- range . -}}
+    {{- if kindIs "map" . }}
+      {{- if and (hasKey . "name") (not (empty .name)) -}}
+        {{ $names = append $names .name }}
+      {{- end -}}
+    {{- else if not (empty .) -}}
+      {{ $names = append $names . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- with .Values.preUpgradeHook.imagePullSecrets -}}
+  {{- range . }}
+    {{- if kindIs "map" . -}}
+      {{- if and (hasKey . "name") (not (empty .name)) -}}
+        {{- $names = append $names .name }}
+      {{- end -}}
+    {{- else if not (empty .) -}}
+      {{- $names = append $names . -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- $names = uniq $names -}}
+{{- if $names -}}
+  {{- range $names }}
+- name: {{ . }}
+  {{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -204,6 +251,19 @@ Usage:
     {{- toYaml .localTolerations | nindent 8 }}
 {{- else if .template.Values.tolerations }}
     {{- toYaml .template.Values.tolerations | nindent 8 }}
+{{- end }}
+{{- end }}
+
+{{/*
+Creates the node selector based on the global and component wise node selectors
+Usage:
+{{ include "node_selector" (dict "template" . "localNodeSelector" .Values.path.to.local.nodeSelector) }}
+*/}}
+{{- define "node_selector" -}}
+{{- if .localNodeSelector }}
+    {{- toYaml .localNodeSelector | nindent 8 }}
+{{- else if .template.Values.nodeSelector }}
+    {{- toYaml .template.Values.nodeSelector | nindent 8 }}
 {{- end }}
 {{- end }}
 
@@ -326,14 +386,15 @@ Renders init containers. If unset it sets the container image.
     {{- $containers := list }}
     {{- $image := .context.Values.base.initContainers.image }}
     {{- $values_image := .context.Values.image }}
+    {{- $global := .context.Values.global }}
     {{- range .value -}}
         {{ $container := . }}
         {{- if not (hasKey . "imagePullPolicy") }}
-            {{- $pullPolicy := $image.pullPolicy | default $values_image.pullPolicy }}
+            {{- $pullPolicy := $global.imagePullPolicy | default $image.pullPolicy | default $values_image.pullPolicy }}
             {{- $_ := set $container "imagePullPolicy" $pullPolicy }}
         {{- end }}
         {{- if or (not $image) (not (hasKey . "image")) }}
-            {{- $registry := $image.registry | default $values_image.registry | default "docker.io" }}
+            {{- $registry := $global.imageRegistry | default $image.registry | default $values_image.registry }}
             {{- $namespace := $image.namespace | default $values_image.repo }}
             {{- $name := $image.name | default "alpine-sh" }}
             {{- $tag := $image.tag | default "4.1.0" }}

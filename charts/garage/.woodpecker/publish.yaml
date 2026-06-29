@@ -1,0 +1,33 @@
+labels:
+  nix: "enabled"
+
+when:
+  event:
+  - deployment
+  - cron
+
+depends_on:
+  - release
+
+steps:
+  - name: refresh-index
+    image: nixpkgs/nix:nixos-24.05
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: garagehq_aws_access_key_id
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: garagehq_aws_secret_access_key
+    commands:
+      - mkdir -p /etc/nix && cp nix/nix.conf /etc/nix/nix.conf
+      - nix-shell --attr ci --run "refresh_index"
+
+  - name: multiarch-docker
+    image: nixpkgs/nix:nixos-24.05
+    environment:
+      DOCKER_AUTH:
+        from_secret: docker_auth
+    commands:
+      - mkdir -p /root/.docker
+      - echo $DOCKER_AUTH > /root/.docker/config.json
+      - export CONTAINER_TAG=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}
+      - nix-shell --attr ci --run "multiarch_docker"

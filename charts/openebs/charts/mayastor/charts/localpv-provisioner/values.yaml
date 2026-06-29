@@ -3,9 +3,19 @@
 # Declare variables to be passed into your templates.
 
 global:
-  # Used as default image registry, values supplied by localpv.image.registry
-  # and helperPod.image.registry override this value.
+  # Global override for container image registry (when `globalImageRegistryOverride` is set to true)
   imageRegistry: "docker.io"
+  # Global image pull secrets (merged with local imagePullSecrets and not overridden)
+  # - secret
+  imagePullSecrets: []
+  # Global override for image pull policy
+  imagePullPolicy: ""
+  analytics:
+    # Global override for analytics
+    enabled:
+
+# When set to true, the value of `global.imageRegistry` will override all image registry settings defined at local level
+globalImageRegistryOverride: false
 
 rbac:
   # rbac.create: `true` if rbac resources should be created
@@ -26,10 +36,14 @@ earlyEvictionTolerations:
 localpv:
   name: localpv-provisioner
   enabled: true
+  controller:
+    # The number of concurrent worker goroutines for processing PVC create and delete events.
+    # Higher values increase provisioning throughput when many PVC events are received simultaneously.
+    workers: 4
   image:
-    registry: ""
+    registry: "docker.io/"
     repository: openebs/provisioner-localpv
-    tag: 4.4.0
+    tag: 4.5.1
     pullPolicy: IfNotPresent
   updateStrategy:
     type: RollingUpdate
@@ -46,6 +60,19 @@ localpv:
   replicas: 1
   enableLeaderElection: true
   basePath: "/var/openebs/local"
+  # Node deployment configuration for distributed provisioning mode
+  nodeDeployment:
+    # Enable the NodeDeployment mode. This deploys the provisioner as a DaemonSet on
+    # cluster nodes. NodeDeployment avoids the need to spin up a HelperPod at volume
+    # creation/deletion time, and instead performs volume operations via the DaemonSet
+    # container.
+    # NOTE: This mode mounts the host '/' path on to container, as it does not use a
+    # HelperPod and must be able to cater to different BasePath paths.
+    enabled: false
+    # Additional volume mounts for the provisioner container
+    additionalVolumeMounts: []
+    # Additional volumes for the provisioner pod
+    additionalVolumes: []
   resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -129,8 +156,10 @@ helperPod:
     repository: openebs/linux-utils
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: 4.3.0
+    tag: 4.5.0
   hostNetwork: false
+  # The maximum number of seconds to wait for a helperPod (init, cleanup, quota) to complete before timing out.
+  timeoutSecs: 120
 
 # Additional labels to add to all chart resources
 extraLabels: {}
@@ -139,6 +168,7 @@ loggingLabels:
   openebs.io/logging: "true"
 
 analytics:
+  # Enable sending stats to Google Analytics
   enabled: true
   # Specify in hours the duration after which a ping event needs to be sent.
   pingInterval: "24h"

@@ -1,0 +1,702 @@
+\nonstopmode
+\documentclass[aspectratio=169,xcolor={svgnames}]{beamer}
+\usepackage[utf8]{inputenc}
+% \usepackage[frenchb]{babel}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{breqn}
+\usepackage{multirow}
+\usetheme{boxes}
+\usepackage{graphicx}
+\usepackage{import}
+\usepackage{adjustbox}
+\usepackage[absolute,overlay]{textpos}
+%\useoutertheme[footline=authortitle,subsection=false]{miniframes}
+%\useoutertheme[footline=authorinstitute,subsection=false]{miniframes}
+\useoutertheme{infolines}
+\setbeamertemplate{headline}{}
+
+\beamertemplatenavigationsymbolsempty
+
+\definecolor{TitleOrange}{RGB}{255,137,0}
+\setbeamercolor{title}{fg=TitleOrange}
+\setbeamercolor{frametitle}{fg=TitleOrange}
+
+\definecolor{ListOrange}{RGB}{255,145,5}
+\setbeamertemplate{itemize item}{\color{ListOrange}$\blacktriangleright$}
+
+\definecolor{verygrey}{RGB}{70,70,70}
+\setbeamercolor{normal text}{fg=verygrey}
+
+
+\usepackage{tabu}
+\usepackage{multicol}
+\usepackage{vwcol}
+\usepackage{stmaryrd}
+\usepackage{graphicx}
+
+\usepackage[normalem]{ulem}
+
+\AtBeginSection[]{
+  \begin{frame}
+  \vfill
+  \centering
+  \begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+    \usebeamerfont{title}\insertsectionhead\par%
+  \end{beamercolorbox}
+  \vfill
+  \end{frame}
+}
+
+\title{Garage, an S3 backend as reliable as possible}
+\author{Garage Authors}
+\date{JoSy S3, 2025-10-08}
+
+\begin{document}
+
+\begin{frame}
+	\centering
+	\includegraphics[width=.3\linewidth]{../../sticker/Garage.png}
+	\vspace{1em}
+
+	{\large\bf Garage, an S3 backend as reliable as possible}
+	\vspace{1em}
+
+		\url{https://garagehq.deuxfleurs.fr/}\\
+		\url{mailto:garagehq@deuxfleurs.fr}\\
+		\texttt{\#garage:deuxfleurs.fr} on Matrix
+\end{frame}
+
+
+\section{Meet Garage}
+
+\begin{frame}
+	\frametitle{A non-profit initiative}
+
+
+	\begin{columns}[t]
+		\begin{column}{.2\textwidth}
+			\centering
+			\adjincludegraphics[width=.5\linewidth, valign=t]{../assets/logos/deuxfleurs.pdf}
+		\end{column}
+		\begin{column}{.8\textwidth}
+			\textbf{Part of a degrowth initiative}\\
+			Garage has been created at Deuxfleurs where we experiment running Internet services without datacenter on commodity and refurbished hardware.
+		\end{column}
+
+	\end{columns}
+	\vspace{2em}
+	\begin{columns}[t]
+		\begin{column}{.2\textwidth}
+			\centering
+			\adjincludegraphics[width=.5\linewidth, valign=t]{../assets/community.png}
+		\end{column}
+		\begin{column}{.8\textwidth}
+			\textbf{Developed by a community}\\
+			{\small Some recent contributors: Arthur C, Charles H, dongdigua, Etienne L, Jonah A, Julien K, Lapineige, MagicRR, Milas B, Niklas M, RockWolf, Schwitzd, trinity-1686a, Xavier S,  babykart, Baptiste J, eddster2309, James O'C, Joker9944, Maximilien R, Renjaya RZ, Yureka...}
+		\end{column}
+
+	\end{columns}
+	\vspace{2em}
+	\begin{columns}[t]
+		\begin{column}{.2\textwidth}
+			\centering
+			\adjincludegraphics[width=.5\linewidth, valign=t]{../assets/logos/AGPLv3_Logo.png}
+		\end{column}
+		\begin{column}{.8\textwidth}
+			\textbf{Owned by nobody, open-core is impossible, zero VC money}\\
+			AGPL + no Contributor License Agreement = Garage ownership spreads among hundredth of contributors.
+		\end{column}
+
+	\end{columns}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Getting support for Garage}
+	\begin{columns}[t]
+		\begin{column}{.2\textwidth}
+			\centering
+			\adjincludegraphics[width=.4\linewidth, valign=t]{../assets/alex.jpg}
+		\end{column}
+		\begin{column}{.4\textwidth}
+			\textbf{Alex Auvolat}\\
+			PhD; co-founder of Deuxfleurs\\
+			Garage maintainer, Freelance
+		\end{column}
+		\begin{column}{.3\textwidth}
+			\centering
+			\adjincludegraphics[width=.4\linewidth, valign=t]{../assets/support.png}
+		\end{column}
+		\begin{column}{.1\textwidth}
+			~
+		\end{column}
+	\end{columns}
+	\vspace{2em}
+	\begin{columns}[t]
+		\begin{column}{.2\textwidth}
+			\centering
+			\adjincludegraphics[width=.4\linewidth, valign=t]{../assets/quentin.jpg}
+		\end{column}
+		\begin{column}{.4\textwidth}
+			\textbf{Quentin Dufour}\\
+			PhD; co-founder of Deuxfleurs\\
+			Garage contributor, Freelance
+		\end{column}
+		\begin{column}{.4\textwidth}
+			For support requests, write at: \\
+			\url{garagehq@deuxfleurs.fr}
+		\end{column}
+	\end{columns}
+	\vspace{2em}
+	\begin{columns}[t]
+		\begin{column}{.2\textwidth}
+			\centering
+			\adjincludegraphics[width=.4\linewidth, valign=t]{../assets/armael.jpg}
+		\end{column}
+		\begin{column}{.4\textwidth}
+			\textbf{Armaël Guéneau}\\
+			PhD; member of Deuxfleurs\\
+			Garage contributor, Freelance
+		\end{column}
+		\begin{column}{.4\textwidth}
+			Eligible: email support, architecture design, specific feature development, etc.
+		\end{column}
+	\end{columns}
+
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Our initial goal}
+
+	\centering
+	\Large
+
+	Being a self-sovereign community to be free of our degrowth choice
+
+	$\big\downarrow$
+
+	As web citizens, datacenters are big black boxes. \\
+	We want to leave them to autonoumously manage our servers.
+
+	$\big\downarrow$
+
+	We want reliable services without relying on dedicated hardware or places.
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Building a resilient system with cheap stuff}
+
+	\only<1,4-7>{
+		\begin{itemize}
+			\item \textcolor<5->{gray}{Commodity hardware (e.g. old desktop PCs)\\
+				\vspace{.5em}
+				\visible<4->{{\footnotesize (can die at any time)}}}
+				\vspace{1.5em}
+			\item<5-> \textcolor<7->{gray}{Regular Internet (e.g. FTTB, FTTH) and power grid connections\\
+				\vspace{.5em}
+				\visible<6->{{\footnotesize (can be unavailable randomly)}}}
+				\vspace{1.5em}
+			\item<7-> \textbf{Geographical redundancy} (multi-site replication)
+		\end{itemize}
+	}
+	\only<2>{
+		\begin{center}
+			\includegraphics[width=.8\linewidth]{../assets/neptune.jpg}
+		\end{center}
+	}
+	\only<3>{
+		\begin{center}
+			\includegraphics[width=.8\linewidth]{../assets/atuin.jpg}
+		\end{center}
+	}
+	\only<8>{
+		\begin{center}
+			\includegraphics[width=.8\linewidth]{../assets/inframap_jdll2023.pdf}
+		\end{center}
+	}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Object storage: a crucial component}
+		\begin{center}
+			\includegraphics[height=6em]{../assets/logos/Amazon-S3.jpg}
+			\hspace{3em}
+			\visible<2->{\includegraphics[height=5em]{../assets/logos/minio.png}}
+			\hspace{3em}
+			\visible<3>{\includegraphics[height=6em]{../../logo/garage_hires_crop.png}}
+		\end{center}
+		\vspace{1em}
+	S3: a de-facto standard, many compatible applications
+
+	\vspace{1em}
+	\visible<2->{MinIO is self-hostable but not suited for geo-distributed deployments}
+
+	\vspace{1em}
+	\visible<3->{\textbf{Garage is a self-hosted drop-in replacement for the Amazon S3 object store}}
+\end{frame}
+
+\begin{frame}
+	\frametitle{CRDTs / weak consistency instead of consensus}
+
+	\underline{Internally, Garage uses only CRDTs} (conflict-free replicated data types)
+
+	\vspace{2em}
+	Why not Raft, Paxos, ...? Issues of consensus algorithms:
+
+	\vspace{1em}
+	\begin{itemize}
+		\item<2-> \textbf{Software complexity}
+			\vspace{1em}
+		\item<3-> \textbf{Performance issues:}
+			\vspace{.5em}
+			\begin{itemize}
+				\item<4-> The leader is a \textbf{bottleneck} for all requests\\
+					\vspace{.5em}
+				\item<5-> \textbf{Sensitive to higher latency} between nodes
+					\vspace{.5em}
+				\item<6-> \textbf{Takes time to reconverge} when disrupted (e.g. node going down)
+			\end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{The data model of object storage}
+	Object storage is basically a \textbf{key-value store}:
+	\vspace{.5em}
+
+	{\scriptsize
+		\begin{center}
+		\begin{tabular}{|l|p{7cm}|}
+			\hline
+			\textbf{Key: file path + name} & \textbf{Value: file data + metadata} \\
+			\hline
+			\hline
+			\texttt{index.html} &
+				\texttt{Content-Type: text/html; charset=utf-8} \newline
+				\texttt{Content-Length: 24929} \newline
+				\texttt{<binary blob>} \\ 
+			\hline
+			\texttt{img/logo.svg} &
+				\texttt{Content-Type: text/svg+xml} \newline
+				\texttt{Content-Length: 13429} \newline
+				\texttt{<binary blob>} \\ 
+			\hline
+			\texttt{download/index.html} &
+				\texttt{Content-Type: text/html; charset=utf-8} \newline
+				\texttt{Content-Length: 26563} \newline
+				\texttt{<binary blob>} \\ 
+			\hline
+		\end{tabular}
+		\end{center}
+		}
+
+	\vspace{1em}
+	\begin{itemize}
+		\item<2> Maps well to CRDT data types
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Performance gains in practice}
+	\begin{center}
+		\includegraphics[width=.8\linewidth]{../assets/perf/endpoint_latency_0.7_0.8_minio.png}
+	\end{center}
+\end{frame}
+
+% ======================================== OPERATING
+% ======================================== OPERATING
+% ======================================== OPERATING
+
+
+\section{Production clusters}
+
+\begin{frame}
+	\frametitle{Deployment kinds}
+
+	\includegraphics[width=.9\linewidth]{../assets/cluster_kind.png}
+	\vspace{1em}
+	
+\end{frame}
+
+\begin{frame}
+	\frametitle{How big they are?}
+
+	\includegraphics[width=.9\linewidth]{../assets/cluster_size.png}
+	\vspace{1em}
+
+	\textit{"Petabyte storage setup for a video site. Nginx as CDN in-front using garage-s3-website feature. Each storage node has ~64TB storage with raid10, no replication within garage. 25gbit nic. haproxy to loadbalance across 5 nodes. mostly reads with very few writes."}
+
+	\vspace{1em}
+	\textit{"We currently manage 7 Garage nodes, 28TB total storage, 6M blocks for 3M objects and 4TB of object data. We have been running Garage in production for 2.5 years."}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Operating Garage}
+	\begin{center}
+		\only<1-2>{
+			\includegraphics[width=.9\linewidth]{../assets/screenshots/garage_status_0.10.png}
+			\\\vspace{1em}
+			\visible<2>{\includegraphics[width=.9\linewidth]{../assets/screenshots/garage_status_unhealthy_0.10.png}}
+		}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Garage's architecture}
+	\begin{center}
+		\only<1>{\includegraphics[width=.45\linewidth]{../assets/garage.drawio.pdf}}%
+		\only<2>{\includegraphics[width=.6\linewidth]{../assets/garage_sync.drawio.pdf}}%
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Digging deeper}
+	\begin{center}
+		\only<1>{\includegraphics[width=.9\linewidth]{../assets/screenshots/garage_stats_0.10.png}}
+		\only<2>{\includegraphics[width=.5\linewidth]{../assets/screenshots/garage_worker_list_0.10.png}}
+		\only<3>{\includegraphics[width=.6\linewidth]{../assets/screenshots/garage_worker_param_0.10.png}}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Potential limitations and bottlenecks}
+	\begin{itemize}
+		\item Global:
+			\begin{itemize}
+				\item Max. $\sim$100 nodes per cluster (excluding gateways)
+			\end{itemize}
+			\vspace{1em}
+		\item Metadata:
+			\begin{itemize}
+				\item One big bucket = bottleneck, object list on 3 nodes only
+			\end{itemize}
+			\vspace{1em}
+		\item Block manager:
+			\begin{itemize}
+				\item Lots of small files on disk
+				\item Processing the resync queue can be slow
+			\end{itemize}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Deployment advice for very large clusters}
+	\begin{itemize}
+		\item Metadata storage:
+			\begin{itemize}
+				\item ZFS mirror (x2) on fast NVMe
+				\item Use LMDB storage engine
+			\end{itemize}
+			\vspace{.5em}
+		\item Data block storage:
+			\begin{itemize}
+				\item Use Garage's native multi-HDD support
+				\item XFS on individual drives
+				\item Increase block size (1MB $\to$ 10MB, requires more RAM and good networking)
+				\item Tune \texttt{resync-tranquility} and \texttt{resync-worker-count} dynamically
+			\end{itemize}
+			\vspace{.5em}
+		\item Other :
+			\begin{itemize}
+				\item Split data over several buckets
+				\item Use less than 100 storage nodes
+				\item Use gateway nodes
+			\end{itemize}
+			\vspace{.5em}
+	\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Focus on Deuxfleurs}
+
+	Host institutional websites, partnership with a web agency.
+	Matrix media backend.
+
+	Plan to use it as an email backend for an internally developed email server.
+
+\end{frame}
+
+
+% ======================================== TIMELINE
+% ======================================== TIMELINE
+% ======================================== TIMELINE
+
+\section{Recent developments}
+
+% ====================== v0.7.0 ===============================
+
+\begin{frame}
+	\begin{center}
+		\includegraphics[width=.8\linewidth]{../assets/tl.drawio.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{April 2022 - Garage v0.7.0}
+	Focus on \underline{observability and ecosystem integration}
+	\vspace{2em}
+	\begin{itemize}
+		\item \textbf{Monitoring:} metrics and traces, using OpenTelemetry
+			\vspace{1em}
+		\item Replication modes with 1 or 2 copies / weaker consistency
+			\vspace{1em}
+		\item Kubernetes integration for node discovery
+			\vspace{1em}
+		\item Admin API (v0.7.2)
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Metrics (Prometheus + Grafana)}
+	\begin{center}
+		\includegraphics[width=.9\linewidth]{../assets/screenshots/grafana_dashboard.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Traces (Jaeger)}
+	\begin{center}
+		\includegraphics[width=.8\linewidth]{../assets/screenshots/jaeger_listobjects.png}
+	\end{center}
+\end{frame}
+
+% ====================== v0.8.0 ===============================
+
+\begin{frame}
+	\begin{center}
+		\includegraphics[width=.8\linewidth]{../assets/tl.drawio.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{November 2022 - Garage v0.8.0}
+	Focus on \underline{performance}
+	\vspace{2em}
+	\begin{itemize}
+		\item \textbf{Alternative metadata DB engines} (LMDB, Sqlite)
+			\vspace{1em}
+		\item \textbf{Performance improvements:} block streaming, various optimizations...
+			\vspace{1em}
+		\item Bucket quotas (max size, max \#objects)
+			\vspace{1em}
+		\item Quality of life improvements, observability, etc.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	\frametitle{About metadata DB engines}
+	\textbf{Issues with Sled:}
+	\vspace{1em}
+	\begin{itemize}
+		\item Huge files on disk
+			\vspace{.5em}
+		\item Unpredictable performance, especially on HDD
+			\vspace{.5em}
+		\item API limitations
+			\vspace{.5em}
+		\item Not actively maintained
+	\end{itemize}
+
+	\vspace{2em}
+	\textbf{LMDB:} very stable, good performance, file size is reasonable\\
+	\textbf{Sqlite} also available as a second choice
+
+	\vspace{1em}
+	Sled will be removed in Garage v1.0
+\end{frame}
+
+\begin{frame}
+	\frametitle{DB engine performance comparison}
+	\begin{center}
+		\includegraphics[width=.6\linewidth]{../assets/perf/db_engine.png}
+	\end{center}
+	NB: Sqlite was slow due to synchronous mode, now configurable
+\end{frame}
+
+\begin{frame}
+	\frametitle{Block streaming}
+	\begin{center}
+		\only<1>{\includegraphics[width=.8\linewidth]{../assets/schema-streaming-1.png}}
+		\only<2>{\includegraphics[width=.8\linewidth]{../assets/schema-streaming-2.png}}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{TTFB benchmark}
+	\begin{center}
+		\includegraphics[width=.8\linewidth]{../assets/perf/ttfb.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Throughput benchmark}
+	\begin{center}
+		\includegraphics[width=.7\linewidth]{../assets/perf/io-0.7-0.8-minio.png}
+	\end{center}
+\end{frame}
+
+% ====================== v0.9.0 ===============================
+
+\begin{frame}
+	\begin{center}
+		\includegraphics[width=.8\linewidth]{../assets/tl.drawio.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{October 2023 - Garage v0.9.0}
+	Focus on \underline{streamlining \& usability}
+	\vspace{2em}
+	\begin{itemize}
+		\item Support multiple HDDs per node
+			\vspace{1em}
+		\item S3 compatibility: 
+			\vspace{1em}
+			\begin{itemize}
+				\item support basic lifecycle configurations
+					\vspace{.5em}
+				\item allow for multipart upload part retries
+			\end{itemize}
+			\vspace{1em}
+		\item LMDB by default, deprecation of Sled
+			\vspace{1em}
+		\item New layout computation algorithm
+	\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Layout computation}
+	\begin{overprint}
+		\onslide<1>
+		\begin{center}
+			\includegraphics[width=\linewidth, trim=0 0 0 -4cm]{../assets/screenshots/garage_status_0.9_prod_zonehl.png}
+		\end{center}
+		\onslide<2>
+		\begin{center}
+			\includegraphics[width=.7\linewidth]{../assets/map.png}
+		\end{center}
+	\end{overprint}
+	\vspace{1em}
+	Garage stores replicas on different zones when possible
+\end{frame}
+
+\begin{frame}
+	\frametitle{What a "layout" is}
+		\textbf{A layout is a precomputed index table:}
+		\vspace{1em}
+
+		{\footnotesize
+			\begin{center}
+			\begin{tabular}{|l|l|l|l|}
+				\hline
+				\textbf{Partition} & \textbf{Node 1} & \textbf{Node 2} & \textbf{Node 3} \\
+				\hline
+				\hline
+				Partition 0 & df-ymk (bespin) & Abricot (scorpio) & Courgette (neptune) \\
+				\hline
+				Partition 1 & Ananas (scorpio) & Courgette (neptune) & df-ykl (bespin) \\
+				\hline
+				Partition 2 & df-ymf (bespin) & Celeri (neptune) & Abricot (scorpio) \\
+				\hline
+				\hspace{1em}$\vdots$ & \hspace{1em}$\vdots$ & \hspace{1em}$\vdots$ & \hspace{1em}$\vdots$ \\
+				\hline
+				Partition 255 & Concombre (neptune) & df-ykl (bespin) & Abricot (scorpio) \\
+				\hline
+			\end{tabular}
+			\end{center}
+		}
+
+	\vspace{2em}
+	\visible<2->{
+		The index table is built centrally using an optimal algorithm,\\
+		then propagated to all nodes
+	}
+
+	\vspace{1em}
+	\visible<3->{
+		\footnotesize
+		Oulamara, M., \& Auvolat, A. (2023). \emph{An algorithm for geo-distributed and redundant storage in Garage}.\\ arXiv preprint arXiv:2302.13798.
+	}
+\end{frame}
+
+
+
+% ====================== v1.0.0 ===============================
+
+\begin{frame}
+	\begin{center}
+		\includegraphics[width=.8\linewidth]{../assets/tl.drawio.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{April 2024 - Garage v1.0.0}
+	Focus on \underline{consistency, security \& stability}
+	\vspace{2em}
+	\begin{itemize}
+		\item Fix consistency issues when reshuffling data (Jepsen testing)
+			\vspace{1em}
+		\item \textbf{Security audit} by Radically Open Security
+			\vspace{1em}
+		\item Misc. S3 features (SSE-C, checksums,  ...) and compatibility fixes
+	\end{itemize}
+\end{frame}
+
+% ====================== v2.0.0 ===============================
+
+\begin{frame}
+	\begin{center}
+		\includegraphics[width=.8\linewidth]{../assets/tl.drawio.png}
+	\end{center}
+\end{frame}
+
+\begin{frame}
+	\frametitle{Garage v2.0.0}
+	Focus on \underline{}
+	\vspace{2em}
+	\begin{itemize}
+		\item TODO
+	\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+	\frametitle{Currently funding...}
+
+	\textit{...}
+\end{frame}
+
+\begin{frame}
+	\frametitle{We run community surveys}
+	\begin{center}
+		\includegraphics[width=.6\linewidth]{../assets/survey_requested_features.png}
+	\end{center}
+\end{frame}
+
+% ======================================== END
+% ======================================== END
+% ======================================== END
+
+\begin{frame}
+	\frametitle{Where to find us}
+	\begin{center}
+			\includegraphics[width=.25\linewidth]{../../logo/garage_hires.png}\\
+			\vspace{-1em}
+		\url{https://garagehq.deuxfleurs.fr/}\\
+		\url{mailto:garagehq@deuxfleurs.fr}\\
+		\texttt{\#garage:deuxfleurs.fr} on Matrix
+
+		\vspace{1.5em}
+			\includegraphics[width=.06\linewidth]{../assets/logos/rust_logo.png}
+			\includegraphics[width=.13\linewidth]{../assets/logos/AGPLv3_Logo.png}
+	\end{center}
+\end{frame}
+
+\end{document}
+
+%% vim: set ts=4 sw=4 tw=0 noet spelllang=en :
