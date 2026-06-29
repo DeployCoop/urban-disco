@@ -1,2 +1,0 @@
-"""AI-OpenSOC Test Suite"""
-
