@@ -1,0 +1,162 @@
+{{- if .Values.deployment.analytics.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "supabase.analytics.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "supabase.labels" . | nindent 4 }}
+  {{- with .Values.deployment.analytics.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if not .Values.autoscaling.analytics.enabled }}
+  replicas: {{ .Values.deployment.analytics.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "supabase.analytics.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "supabase.analytics.selectorLabels" . | nindent 8 }}
+      {{- with .Values.deployment.analytics.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "supabase.analytics.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.deployment.analytics.automountServiceAccountToken }}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: {{ .Values.deployment.analytics.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml .Values.deployment.analytics.podSecurityContext | nindent 8 }}
+      {{- with .Values.image.analytics.pullSecrets}}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.analytics.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.analytics.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.analytics.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.analytics.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      initContainers:
+        - name: init-db
+          image: "{{ .Values.image.initDb.repository }}:{{ .Values.image.initDb.tag }}"
+          imagePullPolicy: {{ .Values.image.initDb.pullPolicy }}
+          env:
+            {{- include "supabase.db.hostEnv" (dict "root" . "name" "DB_HOST") | nindent 12 }}
+            {{- include "supabase.db.portEnv" (dict "root" . "name" "DB_PORT") | nindent 12 }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              until pg_isready -h $(DB_HOST) -p $(DB_PORT) -U postgres; do
+              echo "Waiting for database to start..."
+              sleep 2
+              done
+            - echo "Database is ready"
+      containers:
+        - name: {{ include "supabase.analytics.name" $ }}
+          image: "{{ .Values.image.analytics.repository }}:{{ .Values.image.analytics.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.analytics.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.analytics.port }}
+              protocol: TCP
+          env:
+            {{- range $key, $value := .Values.environment.analytics }}
+            {{- if and (ne $key "DB_HOST") (ne $key "DB_PORT") }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- include "supabase.db.hostEnv" (dict "root" . "name" "DB_HOSTNAME") | nindent 12 }}
+            {{- include "supabase.db.portEnv" (dict "root" . "name" "DB_PORT") | nindent 12 }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "supabase.secret.db.name" . }}
+                  key: {{ include "supabase.secret.db.key.password" . }}
+            - name: DB_PASSWORD_ENC
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "supabase.secret.db.name" . }}
+                  key: {{ include "supabase.secret.db.key.passwordEncoded" . }}
+            - name:  LOGFLARE_PUBLIC_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "supabase.secret.analytics.name" . }}
+                  key: {{ include "supabase.secret.analytics.key.publicAccessToken" . }}
+            - name: LOGFLARE_PRIVATE_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "supabase.secret.analytics.name" . }}
+                  key: {{ include "supabase.secret.analytics.key.privateAccessToken" . }}
+            {{- if .Values.bigQuery.enabled }}
+            - name: GOOGLE_PROJECT_ID
+              value: {{ .Values.bigQuery.projectId | quote }}
+            - name: GOOGLE_PROJECT_NUMBER
+              value: {{ .Values.bigQuery.projectNumber | quote }}
+            {{- else }}
+            - name: POSTGRES_BACKEND_URL
+              value: $(DB_DRIVER)://$(DB_USERNAME):$(DB_PASSWORD_ENC)@$(DB_HOSTNAME):$(DB_PORT)/$(DB_DATABASE)
+            {{- end }}
+          {{- with .Values.deployment.analytics.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.analytics.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if or (.Values.bigQuery.enabled) (.Values.deployment.analytics.volumes) }}
+          volumeMounts:
+            {{- with .Values.deployment.analytics.volumeMounts }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.bigQuery.enabled }}
+            - mountPath: /opt/app/rel/logflare/bin/gcloud.json
+              name: gcloud-credentials
+              subPath: {{ include "supabase.secret.bigquery.key.gcloudJson" . }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.deployment.analytics.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.analytics.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.analytics.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.analytics.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.deployment.analytics.securityContext | nindent 12 }}
+      {{- if or (.Values.bigQuery.enabled) (.Values.deployment.analytics.volumes) }}
+      volumes:
+        {{- with .Values.deployment.analytics.volumes }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.bigQuery.enabled }}
+        - name: gcloud-credentials
+          secret:
+            secretName: {{ include "supabase.secret.bigquery.name" . }}
+        {{- end }}
+      {{- end }}
+{{- end }}

@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app.kubeshark.co/app: hub
+    app.kubeshark.com/app: hub
     {{- include "kubeshark.labels" . | nindent 4 }}
   {{- if .Values.tap.annotations }}
   annotations:
@@ -15,12 +15,12 @@ spec:
   replicas: 1  # Set the desired number of replicas
   selector:
     matchLabels:
-      app.kubeshark.co/app: hub
+      app.kubeshark.com/app: hub
       {{- include "kubeshark.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app.kubeshark.co/app: hub
+        app.kubeshark.com/app: hub
         {{- include "kubeshark.labels" . | nindent 8 }}
     spec:
       dnsPolicy: ClusterFirstWithHostNet
@@ -37,15 +37,67 @@ spec:
             - -loglevel
             - '{{ .Values.logLevel | default "warning" }}'
             - -capture-stop-after
-            - "{{ if hasKey .Values.tap.capture "stopAfter" }}{{ .Values.tap.capture.stopAfter }}{{ else }}5m{{ end }}"
+            - "{{ if hasKey .Values.tap.capture.dissection "stopAfter" }}{{ .Values.tap.capture.dissection.stopAfter }}{{ else }}5m{{ end }}"
+            - -snapshot-size-limit
+            - '{{ .Values.tap.snapshots.local.storageSize }}'
+            - -dissector-image
+          {{- if .Values.tap.docker.overrideImage.worker }}
+            - '{{ .Values.tap.docker.overrideImage.worker }}'
+          {{- else if .Values.tap.docker.overrideTag.worker }}
+            - '{{ .Values.tap.docker.registry }}/worker:{{ .Values.tap.docker.overrideTag.worker }}'
+          {{- else }}
+            - '{{ .Values.tap.docker.registry }}/worker:{{ not (eq .Values.tap.docker.tag "") | ternary .Values.tap.docker.tag (include "kubeshark.defaultVersion" .) }}'
+          {{- end }}
+            {{- if .Values.tap.delayedDissection.cpu }}
+            - -dissector-cpu
+            - '{{ .Values.tap.delayedDissection.cpu }}'
+            {{- end }}
+            {{- if .Values.tap.delayedDissection.memory }}
+            - -dissector-memory
+            - '{{ .Values.tap.delayedDissection.memory }}'
+            {{- end }}
+            {{- $dissectorStorageSize := .Values.tap.delayedDissection.storageSize | default .Values.tap.snapshots.local.storageSize }}
+            {{- if $dissectorStorageSize }}
+            - -dissector-storage-size
+            - '{{ $dissectorStorageSize }}'
+            {{- end }}
+            {{- $dissectorStorageClass := .Values.tap.delayedDissection.storageClass | default .Values.tap.snapshots.local.storageClass }}
+            {{- if $dissectorStorageClass }}
+            - -dissector-storage-class
+            - '{{ $dissectorStorageClass }}'
+            {{- end }}
             {{- if .Values.tap.gitops.enabled }}
             - -gitops
             {{- end }}
-          {{- if .Values.tap.secrets }}
+            - -cloud-api-url
+            - '{{ .Values.cloudApiUrl }}'
+            {{- if .Values.tap.snapshots.cloud.provider }}
+            - -cloud-storage-provider
+            - '{{ .Values.tap.snapshots.cloud.provider }}'
+            {{- end }}
+          {{- $hasInlineConfig := or .Values.tap.snapshots.cloud.prefix .Values.tap.snapshots.cloud.s3.bucket .Values.tap.snapshots.cloud.s3.region .Values.tap.snapshots.cloud.s3.roleArn .Values.tap.snapshots.cloud.s3.externalId .Values.tap.snapshots.cloud.azblob.storageAccount .Values.tap.snapshots.cloud.azblob.container .Values.tap.snapshots.cloud.gcs.bucket .Values.tap.snapshots.cloud.gcs.project }}
+          {{- $hasInlineSecrets := or .Values.tap.snapshots.cloud.s3.accessKey .Values.tap.snapshots.cloud.s3.secretKey .Values.tap.snapshots.cloud.azblob.storageKey .Values.tap.snapshots.cloud.gcs.credentialsJson }}
+          {{- if or .Values.tap.secrets .Values.tap.snapshots.cloud.configMaps .Values.tap.snapshots.cloud.secrets $hasInlineConfig $hasInlineSecrets }}
           envFrom:
             {{- range .Values.tap.secrets }}
             - secretRef:
                 name: {{ . }}
+            {{- end }}
+            {{- range .Values.tap.snapshots.cloud.configMaps }}
+            - configMapRef:
+                name: {{ . }}
+            {{- end }}
+            {{- range .Values.tap.snapshots.cloud.secrets }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+            {{- if $hasInlineConfig }}
+            - configMapRef:
+                name: {{ include "kubeshark.name" . }}-cloud-config
+            {{- end }}
+            {{- if $hasInlineSecrets }}
+            - secretRef:
+                name: {{ include "kubeshark.name" . }}-cloud-secret
             {{- end }}
           {{- end }}
           env:
@@ -61,8 +113,6 @@ spec:
             value: '{{ (include "sentry.enabled" .) }}'
           - name: SENTRY_ENVIRONMENT
             value: '{{ .Values.tap.sentry.environment }}'
-          - name: KUBESHARK_CLOUD_API_URL
-            value: 'https://api.kubeshark.co'
           - name: PROFILING_ENABLED
             value: '{{ .Values.tap.pprof.enabled }}'
         {{- if .Values.tap.docker.overrideImage.hub }}
@@ -106,6 +156,8 @@ spec:
           - name: saml-x509-volume
             mountPath: "/etc/saml/x509"
             readOnly: true
+          - name: snapshots-volume
+            mountPath: "/app/data/snapshots"
 {{- if gt (len .Values.tap.nodeSelectorTerms.hub) 0}}
       affinity:
         nodeAffinity:
@@ -167,3 +219,11 @@ spec:
               items:
               - key: AUTH_SAML_X509_KEY
                 path: kubeshark.key
+      - name: snapshots-volume
+        {{- if .Values.tap.snapshots.local.storageClass }}
+        persistentVolumeClaim:
+          claimName: {{ include "kubeshark.name" . }}-snapshots-pvc
+        {{- else }}
+        emptyDir:
+          sizeLimit: {{ .Values.tap.snapshots.local.storageSize }}
+        {{- end }}

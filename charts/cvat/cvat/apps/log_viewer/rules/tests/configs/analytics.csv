@@ -1,2 +1,0 @@
-Scope,Resource,Context,Ownership,Limit,Method,URL,Privilege,Membership,HasAnalyticsAccess
-view,Analytics,N/A,N/A,,GET,"/analytics",none,N/A,true

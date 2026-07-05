@@ -673,8 +673,8 @@ volumePermissions:
   ##
   image:
     registry: docker.io
-    repository: soldevelo/os-shell
-    tag: 12-debian-12-r3
+    repository: bitnami/os-shell
+    tag: 12-debian-12-r49
     digest: ""
     ## @param volumePermissions.image.pullPolicy Init container volume-permissions image pull policy
     ##

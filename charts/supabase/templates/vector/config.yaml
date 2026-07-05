@@ -1,0 +1,10 @@
+{{- if .Values.deployment.vector.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "supabase.vector.fullname" . }}-config
+  labels:
+    {{- include "supabase.labels" . | nindent 4 }}
+data:
+  vector.yml: |{{ tpl (.Files.Get "files/vector/vector.yml") . | nindent 4 }}
+{{- end }}

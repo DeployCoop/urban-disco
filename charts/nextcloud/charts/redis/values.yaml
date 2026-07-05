@@ -2156,8 +2156,8 @@ volumePermissions:
   ##
   image:
     registry: docker.io
-    repository: soldevelo/os-shell
-    tag: 12-debian-12-r3
+    repository: bitnami/os-shell
+    tag: 12-debian-12-r44
     digest: ""
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
@@ -2220,8 +2220,8 @@ kubectl:
   ##
   image:
     registry: docker.io
-    repository: soldevelo/kubectl
-    tag: 1.33.4-debian-12-r0
+    repository: bitnami/kubectl
+    tag: 1.33.1-debian-12-r0
     digest: ""
     ## Specify a imagePullPolicy
     ## ref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images
@@ -2289,8 +2289,8 @@ sysctl:
   ##
   image:
     registry: docker.io
-    repository: soldevelo/os-shell
-    tag: 12-debian-12-r3
+    repository: bitnami/os-shell
+    tag: 12-debian-12-r44
     digest: ""
     pullPolicy: IfNotPresent
     ## Optionally specify an array of imagePullSecrets.
