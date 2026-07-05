@@ -4,7 +4,7 @@
 
 
 main () {
-  THIS_CWD=$(pwd)
+  URBAN_DISCO_BASE_PATH=$(pwd)
 
   for i in $(cat repo_list); do
     echo "helm repo add $i"

@@ -1,52 +1,40 @@
 #!/usr/bin/env bash
 : "${VERBOSITY:=0}"
 : "${FETCHR_CACHE:=/tmp}"
-
-fetch_wrapper () {
-  WRAPPED_REPO_NAME=$1
-  WRAPPED_REPO_URL=$2
-  cd ${FETCHR_CACHE}
-  if [[ ! -d ${FETCHR_CACHE}/${WRAPPED_REPO_NAME} ]]; then 
-    git clone --filter=blob:none ${WRAPPED_REPO_URL}
-  else
-    cd ${FETCHR_CACHE}/${WRAPPED_REPO_NAME}
-    git pull
-  fi
-}
+. src/util.bash
+test_env
 
 main () {
+  src/vigil.sh
+
   fetch_wrapper 'supabase-kubernetes' 'https://github.com/supabase-community/supabase-kubernetes.git'
-  fetch_wrapper 'vigil' 'https://github.com/Vigil-SOC/vigil.git'
   fetch_wrapper 'FOSSBilling-charts' 'https://github.com/joshuacox/FOSSBilling-charts.git'
   fetch_wrapper 'helm-drupal' 'https://github.com/drupalwxt/helm-drupal.git'
   fetch_wrapper 'garage' 'https://git.deuxfleurs.fr/Deuxfleurs/garage'
   fetch_wrapper 'cvat' 'https://github.com/cvat-ai/cvat'
-  cd ${FETCHR_CACHE}/vigil/helm
-  helm dependency build
-  cp -av vigil ${THIS_CWD}/charts/
   cd ${FETCHR_CACHE}/cvat
-  cp -av helm-chart ${THIS_CWD}/charts/cvat
-  rm ${THIS_CWD}/charts/cvat/analytics
-  cp -av components/analytics ${THIS_CWD}/charts/cvat/
+  cp -av helm-chart ${URBAN_DISCO_BASE_PATH}/charts/cvat
+  rm ${URBAN_DISCO_BASE_PATH}/charts/cvat/analytics
+  cp -av components/analytics ${URBAN_DISCO_BASE_PATH}/charts/cvat/
   cd ${FETCHR_CACHE}/helm-drupal/charts
   git pull
-  cp -av solr    ${THIS_CWD}/charts/
-  cp -av drupal  ${THIS_CWD}/charts/
-  cp -av varnish ${THIS_CWD}/charts/
+  cp -av solr    ${URBAN_DISCO_BASE_PATH}/charts/
+  cp -av drupal  ${URBAN_DISCO_BASE_PATH}/charts/
+  cp -av varnish ${URBAN_DISCO_BASE_PATH}/charts/
   cd ${FETCHR_CACHE}/supabase-kubernetes
   git pull
   cd ${FETCHR_CACHE}/supabase-kubernetes/charts
-  cp -av supabase ${THIS_CWD}/charts/
+  cp -av supabase ${URBAN_DISCO_BASE_PATH}/charts/
   cd ${FETCHR_CACHE}/FOSSBilling-charts
   git pull
-  cp -av ${FETCHR_CACHE}/FOSSBilling-charts ${THIS_CWD}/charts/FOSSBilling
-  rm -Rf ${THIS_CWD}/charts/FOSSBilling/.git
+  cp -av ${FETCHR_CACHE}/FOSSBilling-charts ${URBAN_DISCO_BASE_PATH}/charts/FOSSBilling
+  rm -Rf ${URBAN_DISCO_BASE_PATH}/charts/FOSSBilling/.git
   cd ${FETCHR_CACHE}/garage
   git pull
-  cp -av ${FETCHR_CACHE}/garage/script/helm/garage ${THIS_CWD}/charts/
+  cp -av ${FETCHR_CACHE}/garage/script/helm/garage ${URBAN_DISCO_BASE_PATH}/charts/
 
-  cd ${THIS_CWD}
-  cd ${THIS_CWD}/charts
+  cd ${URBAN_DISCO_BASE_PATH}
+  cd ${URBAN_DISCO_BASE_PATH}/charts
   git checkout nextjs-docker
   git checkout sass-starter
   git checkout urban-mosquitto
@@ -54,7 +42,7 @@ main () {
   cd minio
   helm fetch --untar minio-operator/operator
   helm fetch --untar minio-operator/tenant
-  cd ${THIS_CWD}/charts
+  cd ${URBAN_DISCO_BASE_PATH}/charts
   helm fetch --untar openebs-monitoring/monitoring
   mv -v monitoring openebs-monitoring
   helm fetch --untar haproxytech/kubernetes-ingress

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 : "${VERBOSITY:=0}"
 : "${FETCHR_CACHE:=/tmp}"
-
+. src/util.bash
+test_env
 
 main () {
-  export THIS_CWD=$(pwd)
+  set -eux
 
   bash -ux repo_list
   helm repo update
@@ -14,7 +15,7 @@ main () {
 
   ./custom
 
-  cd ${THIS_CWD}/charts
+  cd ${URBAN_DISCO_BASE_PATH}/charts
   bash -eux ../list_fetch
 }
 
