@@ -6,6 +6,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "supabase.labels" . | nindent 4 }}
+    {{- with .Values.deployment.kong.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
   {{- with .Values.deployment.kong.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -153,14 +156,14 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ include "supabase.kong.fullname" $ }}
+            name: {{ include "supabase.kong.configMapName" $ }}
             defaultMode: 0777
             items:
             - key: kong.yml
               path: template.yml
         - name: wrapper
           configMap:
-            name: {{ include "supabase.kong.fullname" $ }}
+            name: {{ include "supabase.kong.configMapName" $ }}
             defaultMode: 0777
             items:
             - key: kong-entrypoint.sh
