@@ -43,4 +43,4 @@ name: nextcloud
 sources:
 - https://github.com/nextcloud/helm
 - https://github.com/nextcloud/docker
-version: 9.2.0
+version: 9.2.3

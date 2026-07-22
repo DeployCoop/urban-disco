@@ -82,12 +82,12 @@ spec:
             - containerPort: {{ .Values.service.analytics.port }}
               protocol: TCP
           env:
-            {{- range $key, $value := .Values.environment.analytics }}
-            {{- if and (ne $key "DB_HOST") (ne $key "DB_PORT") }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
-            {{- end }}
-            {{- end }}
+            - name: DB_DRIVER
+              value: "postgresql"
+            - name: DB_USERNAME
+              value: "supabase_admin"
+            - name: DB_DATABASE
+              value: "_supabase"
             {{- include "supabase.db.hostEnv" (dict "root" . "name" "DB_HOSTNAME") | nindent 12 }}
             {{- include "supabase.db.portEnv" (dict "root" . "name" "DB_PORT") | nindent 12 }}
             - name: DB_PASSWORD
@@ -119,6 +119,7 @@ spec:
             - name: POSTGRES_BACKEND_URL
               value: $(DB_DRIVER)://$(DB_USERNAME):$(DB_PASSWORD_ENC)@$(DB_HOSTNAME):$(DB_PORT)/$(DB_DATABASE)
             {{- end }}
+            {{- include "supabase.env.render" (dict "env" .Values.environment.analytics) | nindent 12 }}
           {{- with .Values.deployment.analytics.envFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}

@@ -45,6 +45,12 @@ httpRoute:
   hostnames: []
   # -- Reference to parent gateways
   parentRefs: []
+  # -- Add the standard Nextcloud service discovery redirects
+  # (`/.well-known/carddav` and `/.well-known/caldav` -> `/remote.php/dav`) as
+  # Gateway API `RequestRedirect` rules. Unlike the ingress-nginx server snippet
+  # this needs no implementation-specific config. Set to false to opt out.
+  wellKnown:
+    enabled: true
   # -- List of rules and filters applied.
   rules:
     - matches:
@@ -357,6 +363,7 @@ nextcloud:
 
   # Set securityContext parameters for the entire pod. For example, you may need to define runAsNonRoot directive
   podSecurityContext: {}
+  #   fsGroup: 33
   #   runAsUser: 33
   #   runAsGroup: 33
   #   runAsNonRoot: true
@@ -373,6 +380,10 @@ nextcloud:
     resources: {}
     # Set postgresql initContainer securityContext parameters. For example, you may need to define runAsNonRoot directive
     securityContext: {}
+
+    # Settings for the Redis init container that creates a configuration file to address permission issue in some cluster
+    redisInitContainer:
+      resources: {}
 
   # -- priority class for nextcloud.
   # Overrides .Values.priorityClassName

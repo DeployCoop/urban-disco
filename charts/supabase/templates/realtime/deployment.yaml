@@ -85,19 +85,23 @@ spec:
         - name: {{ include "supabase.realtime.name" $ }}
           image: "{{ .Values.image.realtime.repository }}:{{ .Values.image.realtime.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.realtime.pullPolicy }}
-          command: ["/bin/sh"]
-          args: ["-c", "/app/bin/migrate && /app/bin/realtime eval 'Realtime.Release.seeds(Realtime.Repo)' && /app/bin/server"]
+          {{- with .Values.deployment.realtime.command }}
+          command:
+            {{- range . }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.deployment.realtime.args }}
+          args: 
+            {{- range . }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
           ports:
             - name: http
               containerPort: 4000
               protocol: TCP
           env:
-            {{- range $key, $value := .Values.environment.realtime }}
-            {{- if and (ne $key "DB_HOST") (ne $key "DB_PORT") }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
-            {{- end }}
-            {{- end }}
             {{- include "supabase.db.hostEnv" (dict "root" . "name" "DB_HOST") | nindent 12 }}
             {{- include "supabase.db.portEnv" (dict "root" . "name" "DB_PORT") | nindent 12 }}
             - name: SELF_HOST_TENANT_NAME
@@ -144,6 +148,12 @@ spec:
                 secretKeyRef:
                   name: {{ include "supabase.secret.realtime.name" . }}
                   key: {{ include "supabase.secret.realtime.key.secretKeyBase" . }}
+            - name: DB_ENC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "supabase.secret.realtime.name" . }}
+                  key: {{ include "supabase.secret.realtime.key.dbEncKey" . }}
+            {{- include "supabase.env.render" (dict "env" .Values.environment.realtime) | nindent 12 }}
           {{- with .Values.deployment.realtime.envFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}
