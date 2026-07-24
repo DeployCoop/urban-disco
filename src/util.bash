@@ -16,7 +16,13 @@ test_env () {
   if [[ -f .env ]]; then
   . .env
   else
-    echo 'No .env file, please see .env.example and create .env'
+    make_env
     exit 1
   fi
+}
+
+make_env () {
+  THIS_CWD=$(pwd -P)
+  echo "No .env file, creating a new .env at ${THIS_CWD}, please inspect it"
+  echo "URBAN_DISCO_BASE_PATH=${THIS_CWD}" >> .env
 }
