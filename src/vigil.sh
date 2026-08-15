@@ -6,7 +6,7 @@ test_env
 set -eux
 
 fetch_wrapper 'vigil' 'https://github.com/Vigil-SOC/vigil.git'
-cd ${FETCHR_CACHE}/vigil/helm
+cd ${FETCHR_CACHE}/vigil/infra/helm
 rm -Rf ${URBAN_DISCO_BASE_PATH}/charts/vigil
 mkdir -p ${URBAN_DISCO_BASE_PATH}/charts/
 cp -av vigil ${URBAN_DISCO_BASE_PATH}/charts/
