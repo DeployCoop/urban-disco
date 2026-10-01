@@ -35,13 +35,15 @@ spec:
       {{- with .Values.s3.podLabels }}
       {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- $podAnnotations := mergeOverwrite (deepCopy (.Values.podAnnotations | default dict)) (.Values.s3.podAnnotations | default dict) }}
+      {{- if .Values.s3.existingConfigSecret }}
+      {{- $configSecret := (lookup "v1" "Secret" .Release.Namespace .Values.s3.existingConfigSecret) | default dict }}
+      {{- $_ := set $podAnnotations "checksum/s3config" ($configSecret | toYaml | sha256sum) }}
+      {{- else }}
+      {{- $_ := set $podAnnotations "checksum/s3config" (include (print .Template.BasePath "/s3/s3-secret.yaml") . | sha256sum) }}
+      {{- end }}
       annotations:
-      {{ with .Values.podAnnotations }}
-      {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.s3.podAnnotations }}
-      {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- toYaml $podAnnotations | nindent 8 }}
     spec:
       restartPolicy: {{ default .Values.global.seaweedfs.restartPolicy .Values.s3.restartPolicy }}
       {{- if .Values.s3.affinity }}
@@ -60,6 +62,9 @@ spec:
       terminationGracePeriodSeconds: 10
       {{- if .Values.s3.priorityClassName }}
       priorityClassName: {{ .Values.s3.priorityClassName | quote }}
+      {{- end }}
+      {{- if .Values.s3.schedulerName }}
+      schedulerName: {{ .Values.s3.schedulerName | quote }}
       {{- end }}
       enableServiceLinks: false
       {{- if .Values.s3.serviceAccountName }}
@@ -91,6 +96,9 @@ spec:
                   fieldPath: metadata.namespace
             - name: SEAWEEDFS_FULLNAME
               value: "{{ include "seaweedfs.fullname" . }}"
+            {{- if .Values.s3.enableAuth }}
+            {{- include "seaweedfs.s3.credentialEnv" . | nindent 12 }}
+            {{- end }}
             {{- $mergedExtraEnvironmentVars := dict }}
             {{- include "seaweedfs.mergeExtraEnvironmentVars" (dict "global" .Values.global.seaweedfs "component" .Values.s3 "target" $mergedExtraEnvironmentVars) }}
             {{- range $key := keys $mergedExtraEnvironmentVars | sortAlpha }}
@@ -143,6 +151,8 @@ spec:
               {{- if .Values.s3.icebergPort }}
               -port.iceberg={{ .Values.s3.icebergPort }} \
               {{- end }}
+              {{- /* rendered even when 0: an if would drop the flag and weed would serve its default */}}
+              -port.lance={{ .Values.s3.lancePort | default 0 }} \
               {{- range .Values.s3.extraArgs }}
               {{ . }} \
               {{- end }}
@@ -191,6 +201,10 @@ spec:
             {{- if .Values.s3.icebergPort }}
             - containerPort: {{ .Values.s3.icebergPort }}
               name: swfs-iceberg
+            {{- end }}
+            {{- if .Values.s3.lancePort }}
+            - containerPort: {{ .Values.s3.lancePort }}
+              name: swfs-lance
             {{- end }}
             {{- if .Values.s3.metricsPort }}
             - containerPort: {{ .Values.s3.metricsPort }}

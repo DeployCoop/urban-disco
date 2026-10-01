@@ -1,0 +1,38 @@
+{{- if .Values.rustfs.bundled }}
+{{- $host := required "rustfs.ingress.host is required when rustfs.bundled is true, so OpenProject's pre-signed attachment URLs are reachable from users' browsers" .Values.rustfs.ingress.host }}
+---
+apiVersion: {{ include "common.capabilities.ingress.apiVersion" . }}
+kind: Ingress
+metadata:
+  name: {{ include "common.names.fullname" . }}-rustfs
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: rustfs
+  {{- if or .Values.rustfs.ingress.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.rustfs.ingress.annotations .Values.commonAnnotations ) "context" . ) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.rustfs.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.rustfs.ingress.ingressClassName }}
+  {{- end }}
+  {{- if and .Values.rustfs.ingress.tls.enabled .Values.rustfs.ingress.tls.secretName }}
+  tls:
+    - hosts:
+        - {{ $host | quote }}
+      secretName: "{{ .Values.rustfs.ingress.tls.secretName }}"
+  {{- end }}
+  rules:
+    - host: {{ $host | quote }}
+      http:
+        paths:
+          {{- if .Values.rustfs.ingress.consoleEnabled }}
+          - path: /rustfs/console
+            pathType: Prefix
+            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "openproject.rustfsServiceHost" $) "servicePort" "console" "context" $) | nindent 14 }}
+          {{- end }}
+          - path: {{ .Values.rustfs.ingress.path }}
+            pathType: {{ .Values.rustfs.ingress.pathType }}
+            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "openproject.rustfsServiceHost" $) "servicePort" "endpoint" "context" $) | nindent 14 }}
+...
+{{- end }}

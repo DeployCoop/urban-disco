@@ -29,17 +29,6 @@ global:
   # -- If deploying to OpenShift
   openshift: false
 
-  # -- Create PodSecurityPolicy for pods
-  psp:
-    enable: false
-    # -- Annotation for PodSecurityPolicy.
-    # This is a multi-line templated string map, and can also be set as YAML.
-    annotations: |
-      seccomp.security.alpha.kubernetes.io/allowedProfileNames: docker/default,runtime/default
-      apparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default
-      seccomp.security.alpha.kubernetes.io/defaultProfileName:  runtime/default
-      apparmor.security.beta.kubernetes.io/defaultProfileName:  runtime/default
-
   serverTelemetry:
     # -- Enable integration with the Prometheus Operator
     # See the top level serverTelemetry section below before enabling this feature.
@@ -209,6 +198,16 @@ injector:
         operator: NotIn
         values:
         - {{ template "openbao.name" . }}-agent-injector
+
+    # matchConditions is a list of CEL expressions for restricting the webhook to only
+    # specific requests.
+    # See https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-matchconditions
+    # for more details.
+    # Example:
+    # matchConditions:
+    #   - name: has-agent-inject-annotation
+    #     expression: 'has(object.metadata.annotations) && "openbao.org/agent-inject" in object.metadata.annotations'
+    matchConditions: []
 
     # Extra annotations to attach to the webhook
     annotations: {}
@@ -521,9 +520,9 @@ server:
         path:
           type: PathPrefix
           value: '/'
-        timeouts: {}
-          # request: 10s  #Maximum time the Gateway waits to complete the full client request and response cycle.
-          # backendRequest: 10s # Maximum time the Gateway waits for a response from the backend service.
+      timeouts: {}
+        # request: 10s  #Maximum time the Gateway waits to complete the full client request and response cycle.
+        # backendRequest: 10s # Maximum time the Gateway waits for a response from the backend service.
       filters: []
       # - type: RequestHeaderModifier
       #   requestHeaderModifier:
@@ -837,7 +836,6 @@ server:
     # The IP family and IP families options are to set the behaviour in a dual-stack environment.
     # Omitting these values will let the service fall back to whatever the CNI dictates the defaults
     # should be.
-    # These are only supported for kubernetes versions >=1.23.0
     #
     # Configures the service's supported IP family policy, can be either:
     #     SingleStack: Single-stack service. The control plane allocates a cluster IP for the Service, using the first configured service cluster IP range.
@@ -955,7 +953,7 @@ server:
 
   # Run OpenBao in "standalone" mode. This is the default mode that will deploy if
   # no arguments are given to helm. This requires a PVC for data storage to use
-  # the "file" backend.  This mode is not highly available and should not be scaled
+  # the "pebbledb" backend. This mode is not highly available and should not be scaled
   # past a single replica.
   standalone:
     enabled: "-"
@@ -981,8 +979,8 @@ server:
         #  unauthenticated_metrics_access = "true"
         #}
       }
-      storage "file" {
-        path = "/openbao/data"
+      storage "pebbledb" {
+        path = "/openbao/data/pebbledb"
       }
 
       # Example configuration for using auto-unseal, using Google Cloud KMS. The
@@ -1183,7 +1181,6 @@ ui:
   # The IP family and IP families options are to set the behaviour in a dual-stack environment.
   # Omitting these values will let the service fall back to whatever the CNI dictates the defaults
   # should be.
-  # These are only supported for kubernetes versions >=1.23.0
   #
   # Configures the service's supported IP family, can be either:
   #     SingleStack: Single-stack service. The control plane allocates a cluster IP for the Service, using the first configured service cluster IP range.
@@ -1234,7 +1231,7 @@ csi:
     # -- image repo to use for csi image
     repository: "openbao/openbao-csi-provider"
     # -- image tag to use for csi image
-    tag: "2.0.2"
+    tag: "2.0.3"
     # -- image pull policy to use for csi image. if tag is "latest", set to "Always"
     pullPolicy: IfNotPresent
 
@@ -1463,6 +1460,10 @@ serverTelemetry:
     # authorization used for scraping the Vault metrics API.
     authorization: {}
 
+    # -- bearerTokenFile defines the file to read bearer token for scraping the target.
+    # Deprecated: Use 'serverTelemetry.serviceMonitor.authorization'
+    bearerTokenFile: ~
+
     # scrapeClass to be used by the serviceMonitor
     scrapeClass: ""
 
@@ -1537,9 +1538,14 @@ extraObjects: []
 snapshotAgent:
   # whether or not to enable the snapshot agent cronjob
   enabled: false
-  # extra Annotations for the job
+  # Extra labels to attach to the snapshot agent CronJob
+  # This should be a YAML map of the labels to apply to the CronJob
+  extraLabels: {}
+  # Extra Annotations to attach to the snapshot agent CronJob
   annotations: {}
-  # schedule of the cronjob
+  # concurrencyPolicy for the CronJob. Can be "Allow", "Forbid", or "Replace"
+  concurrencyPolicy: "Forbid"
+  # schedule of the CronJob
   schedule: "*/15 * * * *"
   restartPolicy: OnFailure
   # service account settings for the snapshot agent
@@ -1548,10 +1554,20 @@ snapshotAgent:
     name: ""
     annotations: {}
     extraLabels: {}
+  job:
+    # Extra labels to attach to snapshot agent Jobs
+    extraLabels: {}
+    # Extra annotations to attach to snapshot agent Jobs
+    annotations: {}
+  pod:
+    # Extra labels to attach to snapshot agent Pods
+    extraLabels: {}
+    # Extra annotations to attach to snapshot agent Pods
+    annotations: {}
   # The image settings for the snapshot agent
   image:
     repository: ghcr.io/openbao/openbao-snapshot-agent
-    tag: 0.3.0
+    tag: 0.4.5
 
   # -- List of extraVolumes made available to the snapshot cronjob container.
   extraVolumes: []
@@ -1567,8 +1583,10 @@ snapshotAgent:
   #     readOnly: true
   #     subPath: ca.crt
 
-  # s3CredentialsSecret to use
-  s3CredentialsSecret: "my-s3-credentials"
+  # -- Existing Kubernetes secret with S3 Credentials.
+  # Must contain keys called AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
+  # If not provided, you must provide `snapshotAgent.extraSecretEnvironmentVars`
+  s3CredentialsSecret: ""
 
   # configuration for the snapshot agent
   config:
@@ -1577,8 +1595,18 @@ snapshotAgent:
     s3Uri: "s3://openbao-snapshots"
     s3ExpireDays: "14"
     s3cmdExtraFlag: "-v"
+    # The path of the Kubernetes authentication backend in OpenBao (e.g. `kubernetes`)
     baoAuthPath: "kubernetes"
+    # OpenBao role to use to create the snapshot
     baoRole: "snapshot"
+    # OpenBao namespace to be used. Leave empty for non-namespace installations.
+    baoNamespace: ""
+    # Namespace for bao authentication. If authentication namespace needs to be different to `BAO_NAMESPACE`.
+    baoAuthNamespace: ""
+    # Secret path to retrieve S3 credentials from. Expects the secret to have two fields: `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+    baoSecretPath: ""
+    # The path of the Kubernetes service account token. If unset defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token`.
+    tokenPath: ""
 
   # configuration of the CronJobs resources
   resources: {}
@@ -1615,3 +1643,14 @@ snapshotAgent:
   # This should be either a multi-line string or YAML matching the Toleration array
   # in a PodSpec.
   tolerations: []
+
+  # nodeSelector labels for snapshot-agent cronjob pod assignment, formatted as a multi-line string or YAML map.
+  # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+  # Example:
+  # nodeSelector:
+  #   beta.kubernetes.io/arch: amd64
+  nodeSelector: {}
+
+  # Affinity Settings for snapshot-agent cronjob pod
+  # This should be either a multi-line string or YAML matching the PodSpec's affinity field.
+  affinity: {}

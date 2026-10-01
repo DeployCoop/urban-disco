@@ -40,7 +40,7 @@ The following table lists the configurable parameters of the Helm chart.
 | `cluster.general.setVMMaxMapCount` | bool | `true` | Enable setVMMaxMapCount. OpenSearch requires the Linux kernel vm.max_map_count option to be set to at least 262144 |
 | `cluster.general.snapshotRepositories` | list | `[]` | Opensearch snapshot repositories configuration |
 | `cluster.general.vendor` | string | `"Opensearch"` |  |
-| `cluster.general.version` | string | `"2.3.0"` | Opensearch version |
+| `cluster.general.version` | string | `""` | Opensearch version |
 | `cluster.bootstrap.env` | list | `[]` | bootstrap pod env variables |
 | `cluster.bootstrap.affinity` | object | `{}` | bootstrap pod affinity rules |
 | `cluster.bootstrap.annotations` | object | `{}` | bootstrap pod annotations |
@@ -75,7 +75,7 @@ The following table lists the configurable parameters of the Helm chart.
 | `cluster.dashboards.tls.secret` | string | `nil` | Optional, name of a TLS secret that contains ca.crt, tls.key and tls.crt data. If ca.crt is in a different secret provide it via the caSecret field |
 | `cluster.dashboards.tls.duration` | string | `"8760h"` | Duration controls the validity period of generated certificates (e.g. "8760h", "720h"). This is used only when generate is true. |
 | `cluster.dashboards.tolerations` | list | `[]` | dashboards pod tolerations |
-| `cluster.dashboards.version` | string | `"2.3.0"` | dashboards version |
+| `cluster.dashboards.version` | string | `""` | dashboards version |
 | `cluster.initHelper.image` | string | `"docker.io/busybox"` | initHelper image |
 | `cluster.initHelper.imagePullPolicy` | string | `"IfNotPresent"` | initHelper image pull policy |
 | `cluster.initHelper.imagePullSecrets` | list | `[]` | initHelper image pull secret |
@@ -89,13 +89,15 @@ The following table lists the configurable parameters of the Helm chart.
 | `cluster.security.config.adminCredentialsSecret` | object | `{}` | Secret that contains fields username and password to be used by the operator to access the opensearch cluster for node draining. Must be set if custom securityconfig is provided. |
 | `cluster.security.config.adminSecret` | object | `{}` | TLS Secret that contains a client certificate (tls.key, tls.crt, ca.crt) with admin rights in the opensearch cluster. Must be set if http certificates are provided by user and not generated |
 | `cluster.security.config.securityConfigSecret` | object | `{}` | Secret that contains the differnt yml files of the opensearch-security config (config.yml, internal_users.yml, etc) |
+| `cluster.security.tls.http.enabled` | string | `nil` | Controls if TLS should be enabled for HTTP. If false, TLS is explicitly disabled. If not set (default), TLS is enabled when http configuration is provided. If true, TLS is explicitly enabled and http configuration must be provided. |
 | `cluster.security.tls.http.adminDn` | list | `[]` | DNs of certificates that should have admin access, mainly used for securityconfig updates via securityadmin.sh, only used when existing certificates are provided |
 | `cluster.security.tls.http.caSecret` | object | `{}` | Optional, secret that contains the ca certificate as ca.crt. If this and generate=true is set the existing CA cert from that secret is used to generate the node certs. In this case must contain ca.crt and ca.key fields |
 | `cluster.security.tls.http.generate` | bool | `true` | If set to true the operator will generate a CA and certificates for the cluster to use, if false - secrets with existing certificates must be supplied |
 | `cluster.security.tls.http.customFQDN` | string | `""` | Optional custom FQDN to use for the HTTP certificate. If provided, this FQDN will be used as the primary DNS name in the certificate's Subject Alternative Names (SAN), along with the default cluster DNS names. This allows you to use a single certificate that works with both your custom domain and the internal Kubernetes DNS names. |
 | `cluster.security.tls.http.secret` | object | `{}` | Optional, name of a TLS secret that contains ca.crt, tls.key and tls.crt data. If ca.crt is in a different secret provide it via the caSecret field |
 | `cluster.security.tls.http.duration` | string | `"8760h"` | Duration controls the validity period of generated certificates (e.g. "8760h", "720h"). This is used only when generate is true. |
-| `cluster.security.tls.http.enableHotReload` | bool | `false` | Enable hot reloading of TLS certificates. |
+| `cluster.security.tls.http.enableHotReload` | string | `nil` | Enable hot reloading of TLS certificates so nodes pick up renewed certificates without a restart. Requires OpenSearch >= 2.19.1. Unset (~) defers to the operator: enabled on OpenSearch 3.x+, off below. Set true/false to override. |
+| `cluster.security.tls.transport.enabled` | string | `nil` | Controls if TLS should be enabled for transport. If false, TLS is explicitly disabled. If not set (default), TLS is enabled when transport configuration is provided. If true, TLS is explicitly enabled and transport configuration must be provided. |
 | `cluster.security.tls.transport.adminDn` | list | `[]` | DNs of certificates that should have admin access, mainly used for securityconfig updates via securityadmin.sh, only used when existing certificates are provided. This field is deprecated and will be removed in a future version. For OpenSearch 2.0.0+, use security.tls.http.adminDn instead. |
 | `cluster.security.tls.transport.caSecret` | object | `{}` | Optional, secret that contains the ca certificate as ca.crt. If this and generate=true is set the existing CA cert from that secret is used to generate the node certs. In this case must contain ca.crt and ca.key fields |
 | `cluster.security.tls.transport.generate` | bool | `true` | If set to true the operator will generate a CA and certificates for the cluster to use, if false secrets with existing certificates must be supplied |
@@ -103,7 +105,7 @@ The following table lists the configurable parameters of the Helm chart.
 | `cluster.security.tls.transport.perNode` | bool | `true` | Separate certificate per node |
 | `cluster.security.tls.transport.secret` | object | `{}` | Optional, name of a TLS secret that contains ca.crt, tls.key and tls.crt data. If ca.crt is in a different secret provide it via the caSecret field |
 | `cluster.security.tls.transport.duration` | string | `"8760h"` | Duration controls the validity period of generated certificates (e.g. "8760h", "720h"). This is used only when generate is true. |
-| `cluster.security.tls.transport.enableHotReload` | bool | `false` | Enable hot reloading of TLS certificates. |
+| `cluster.security.tls.transport.enableHotReload` | string | `nil` | Enable hot reloading of TLS certificates so nodes pick up renewed certificates without a restart. Requires OpenSearch >= 2.19.1. Unset (~) defers to the operator: enabled on OpenSearch 3.x+, off below. Set true/false to override. |
 | `cluster.ingress.opensearch.enabled` | bool | `false` | Enable ingress for Opensearch service |
 | `cluster.ingress.opensearch.annotations` | object | `{}` | Opensearch ingress annotations |
 | `cluster.ingress.opensearch.className` | string | `""` | Opensearch Ingress class name |
@@ -125,4 +127,4 @@ The following table lists the configurable parameters of the Helm chart.
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 
-Opensearch-cluster Helm Chart version: `3.3.0`
+Opensearch-cluster Helm Chart version: `3.3.5`

@@ -18,17 +18,45 @@ ingress:
 ## Configure OpenShift Route resources.
 ## Routes are automatically used when the OpenShift Route API is available.
 ##
-route:
-  enabled: false
-  labels: {}
-    # network-type: dmz
-  annotations: {}
-  path: /
-  hosts:
-    - chart-example.local
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
+routes: []
+  # - name: drupal
+  #   enabled: true
+  #   labels: {}
+  #     # network-type: dmz
+  #   annotations: {}
+  #   path: /
+  #   hosts:   # only the first host is used; add another entry for another host
+  #     - chart-example.local
+  #   tls:
+  #     # Terminate TLS at the OpenShift router (edge): HTTPS is decrypted here,
+  #     # then the request is forwarded to the app over plain HTTP internally.
+  #     termination: edge
+  #
+  #     # Redirect insecure HTTP requests to HTTPS when they reach the route.
+  #     insecureEdgeTerminationPolicy: Redirect
+  #
+  #     # Reference an existing Kubernetes TLS Secret containing tls.crt and tls.key.
+  #     # Use this OR the inline key/certificate fields below, not both.
+  #     externalCertificate:
+  #       name: my-route-tls
+  #
+  #     # Private key for the route certificate (PEM format).
+  #     key: |-
+  #       -----BEGIN PRIVATE KEY-----
+  #       ...
+  #       -----END PRIVATE KEY-----
+  #
+  #     # Public certificate for the route (PEM format).
+  #     certificate: |-
+  #       -----BEGIN CERTIFICATE-----
+  #       ...
+  #       -----END CERTIFICATE-----
+  #
+  #     # Optional CA/intermediate certificate chain.
+  #     caCertificate: |-
+  #       -----BEGIN CERTIFICATE-----
+  #       ...
+  #       -----END CERTIFICATE-----
 
 extraEnvVars: []
 
@@ -64,6 +92,9 @@ drupal:
   imagePullPolicy: IfNotPresent
 
   replicas: 1
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 1
 
   # PHP configuration
   php:
@@ -192,10 +223,6 @@ drupal:
   # Restrict how many attempt install and/or reconfigure jobs will try in case of failure. Default is 6.
   # backoffLimitInstall: 1
   # backoffLimitReconfigure: 1
-
-  # podDisruptionBudget:
-  #   minAvailable: 1
-  #   maxUnavailable: 1
 
   # Configure the Drupal cron
   cron:
@@ -454,6 +481,9 @@ nginx:
   imagePullPolicy: IfNotPresent
 
   replicas: 1
+  podDisruptionBudget:
+    enabled: false
+    maxUnavailable: 1
 
   # Set your cluster's DNS resolution service here
   resolver: kube-dns.kube-system.svc.cluster.local
@@ -480,6 +510,12 @@ nginx:
       timeoutSeconds: 1
       successThreshold: 1
       failureThreshold: 3
+
+  # Optional full nginx.conf override.
+  # When empty, the chart uses conf/nginx.conf.
+  # When set, this value replaces the entire nginx.conf and is rendered with tpl,
+  # so Helm template expressions can still be used inside it.
+  configuration: ""
 
   # rootLocationRules: |
   #   deny 5.181.182.0/24;

@@ -34,6 +34,27 @@ helm repo update
 helm upgrade [RELEASE_NAME] opensearch-operator/opensearch-operator
 ```
 
+#### Disabling the legacy API
+
+> **Warning:** Helm manages the legacy CRDs as regular Helm resources.
+> Upgrading with `legacyAPI.enabled=false` removes those CRDs from the release.
+> Deleting a CRD also deletes every custom resource stored under it across the
+> cluster.
+
+Before disabling the legacy API, follow the
+[migration guide](../../docs/userguide/migration-guide.md) to migrate every
+legacy custom resource, verify the replacement `opensearch.org` resources, and
+delete all remaining `opensearch.opster.io` resources. Only then upgrade with
+the legacy API disabled:
+
+```shell
+helm upgrade [RELEASE_NAME] opensearch-operator/opensearch-operator \
+  --set legacyAPI.enabled=false
+```
+
+If you are installing the chart for the first time, you can safely disable the
+legacy API during installation to not include the legacy opster.io CRDs in the release.
+
 ## Values
 
 The following table lists the configurable parameters of the Helm chart.
@@ -68,7 +89,6 @@ The following table lists the configurable parameters of the Helm chart.
 | `manager.readinessProbe.successThreshold` | int | `1` |  |
 | `manager.readinessProbe.timeoutSeconds` | int | `3` |  |
 | `manager.readinessProbe.initialDelaySeconds` | int | `10` |  |
-| `manager.parallelRecoveryEnabled` | bool | `true` |  |
 | `manager.pprofEndpointsEnabled` | bool | `false` |  |
 | `manager.image.repository` | string | `"opensearchproject/opensearch-operator"` |  |
 | `manager.image.tag` | string | `""` |  |
@@ -77,8 +97,11 @@ The following table lists the configurable parameters of the Helm chart.
 | `manager.dnsBase` | string | `"cluster.local"` |  |
 | `manager.loglevel` | string | `"info"` |  |
 | `manager.watchNamespace` | string | `nil` |  |
+| `manager.maxConcurrentReconciles` | int | `1` | Global default max concurrent reconciles for all controllers. |
+| `manager.maxConcurrentReconcilesPerController` | object | `{}` | Per-controller overrides (controller name -> max concurrent reconciles). Example: `{opensearchcluster: 4}`. |
 | `manager.metricsBindAddress` | string | `"127.0.0.1:8080"` |  |
 | `installCRDs` | bool | `true` |  |
+| `legacyAPI.enabled` | bool | `true` | Enable support for the deprecated `opensearch.opster.io/v1` API group. When false, deprecated CRDs, webhooks, RBAC rules, and manager watches are skipped. |
 | `serviceAccount.create` | bool | `true` |  |
 | `serviceAccount.name` | string | `""` |  |
 | `useRoleBindings` | bool | `false` |  |
@@ -135,4 +158,4 @@ subjects:
   namespace: <monitoring-namespace>
 ```
 
-Opensearch-operator Helm Chart version: `3.0.2`
+Opensearch-operator Helm Chart version: `3.0.14`

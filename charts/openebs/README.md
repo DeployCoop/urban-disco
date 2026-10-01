@@ -83,14 +83,14 @@ helm delete `<RELEASE NAME>` -n `<RELEASE NAMESPACE>`
 
 | Repository | Name | Version |
 |------------|------|---------|
-|  | openebs-crds | 4.5.1-prerelease |
+|  | openebs-crds | 4.6.1-prerelease |
 | https://grafana.github.io/helm-charts | alloy | 1.0.1 |
 | https://grafana.github.io/helm-charts | loki | 6.29.0 |
-| https://openebs.github.io/dynamic-localpv-provisioner | localpv-provisioner | 4.5.1 |
-| https://openebs.github.io/lvm-localpv | lvm-localpv | 1.9.1 |
-| https://openebs.github.io/mayastor-extensions | mayastor | 2.11.1 |
-| https://openebs.github.io/rawfile-localpv | rawfile-localpv | 0.14.1 |
-| https://openebs.github.io/zfs-localpv | zfs-localpv | 2.10.1 |
+| https://openebs.github.io/dynamic-localpv-provisioner | localpv-provisioner | 4.6.0 |
+| https://openebs.github.io/lvm-localpv | lvm-localpv | 1.10.1 |
+| https://openebs.github.io/mayastor-extensions | mayastor | 2.12.1 |
+| https://openebs.github.io/rawfile-localpv | rawfile-localpv | 0.15.1 |
+| https://openebs.github.io/zfs-localpv | zfs-localpv | 2.11.1 |
 
 ## Values
 
@@ -98,7 +98,7 @@ helm delete `<RELEASE NAME>` -n `<RELEASE NAMESPACE>`
 |:----|:------------|:--------|
 | alloy.&ZeroWidthSpace;enabled | Enable/Disable Alloy. | `true` |
 | alloy.&ZeroWidthSpace;logging_config.&ZeroWidthSpace;labels | Labels to enable scraping on, at-least one of these labels should be present. | <pre>{<br>"openebs.io/logging":true<br>}</pre> |
-| alloy.&ZeroWidthSpace;logging_config.&ZeroWidthSpace;tenant_id | X-Scope-OrgID to pe populated which pushing logs. Make sure the caller also uses the same. | `"openebs"` |
+| alloy.&ZeroWidthSpace;logging_config.&ZeroWidthSpace;tenant_id | X-Scope-OrgID to be populated when pushing logs. Make sure the caller also uses the same. | `"openebs"` |
 | engines.&ZeroWidthSpace;local.&ZeroWidthSpace;hostpath.&ZeroWidthSpace;enabled | Enable/Disable Dynamic LocalPV Provisioner | `true` |
 | engines.&ZeroWidthSpace;local.&ZeroWidthSpace;lvm.&ZeroWidthSpace;enabled | Enable/Disable LocalPV LVM Storage Engine | `true` |
 | engines.&ZeroWidthSpace;local.&ZeroWidthSpace;rawfile.&ZeroWidthSpace;enabled | Enable/Disable LocalPV Rawfile Storage Engine | `false` |

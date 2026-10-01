@@ -1,5 +1,55 @@
 # openproject
 
+## 13.13.0
+
+### Minor Changes
+
+- 46ecf0b: Upgrade OpenProject core version to 17.9.0 (minor update)
+- ca5dd3e: Make the bundled RustFS instance more configurable: add `rustfs.bucketInitJob.resources` and `rustfs.bucketInitJob.annotations` for the bucket init job, and wire the global `affinity` and `podAnnotations` values into the RustFS pod template (and `affinity` into the bucket init job) so they can be scheduled and annotated like the web/worker pods.
+
+  **Breaking:** rename `rustfs.s3Ingress` to `rustfs.ingress` for consistency with the top-level OpenProject `ingress` config. Update your values accordingly, e.g. `rustfs.ingress.host` instead of `rustfs.s3Ingress.host`.
+
+### Patch Changes
+
+- fe431b8: Upgrade OpenProject core version to 17.8.1 (patch update)
+- fddc035: Respect `persistence.existingClaim` in the cron deployment, matching the web, worker and seeder pods.
+
+## 13.12.0
+
+### Minor Changes
+
+- 0c06edf: Add `rustfs.bundled` option to deploy a minimal, single-node [RustFS](https://rustfs.com) instance and automatically configure it as S3-compatible attachment storage. Intended as a quick way to get S3 storage working out of the box; for production, install the official RustFS Helm chart (https://charts.rustfs.com) separately instead, or use an external S3 service.
+
+## 13.11.0
+
+### Minor Changes
+
+- a157d43: Upgrade OpenProject core version to 17.8.0 (minor update)
+
+## 13.10.2
+
+### Patch Changes
+
+- 828ce6e: Upgrade OpenProject core version to 17.7.2 (patch update)
+
+## 13.10.1
+
+### Patch Changes
+
+- 4582247: Upgrade OpenProject core version to 17.7.1 (patch update)
+
+## 13.10.0
+
+### Minor Changes
+
+- 805922c: Upgrade OpenProject core version to 17.7.0 (minor update)
+
+## 13.9.1
+
+### Patch Changes
+
+- 9cc6da0: Ensure tls configMap for seeder job is added
+
 ## 13.9.0
 
 ### Minor Changes

@@ -81,7 +81,7 @@ spec:
 {{- if .Values.prometheus.prometheusSpec.externalUrl }}
   externalUrl: "{{ tpl .Values.prometheus.prometheusSpec.externalUrl . }}"
 {{- else if and .Values.prometheus.ingress.enabled .Values.prometheus.ingress.hosts }}
-  externalUrl: "http://{{ tpl (index .Values.prometheus.ingress.hosts 0) . }}{{ .Values.prometheus.prometheusSpec.routePrefix }}"
+  externalUrl: "{{ if .Values.prometheus.ingress.tls }}https{{ else }}http{{ end }}://{{ tpl (index .Values.prometheus.ingress.hosts 0) . }}{{ .Values.prometheus.prometheusSpec.routePrefix }}"
 {{- else if and .Values.prometheus.route.main.enabled .Values.prometheus.route.main.hostnames }}
   externalUrl: "http://{{ tpl (index .Values.prometheus.route.main.hostnames 0) . }}{{ .Values.prometheus.prometheusSpec.routePrefix }}"
 {{- else }}
@@ -163,11 +163,21 @@ spec:
 {{- if .Values.prometheus.prometheusSpec.retentionSize }}
   retentionSize: {{ .Values.prometheus.prometheusSpec.retentionSize | quote }}
 {{- end }}
+{{- if .Values.prometheus.prometheusSpec.retentionPercentage }}
+  retentionPercentage: {{ .Values.prometheus.prometheusSpec.retentionPercentage }}
+{{- end }}
 {{- end }}
 {{- if .Values.prometheus.prometheusSpec.tsdb }}
   tsdb:
     {{- if .Values.prometheus.prometheusSpec.tsdb.outOfOrderTimeWindow }}
     outOfOrderTimeWindow: {{ .Values.prometheus.prometheusSpec.tsdb.outOfOrderTimeWindow }}
+    {{- end }}
+    {{- with .Values.prometheus.prometheusSpec.tsdb.chunkEncoding }}
+    chunkEncoding:
+{{ toYaml . | indent 6 }}
+    {{- end }}
+    {{- if .Values.prometheus.prometheusSpec.tsdb.staleSeriesCompactionThreshold }}
+    staleSeriesCompactionThreshold: {{ .Values.prometheus.prometheusSpec.tsdb.staleSeriesCompactionThreshold }}
     {{- end }}
 {{- end }}
 {{- if eq .Values.prometheus.prometheusSpec.walCompression false }}
@@ -568,6 +578,10 @@ spec:
 {{- end }}
 {{- if .Values.prometheus.prometheusSpec.ruleQueryOffset }}
   ruleQueryOffset: {{ .Values.prometheus.prometheusSpec.ruleQueryOffset | quote }}
+{{- end }}
+{{- with .Values.prometheus.prometheusSpec.rules }}
+  rules:
+{{ toYaml . | indent 4 }}
 {{- end }}
 {{- with .Values.prometheus.prometheusSpec.runtime }}
   runtime:

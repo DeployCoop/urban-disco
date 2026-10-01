@@ -468,6 +468,22 @@ spec:
                         This is the number of OSDs that can be lost simultaneously before data cannot be recovered.
                       minimum: 0
                       type: integer
+                    crushNumFailureDomains:
+                      description: |-
+                        Number of failure domains to use for erasure coded chunk placement.
+                        When specified along with crushOSDsPerFailureDomain, a CRUSH MSR rule will be created
+                        that distributes chunks across this many failure domains.
+                      format: int32
+                      minimum: 1
+                      type: integer
+                    crushOSDsPerFailureDomain:
+                      description: |-
+                        Number of OSDs allowed per failure domain for erasure coded chunk placement.
+                        When specified along with crushNumFailureDomains, a CRUSH MSR rule will be created
+                        that allows up to this many chunks on OSDs within each failure domain.
+                      format: int32
+                      minimum: 1
+                      type: integer
                     dataChunks:
                       description: |-
                         Number of data chunks per object in an erasure coded storage pool (required for erasure-coded pool type).
@@ -494,6 +510,9 @@ spec:
                     - codingChunks
                     - dataChunks
                   type: object
+                  x-kubernetes-validations:
+                    - message: crushNumFailureDomains and crushOSDsPerFailureDomain must be specified together
+                      rule: has(self.crushNumFailureDomains) == has(self.crushOSDsPerFailureDomain)
                 failureDomain:
                   description: 'The failure domain: osd/host/(region or zone if available) - technically also any type in the crush map'
                   type: string
@@ -655,6 +674,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                   type: object
                 conditions:
@@ -950,37 +976,6 @@ spec:
                     description: |-
                       BucketNotificationEvent represent the event type of the bucket notification
                       See: https://docs.ceph.com/en/latest/radosgw/s3-notification-compatibility/#event-types
-                    enum:
-                      - s3:ObjectCreated:*
-                      - s3:ObjectCreated:Put
-                      - s3:ObjectCreated:Post
-                      - s3:ObjectCreated:Copy
-                      - s3:ObjectCreated:CompleteMultipartUpload
-                      - s3:ObjectRemoved:*
-                      - s3:ObjectRemoved:Delete
-                      - s3:ObjectRemoved:DeleteMarkerCreated
-                      - s3:ObjectLifecycle:Expiration:Current
-                      - s3:ObjectLifecycle:Expiration:NonCurrent
-                      - s3:ObjectLifecycle:Expiration:DeleteMarker
-                      - s3:ObjectLifecycle:Expiration:AbortMultipartUpload
-                      - s3:ObjectLifecycle:Transition:Current
-                      - s3:ObjectLifecycle:Transition:NonCurrent
-                      - s3:LifecycleExpiration:*
-                      - s3:LifecycleExpiration:Delete
-                      - s3:LifecycleExpiration:DeleteMarkerCreated
-                      - s3:LifecycleTransition
-                      - s3:ObjectSynced:*
-                      - s3:ObjectSynced:Create
-                      - s3:ObjectSynced:Delete
-                      - s3:ObjectSynced:DeletionMarkerCreated
-                      - s3:Replication:*
-                      - s3:Replication:Create
-                      - s3:Replication:Delete
-                      - s3:Replication:DeletionMarkerCreated
-                      - s3:ObjectRestore:*
-                      - s3:ObjectRestore:Post
-                      - s3:ObjectRestore:Completed
-                      - s3:ObjectRestore:Delete
                     type: string
                   type: array
                 filter:
@@ -1148,10 +1143,14 @@ spec:
                       properties:
                         ackLevel:
                           default: broker
-                          description: The ack level required for this topic (none/broker/routeable)
+                          description: |-
+                            The ack level required for this topic (none/broker/routable). The misspelled value
+                            "routeable" is deprecated, is sent to the RGW as "routable", and will be removed in a
+                            future release.
                           enum:
                             - none
                             - broker
+                            - routable
                             - routeable
                           type: string
                         disableVerifySSL:
@@ -1410,7 +1409,7 @@ spec:
                             this new value (generation values are not necessarily incremental, though that is the
                             intended use case). If this is set to less than or equal to the current key generation, keys
                             are not rotated.
-                          format: int32
+                          format: int64
                           maximum: 4294967295
                           minimum: 0
                           type: integer
@@ -1426,7 +1425,24 @@ spec:
                             - Disabled
                             - KeyGeneration
                           type: string
+                        keyType:
+                          description: |-
+                            KeyType specifies the desired CephX key cipher type.
+                            If unspecified, Ceph's default will be used.
+                            If KeyRotationPolicy is Disabled or unspecified (default), modifying this value will never
+                            initiate key rotation.
+                            If KeyRotationPolicy is set to an enabled value (any other value), modifying this may
+                            initiate key rotation.
+                          enum:
+                            - aes
+                            - aes256k
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
+                      x-kubernetes-validations:
+                        - message: keyGeneration cannot be removed once set
+                          rule: '!has(oldSelf.keyGeneration) || has(self.keyGeneration)'
                   type: object
               required:
                 - caps
@@ -1454,6 +1470,13 @@ spec:
                         Generation `0` indicates that keys existed prior to the implementation of key tracking.
                       format: int32
                       type: integer
+                    keyType:
+                      description: |-
+                        KeyType identifies the CephX key type for the current generation's keys, if known.
+                        If unknown, the value will be empty.
+                      maxLength: 7
+                      minLength: 3
+                      type: string
                   type: object
                 info:
                   additionalProperties:
@@ -3831,6 +3854,27 @@ spec:
                     cephx:
                       description: 'CephX configures CephX key settings. More: https://docs.ceph.com/en/latest/dev/cephx/'
                       properties:
+                        allowedCiphers:
+                          description: |-
+                            AllowedCiphers is an advanced configuration that can disrupt cluster availability!
+                            Review Rook documentation carefully before setting this in a production cluster!
+
+                            AllowedCiphers sets the Ceph config `auth_allowed_ciphers` to the list given.
+                            If the list is empty, Rook will enable support for all ciphers.
+                          items:
+                            description: |-
+                              A CephX key type represents a cipher type for CephX keys.
+                              Supported values: aes, aes256k.
+                            enum:
+                              - aes
+                              - aes256k
+                            maxLength: 7
+                            minLength: 3
+                            type: string
+                          maxItems: 2
+                          minItems: 1
+                          type: array
+                          x-kubernetes-list-type: set
                         csi:
                           description: |-
                             CSI configures CephX key rotation settings for the Ceph-CSI daemons in the current Kubernetes cluster.
@@ -3856,7 +3900,7 @@ spec:
                                 this new value (generation values are not necessarily incremental, though that is the
                                 intended use case). If this is set to less than or equal to the current key generation, keys
                                 are not rotated.
-                              format: int32
+                              format: int64
                               maximum: 4294967295
                               minimum: 0
                               type: integer
@@ -3872,7 +3916,24 @@ spec:
                                 - Disabled
                                 - KeyGeneration
                               type: string
+                            keyType:
+                              description: |-
+                                KeyType specifies the desired CephX key cipher type.
+                                If unspecified, Ceph's default will be used.
+                                If KeyRotationPolicy is Disabled or unspecified (default), modifying this value will never
+                                initiate key rotation.
+                                If KeyRotationPolicy is set to an enabled value (any other value), modifying this may
+                                initiate key rotation.
+                              enum:
+                                - aes
+                                - aes256k
+                              maxLength: 7
+                              minLength: 3
+                              type: string
                           type: object
+                          x-kubernetes-validations:
+                            - message: keyGeneration cannot be removed once set
+                              rule: '!has(oldSelf.keyGeneration) || has(self.keyGeneration)'
                         daemon:
                           description: |-
                             Daemon configures CephX key settings for local Ceph daemons managed by Rook and part of the
@@ -3886,7 +3947,7 @@ spec:
                                 this new value (generation values are not necessarily incremental, though that is the
                                 intended use case). If this is set to less than or equal to the current key generation, keys
                                 are not rotated.
-                              format: int32
+                              format: int64
                               maximum: 4294967295
                               minimum: 0
                               type: integer
@@ -3902,7 +3963,24 @@ spec:
                                 - Disabled
                                 - KeyGeneration
                               type: string
+                            keyType:
+                              description: |-
+                                KeyType specifies the desired CephX key cipher type.
+                                If unspecified, Ceph's default will be used.
+                                If KeyRotationPolicy is Disabled or unspecified (default), modifying this value will never
+                                initiate key rotation.
+                                If KeyRotationPolicy is set to an enabled value (any other value), modifying this may
+                                initiate key rotation.
+                              enum:
+                                - aes
+                                - aes256k
+                              maxLength: 7
+                              minLength: 3
+                              type: string
                           type: object
+                          x-kubernetes-validations:
+                            - message: keyGeneration cannot be removed once set
+                              rule: '!has(oldSelf.keyGeneration) || has(self.keyGeneration)'
                         rbdMirrorPeer:
                           description: |-
                             RBDMirrorPeer configures CephX key settings of the `rbd-mirror-peer` user that is used for creating
@@ -3918,7 +3996,7 @@ spec:
                                 this new value (generation values are not necessarily incremental, though that is the
                                 intended use case). If this is set to less than or equal to the current key generation, keys
                                 are not rotated.
-                              format: int32
+                              format: int64
                               maximum: 4294967295
                               minimum: 0
                               type: integer
@@ -3934,7 +4012,24 @@ spec:
                                 - Disabled
                                 - KeyGeneration
                               type: string
+                            keyType:
+                              description: |-
+                                KeyType specifies the desired CephX key cipher type.
+                                If unspecified, Ceph's default will be used.
+                                If KeyRotationPolicy is Disabled or unspecified (default), modifying this value will never
+                                initiate key rotation.
+                                If KeyRotationPolicy is set to an enabled value (any other value), modifying this may
+                                initiate key rotation.
+                              enum:
+                                - aes
+                                - aes256k
+                              maxLength: 7
+                              minLength: 3
+                              type: string
                           type: object
+                          x-kubernetes-validations:
+                            - message: keyGeneration cannot be removed once set
+                              rule: '!has(oldSelf.keyGeneration) || has(self.keyGeneration)'
                       type: object
                     keyRotation:
                       description: KeyRotation defines options for rotation of OSD disk encryption keys.
@@ -6104,6 +6199,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                     cephExporter:
                       description: Ceph Exporter represents the cephx key rotation status of the ceph exporter daemon
@@ -6126,6 +6228,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                     crashCollector:
                       description: Crash Collector represents the cephx key rotation status of the crash collector daemon
@@ -6148,6 +6257,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                     csi:
                       description: CSI shows the CephX key status for Ceph-CSI components.
@@ -6170,6 +6286,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                         priorKeyCount:
                           description: PriorKeyCount reports the number of prior-generation CephX keys that remain active for the related component
                           type: integer
@@ -6195,6 +6318,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                     mon:
                       description: Mon represents the CephX key status of the Monitor daemons
@@ -6217,6 +6347,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                     osd:
                       description: OSD shows the CephX key status of OSDs
@@ -6239,6 +6376,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                     rbdMirrorPeer:
                       description: RBDMirrorPeer represents the cephx key rotation status of the `rbd-mirror-peer` user
@@ -6261,6 +6405,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                   type: object
                 conditions:
@@ -7643,6 +7794,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                   type: object
                 conditions:
@@ -7790,6 +7948,22 @@ spec:
                               This is the number of OSDs that can be lost simultaneously before data cannot be recovered.
                             minimum: 0
                             type: integer
+                          crushNumFailureDomains:
+                            description: |-
+                              Number of failure domains to use for erasure coded chunk placement.
+                              When specified along with crushOSDsPerFailureDomain, a CRUSH MSR rule will be created
+                              that distributes chunks across this many failure domains.
+                            format: int32
+                            minimum: 1
+                            type: integer
+                          crushOSDsPerFailureDomain:
+                            description: |-
+                              Number of OSDs allowed per failure domain for erasure coded chunk placement.
+                              When specified along with crushNumFailureDomains, a CRUSH MSR rule will be created
+                              that allows up to this many chunks on OSDs within each failure domain.
+                            format: int32
+                            minimum: 1
+                            type: integer
                           dataChunks:
                             description: |-
                               Number of data chunks per object in an erasure coded storage pool (required for erasure-coded pool type).
@@ -7816,6 +7990,9 @@ spec:
                           - codingChunks
                           - dataChunks
                         type: object
+                        x-kubernetes-validations:
+                          - message: crushNumFailureDomains and crushOSDsPerFailureDomain must be specified together
+                            rule: has(self.crushNumFailureDomains) == has(self.crushOSDsPerFailureDomain)
                       failureDomain:
                         description: 'The failure domain: osd/host/(region or zone if available) - technically also any type in the crush map'
                         type: string
@@ -8000,6 +8177,22 @@ spec:
                             This is the number of OSDs that can be lost simultaneously before data cannot be recovered.
                           minimum: 0
                           type: integer
+                        crushNumFailureDomains:
+                          description: |-
+                            Number of failure domains to use for erasure coded chunk placement.
+                            When specified along with crushOSDsPerFailureDomain, a CRUSH MSR rule will be created
+                            that distributes chunks across this many failure domains.
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        crushOSDsPerFailureDomain:
+                          description: |-
+                            Number of OSDs allowed per failure domain for erasure coded chunk placement.
+                            When specified along with crushNumFailureDomains, a CRUSH MSR rule will be created
+                            that allows up to this many chunks on OSDs within each failure domain.
+                          format: int32
+                          minimum: 1
+                          type: integer
                         dataChunks:
                           description: |-
                             Number of data chunks per object in an erasure coded storage pool (required for erasure-coded pool type).
@@ -8026,6 +8219,9 @@ spec:
                         - codingChunks
                         - dataChunks
                       type: object
+                      x-kubernetes-validations:
+                        - message: crushNumFailureDomains and crushOSDsPerFailureDomain must be specified together
+                          rule: has(self.crushNumFailureDomains) == has(self.crushOSDsPerFailureDomain)
                     failureDomain:
                       description: 'The failure domain: osd/host/(region or zone if available) - technically also any type in the crush map'
                       type: string
@@ -9175,6 +9371,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                   type: object
                 conditions:
@@ -11514,6 +11717,14 @@ spec:
                           type: array
                       type: object
                       x-kubernetes-preserve-unknown-fields: true
+                    port:
+                      description: |-
+                        The port the NFS server (NFS-Ganesha) will listen on for NFS clients. Defaults to 2049.
+                        Useful when host networking is enabled and the default NFS port is already in use.
+                      format: int32
+                      maximum: 65535
+                      minimum: 1
+                      type: integer
                     priorityClassName:
                       description: PriorityClassName sets the priority class on the pods
                       type: string
@@ -11610,6 +11821,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                   type: object
                 conditions:
@@ -12527,6 +12745,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                   type: object
                 conditions:
@@ -12946,6 +13171,22 @@ spec:
                             This is the number of OSDs that can be lost simultaneously before data cannot be recovered.
                           minimum: 0
                           type: integer
+                        crushNumFailureDomains:
+                          description: |-
+                            Number of failure domains to use for erasure coded chunk placement.
+                            When specified along with crushOSDsPerFailureDomain, a CRUSH MSR rule will be created
+                            that distributes chunks across this many failure domains.
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        crushOSDsPerFailureDomain:
+                          description: |-
+                            Number of OSDs allowed per failure domain for erasure coded chunk placement.
+                            When specified along with crushNumFailureDomains, a CRUSH MSR rule will be created
+                            that allows up to this many chunks on OSDs within each failure domain.
+                          format: int32
+                          minimum: 1
+                          type: integer
                         dataChunks:
                           description: |-
                             Number of data chunks per object in an erasure coded storage pool (required for erasure-coded pool type).
@@ -12972,6 +13213,9 @@ spec:
                         - codingChunks
                         - dataChunks
                       type: object
+                      x-kubernetes-validations:
+                        - message: crushNumFailureDomains and crushOSDsPerFailureDomain must be specified together
+                          rule: has(self.crushNumFailureDomains) == has(self.crushOSDsPerFailureDomain)
                     failureDomain:
                       description: 'The failure domain: osd/host/(region or zone if available) - technically also any type in the crush map'
                       type: string
@@ -14603,6 +14847,22 @@ spec:
                             This is the number of OSDs that can be lost simultaneously before data cannot be recovered.
                           minimum: 0
                           type: integer
+                        crushNumFailureDomains:
+                          description: |-
+                            Number of failure domains to use for erasure coded chunk placement.
+                            When specified along with crushOSDsPerFailureDomain, a CRUSH MSR rule will be created
+                            that distributes chunks across this many failure domains.
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        crushOSDsPerFailureDomain:
+                          description: |-
+                            Number of OSDs allowed per failure domain for erasure coded chunk placement.
+                            When specified along with crushNumFailureDomains, a CRUSH MSR rule will be created
+                            that allows up to this many chunks on OSDs within each failure domain.
+                          format: int32
+                          minimum: 1
+                          type: integer
                         dataChunks:
                           description: |-
                             Number of data chunks per object in an erasure coded storage pool (required for erasure-coded pool type).
@@ -14629,6 +14889,9 @@ spec:
                         - codingChunks
                         - dataChunks
                       type: object
+                      x-kubernetes-validations:
+                        - message: crushNumFailureDomains and crushOSDsPerFailureDomain must be specified together
+                          rule: has(self.crushNumFailureDomains) == has(self.crushOSDsPerFailureDomain)
                     failureDomain:
                       description: 'The failure domain: osd/host/(region or zone if available) - technically also any type in the crush map'
                       type: string
@@ -15057,6 +15320,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                   type: object
                 conditions:
@@ -15696,6 +15966,22 @@ spec:
                             This is the number of OSDs that can be lost simultaneously before data cannot be recovered.
                           minimum: 0
                           type: integer
+                        crushNumFailureDomains:
+                          description: |-
+                            Number of failure domains to use for erasure coded chunk placement.
+                            When specified along with crushOSDsPerFailureDomain, a CRUSH MSR rule will be created
+                            that distributes chunks across this many failure domains.
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        crushOSDsPerFailureDomain:
+                          description: |-
+                            Number of OSDs allowed per failure domain for erasure coded chunk placement.
+                            When specified along with crushNumFailureDomains, a CRUSH MSR rule will be created
+                            that allows up to this many chunks on OSDs within each failure domain.
+                          format: int32
+                          minimum: 1
+                          type: integer
                         dataChunks:
                           description: |-
                             Number of data chunks per object in an erasure coded storage pool (required for erasure-coded pool type).
@@ -15722,6 +16008,9 @@ spec:
                         - codingChunks
                         - dataChunks
                       type: object
+                      x-kubernetes-validations:
+                        - message: crushNumFailureDomains and crushOSDsPerFailureDomain must be specified together
+                          rule: has(self.crushNumFailureDomains) == has(self.crushOSDsPerFailureDomain)
                     failureDomain:
                       description: 'The failure domain: osd/host/(region or zone if available) - technically also any type in the crush map'
                       type: string
@@ -15901,6 +16190,22 @@ spec:
                             This is the number of OSDs that can be lost simultaneously before data cannot be recovered.
                           minimum: 0
                           type: integer
+                        crushNumFailureDomains:
+                          description: |-
+                            Number of failure domains to use for erasure coded chunk placement.
+                            When specified along with crushOSDsPerFailureDomain, a CRUSH MSR rule will be created
+                            that distributes chunks across this many failure domains.
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        crushOSDsPerFailureDomain:
+                          description: |-
+                            Number of OSDs allowed per failure domain for erasure coded chunk placement.
+                            When specified along with crushNumFailureDomains, a CRUSH MSR rule will be created
+                            that allows up to this many chunks on OSDs within each failure domain.
+                          format: int32
+                          minimum: 1
+                          type: integer
                         dataChunks:
                           description: |-
                             Number of data chunks per object in an erasure coded storage pool (required for erasure-coded pool type).
@@ -15927,6 +16232,9 @@ spec:
                         - codingChunks
                         - dataChunks
                       type: object
+                      x-kubernetes-validations:
+                        - message: crushNumFailureDomains and crushOSDsPerFailureDomain must be specified together
+                          rule: has(self.crushNumFailureDomains) == has(self.crushOSDsPerFailureDomain)
                     failureDomain:
                       description: 'The failure domain: osd/host/(region or zone if available) - technically also any type in the crush map'
                       type: string
@@ -16884,6 +17192,13 @@ spec:
                             Generation `0` indicates that keys existed prior to the implementation of key tracking.
                           format: int32
                           type: integer
+                        keyType:
+                          description: |-
+                            KeyType identifies the CephX key type for the current generation's keys, if known.
+                            If unknown, the value will be empty.
+                          maxLength: 7
+                          minLength: 3
+                          type: string
                       type: object
                   type: object
                 conditions:

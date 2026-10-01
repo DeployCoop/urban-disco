@@ -127,7 +127,7 @@ cluster:
     vendor: Opensearch
 
     # -- Opensearch version
-    version: 2.3.0
+    version: ""
 
     # -- OpenSearch installation directory inside the container.
     # If not set, defaults to /usr/share/opensearch.
@@ -251,7 +251,7 @@ cluster:
     tolerations: []
 
     # -- dashboards version
-    version: 2.3.0
+    version: ""
 
     # -- OpenSearch Dashboards installation directory inside the container.
     # If not set, defaults to /usr/share/opensearch-dashboards.
@@ -270,6 +270,10 @@ cluster:
 
     # -- initHelper pod cpu and memory resources
     resources: {}
+
+    # initHelper containers security context (replaces the default one; the chown init
+    # container needs to run as root and the sysctl init container needs privileged access)
+    # securityContext: {}
 
     # -- initHelper version
     version: "1.36"
@@ -358,6 +362,12 @@ cluster:
     # Configure tls usage for transport and http interface
     tls:
       http:
+        # -- Controls if TLS should be enabled for HTTP.
+        # If false, TLS is explicitly disabled.
+        # If not set (default), TLS is enabled when http configuration is provided.
+        # If true, TLS is explicitly enabled and http configuration must be provided.
+        enabled: ~
+
         # -- DNs of certificates that should have admin access, mainly used for securityconfig updates via securityadmin.sh,
         # only used when existing certificates are provided
         adminDn: []
@@ -387,10 +397,19 @@ cluster:
         # This is used only when generate is true.
         duration: "8760h"
 
-        # -- Enable hot reloading of TLS certificates.
-        enableHotReload: false
+        # -- Enable hot reloading of TLS certificates so nodes pick up renewed
+        # certificates without a restart. Requires OpenSearch >= 2.19.1.
+        # Unset (~) defers to the operator: enabled on OpenSearch 3.x+, off below.
+        # Set true/false to override.
+        enableHotReload: ~
 
       transport:
+        # -- Controls if TLS should be enabled for transport.
+        # If false, TLS is explicitly disabled.
+        # If not set (default), TLS is enabled when transport configuration is provided.
+        # If true, TLS is explicitly enabled and transport configuration must be provided.
+        enabled: ~
+
         # -- DNs of certificates that should have admin access, mainly used for securityconfig updates via securityadmin.sh,
         # only used when existing certificates are provided. This field is deprecated and will be removed in a future version.
         # For OpenSearch 2.0.0+, use security.tls.http.adminDn instead.
@@ -420,8 +439,11 @@ cluster:
         # This is used only when generate is true.
         duration: "8760h"
 
-        # -- Enable hot reloading of TLS certificates.
-        enableHotReload: false
+        # -- Enable hot reloading of TLS certificates so nodes pick up renewed
+        # certificates without a restart. Requires OpenSearch >= 2.19.1.
+        # Unset (~) defers to the operator: enabled on OpenSearch 3.x+, off below.
+        # Set true/false to override.
+        enableHotReload: ~
 
   # Opensearch Ingress configuration
   ingress:

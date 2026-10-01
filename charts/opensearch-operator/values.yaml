@@ -40,8 +40,6 @@ manager:
     timeoutSeconds: 3
     initialDelaySeconds: 10
 
-  # Set this to false to disable the experimental parallel recovery in case you are experiencing problems
-  parallelRecoveryEnabled: true
   # Set this to true to enable the standard go pprof endpoints on port 6060 (https://pkg.go.dev/net/http/pprof)
   # Should only be used for debugging purposes
   pprofEndpointsEnabled: false
@@ -69,10 +67,20 @@ manager:
   # watchNamespace: [ns1, ns2]
   watchNamespace:
 
+  # -- Global default max concurrent reconciles for all controllers.
+  maxConcurrentReconciles: 1
+
+  # -- Per-controller overrides (controller name -> max concurrent reconciles). Example: `{opensearchcluster: 4}`.
+  maxConcurrentReconcilesPerController: {}
+
   metricsBindAddress: 127.0.0.1:8080
 
 # Install the Custom Resource Definitions with Helm
 installCRDs: true
+
+legacyAPI:
+  # -- Enable support for the deprecated `opensearch.opster.io/v1` API group. When false, deprecated CRDs, webhooks, RBAC rules, and manager watches are skipped.
+  enabled: true
 
 serviceAccount:
   # Specifies whether a service account should be created

@@ -106,6 +106,7 @@ helm install openebs-lvmlocalpv openebs-lvmlocalpv/lvm-localpv --namespace opene
 | `lvmNode.driverRegistrar.image.tag`                 | Image tag for csi-node-driver-registrar                                          | `v2.8.0`                                |
 | `lvmNode.updateStrategy.type`                       | Update strategy for lvmnode daemonset                                            | `RollingUpdate`                         |
 | `lvmNode.kubeletDir`                                | Kubelet mount point for lvmnode daemonset                                        | `"/var/lib/kubelet/"`                   |
+| `lvmNode.defaultFormatOptions`                      | Extra mkfs options per filesystem, used when the StorageClass of a volume does not set `formatOptions`. A StorageClass value replaces the default of its filesystem, the two are not merged. Keys are the formatted filesystem types (ext2, ext3, ext4, xfs, btrfs), values the space separated mkfs options of that filesystem as one string, e.g. `{"ext4": "-m 0", "xfs": "-i nrext64=0"}`. | `{}`                                    |
 | `lvmNode.annotations`                               | Annotations for lvmnode daemonset metadata                                       | `""`                                    |
 | `lvmNode.podAnnotations`                            | Annotations for lvmnode daemonset's pods metadata                                | `""`                                    |
 | `lvmNode.resources`                                 | Resource and request and limit for lvmnode daemonset containers                  | `""`                                    |
@@ -117,15 +118,16 @@ helm install openebs-lvmlocalpv openebs-lvmlocalpv/lvm-localpv --namespace opene
 | `lvmController.resizer.image.registry`              | Registry for csi-resizer image                                                   | `registry.k8s.io/`                      |
 | `lvmController.resizer.image.repository`            | Image repository for csi-resizer                                                 | `sig-storage/csi-resizer`               |
 | `lvmController.resizer.image.pullPolicy`            | Image pull policy for csi-resizer                                                | `IfNotPresent`                          |
-| `lvmController.resizer.image.tag`                   | Image tag for csi-resizer                                                        | `v1.8.0`                                |
+| `lvmController.resizer.image.tag`                   | Image tag for csi-resizer                                                        | `v2.0.0`                                |
 | `lvmController.snapshotter.image.registry`          | Registry for csi-snapshotter image                                               | `registry.k8s.io/`                      |
 | `lvmController.snapshotter.image.repository`        | Image repository for csi-snapshotter                                             | `sig-storage/csi-snapshotter`           |
 | `lvmController.snapshotter.image.pullPolicy`        | Image pull policy for csi-snapshotter                                            | `IfNotPresent`                          |
-| `lvmController.snapshotter.image.tag`               | Image tag for csi-snapshotter                                                    | `v6.2.2`                                |
+| `lvmController.snapshotter.image.tag`               | Image tag for csi-snapshotter                                                    | `v8.2.0`                                |
+| `lvmController.snapshotController.enabled`          | Enable the snapshot-controller container. Disable if the cluster already runs one | `true`                                  |
 | `lvmController.snapshotController.image.registry`   | Registry for snapshot-controller image                                           | `registry.k8s.io/`                      |
 | `lvmController.snapshotController.image.repository` | Image repository for snapshot-controller                                         | `sig-storage/snapshot-controller`       |
 | `lvmController.snapshotController.image.pullPolicy` | Image pull policy for snapshot-controller                                        | `IfNotPresent`                          |
-| `lvmController.snapshotController.image.tag`        | Image tag for snapshot-controller                                                | `v6.2.2`                                |
+| `lvmController.snapshotController.image.tag`        | Image tag for snapshot-controller                                                | `v8.2.0`                                |
 | `lvmController.provisioner.image.registry`          | Registry for csi-provisioner image                                               | `registry.k8s.io/`                      |
 | `lvmController.provisioner.image.repository`        | Image repository for csi-provisioner                                             | `sig-storage/csi-provisioner`           |
 | `lvmController.provisioner.image.pullPolicy`        | Image pull policy for csi-provisioner                                            | `IfNotPresent`                          |

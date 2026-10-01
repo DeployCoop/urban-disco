@@ -19,14 +19,16 @@ spec:
   {{- end }}
   {{- with .Values.cluster.dashboards }}
   dashboards:
-    {{- omit . "image" | toYaml | nindent 4 }}
-    image: {{ .image }}:{{ .version }}
+    {{- omit . "image" "version" | toYaml | nindent 4 }}
+    image: {{ .image }}:{{ default $.Chart.AppVersion .version }}
+    version: {{ default $.Chart.AppVersion .version }}
   {{- end }}
   {{- with .Values.cluster.general }}
   general:
-    {{- omit . "image" "serviceName" | toYaml | nindent 4 }}
-    image: {{ .image }}:{{ .version }}
+    {{- omit . "image" "serviceName" "version" | toYaml | nindent 4 }}
+    image: {{ .image }}:{{ default $.Chart.AppVersion .version }}
     serviceName: {{ .serviceName | default $clusterName }}
+    version: {{ default $.Chart.AppVersion .version }}
   {{- end }}
   {{- with .Values.cluster.initHelper }}
   initHelper:
@@ -43,6 +45,11 @@ spec:
   security:
     tls:
       transport:
+        {{- if eq (toString .tls.transport.enabled) "false" }}
+        enabled: false
+        {{- else if eq (toString .tls.transport.enabled) "true" }}
+        enabled: true
+        {{- end }}
         {{- if .tls.transport.generate }}
         generate: {{ .tls.transport.generate }}
         {{- end }}
@@ -55,6 +62,9 @@ spec:
         {{- with .tls.transport.nodesDn }}
         nodesDn: {{ . | toYaml | nindent 10 }}
         {{- end }}
+        {{- with .tls.transport.adminDn }}
+        adminDn: {{ . | toYaml | nindent 10 }}
+        {{- end }}
         {{- with .tls.transport.secret }}
         secret: {{ . | toYaml | nindent 10 }}
         {{- end }}
@@ -64,10 +74,17 @@ spec:
         {{- if .tls.transport.duration }}
         duration: {{ .tls.transport.duration }}
         {{- end }}
-        {{- if .tls.transport.enableHotReload }}
-        enableHotReload: {{ .tls.transport.enableHotReload }}
+        {{- if eq (toString .tls.transport.enableHotReload) "false" }}
+        enableHotReload: false
+        {{- else if eq (toString .tls.transport.enableHotReload) "true" }}
+        enableHotReload: true
         {{- end }}
       http:
+        {{- if eq (toString .tls.http.enabled) "false" }}
+        enabled: false
+        {{- else if eq (toString .tls.http.enabled) "true" }}
+        enabled: true
+        {{- end }}
         {{- with .tls.http.adminDn }}
         adminDn: {{ . | toYaml | nindent 10 }}
         {{- end }}
@@ -86,8 +103,10 @@ spec:
         {{- if .tls.http.duration }}
         duration: {{ .tls.http.duration }}
         {{- end }}
-        {{- if .tls.http.enableHotReload }}
-        enableHotReload: {{ .tls.http.enableHotReload }}
+        {{- if eq (toString .tls.http.enableHotReload) "false" }}
+        enableHotReload: false
+        {{- else if eq (toString .tls.http.enableHotReload) "true" }}
+        enableHotReload: true
         {{- end }}
     {{- with .config }}
     config: {{ . | toYaml | nindent 6 }}

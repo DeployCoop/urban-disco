@@ -248,8 +248,12 @@ receivers:
 {{- end }}
 
 {{- define "opentelemetry-collector.applyLogsCollectionConfig" -}}
+{{- $receiverName := "filelog" }}
+{{- if .Values.Values.rewriteDeprecatedComponentNames }}
+{{- $receiverName = "file_log" }}
+{{- end }}
 {{- $config := mustMergeOverwrite (dict "service" (dict "pipelines" (dict "logs" (dict "receivers" list)))) (include "opentelemetry-collector.logsCollectionConfig" .Values | fromYaml) .config }}
-{{- $_ := set $config.service.pipelines.logs "receivers" (append $config.service.pipelines.logs.receivers "filelog" | uniq)  }}
+{{- $_ := set $config.service.pipelines.logs "receivers" (append $config.service.pipelines.logs.receivers $receiverName | uniq)  }}
 {{- if .Values.Values.presets.logsCollection.storeCheckpoints}}
 {{- $configExtensions := mustMergeOverwrite (dict "service" (dict "extensions" list)) $config }}
 {{- $_ := set $config.service "extensions" (append $configExtensions.service.extensions "file_storage" | uniq)  }}
@@ -258,13 +262,17 @@ receivers:
 {{- end }}
 
 {{- define "opentelemetry-collector.logsCollectionConfig" -}}
+{{- $receiverName := "filelog" }}
+{{- if .Values.rewriteDeprecatedComponentNames }}
+{{- $receiverName = "file_log" }}
+{{- end }}
 {{- if .Values.presets.logsCollection.storeCheckpoints }}
 extensions:
   file_storage:
     directory: /var/lib/otelcol
 {{- end }}
 receivers:
-  filelog:
+  {{ $receiverName }}:
     include: [ /var/log/pods/*/*/*.log ]
     {{- if .Values.presets.logsCollection.includeCollectorLogs }}
     exclude: []
@@ -486,12 +494,20 @@ processors:
 {{- end }}
 
 {{- define "opentelemetry-collector.applyKubernetesEventsConfig" -}}
+{{- $receiverName := "k8sobjects" -}}
+{{- if .Values.Values.presets.kubernetesEvents.useK8sEventsReceiver -}}
+{{- $receiverName = "k8s_events" -}}
+{{- end -}}
 {{- $config := mustMergeOverwrite (dict "service" (dict "pipelines" (dict "logs" (dict "receivers" list)))) (include "opentelemetry-collector.kubernetesEventsConfig" .Values | fromYaml) .config }}
-{{- $_ := set $config.service.pipelines.logs "receivers" (append $config.service.pipelines.logs.receivers "k8sobjects" | uniq)  }}
+{{- $_ := set $config.service.pipelines.logs "receivers" (append $config.service.pipelines.logs.receivers $receiverName | uniq)  }}
 {{- $config | toYaml }}
 {{- end }}
 
 {{- define "opentelemetry-collector.kubernetesEventsConfig" -}}
+{{- if .Values.presets.kubernetesEvents.useK8sEventsReceiver -}}
+receivers:
+  k8s_events: {}
+{{- else -}}
 receivers:
   k8sobjects:
     objects:
@@ -500,6 +516,7 @@ receivers:
         group: "events.k8s.io"
         exclude_watch_type:
           - "DELETED"
+{{- end }}
 {{- end }}
 
 {{- define "opentelemetry-collector.applyKubernetesObjectsConfig" -}}
@@ -657,6 +674,13 @@ receivers:
         group: apiextensions.k8s.io
 {{- end }}
 {{- end }}
+{{- if $preset.events.enabled }}
+      - name: events
+        mode: watch
+        group: events.k8s.io
+        exclude_watch_type:
+          - "DELETED"
+{{- end }}
 {{- end }}
 
 {{- define "opentelemetry-collector.leaderElectionConfig" -}}
@@ -750,7 +774,10 @@ gcp:
     {{- if $section }}
       {{- range $key, $val := $section }}
         {{- if or (eq $key $old) (hasPrefix (printf "%s/" $old) $key) }}
-          {{- $newKey := $key | replace (printf "%s/" $old) (printf "%s/" $new) | replace $old $new }}
+          {{- $newKey := $new }}
+          {{- if hasPrefix (printf "%s/" $old) $key }}
+            {{- $newKey = $key | replace (printf "%s/" $old) (printf "%s/" $new) }}
+          {{- end }}
           {{- $existing := index $section $newKey | default dict }}
           {{- $_ := set $section $newKey (mustMergeOverwrite $existing $val) }}
           {{- $_ := unset $section $key }}

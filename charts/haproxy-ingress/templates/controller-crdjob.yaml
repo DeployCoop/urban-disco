@@ -33,6 +33,9 @@ spec:
 {{- if .Values.crdjob.ttlSecondsAfterFinished }}
   ttlSecondsAfterFinished: {{ .Values.crdjob.ttlSecondsAfterFinished }}
 {{- end }}
+{{- if .Values.crdjob.activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ .Values.crdjob.activeDeadlineSeconds }}
+{{- end }}
   backoffLimit: 0
   template:
     metadata:
@@ -78,6 +81,8 @@ spec:
           command:
             - /haproxy-ingress-controller
             - --job-check-crd
+          resources:
+            {{- toYaml .Values.crdjob.resources | nindent 12 }}
           {{- if .Values.controller.unprivileged }}
           securityContext:
             runAsNonRoot: true
@@ -93,8 +98,6 @@ spec:
             seccompProfile:
               type: RuntimeDefault
             {{- end }}
-          resources:
-            {{- toYaml .Values.crdjob.resources | nindent 12 }}
           {{- end }}
       {{- with .Values.crdjob.nodeSelector }}
       nodeSelector:

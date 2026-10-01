@@ -18,20 +18,18 @@ data:
     INGRESS_ENABLED: '{{ .Values.tap.ingress.enabled }}'
     INGRESS_HOST: '{{ .Values.tap.ingress.host }}'
     PROXY_FRONT_PORT: '{{ .Values.tap.proxy.front.port }}'
-    AUTH_ENABLED: '{{- if and .Values.cloudLicenseEnabled (not (empty .Values.license)) -}}
-                        {{ (default false .Values.demoModeEnabled) | ternary true ((and .Values.tap.auth.enabled (or (eq .Values.tap.auth.type "oidc") (eq .Values.tap.auth.type "dex"))) | ternary true false) }}
-                  {{- else -}}
-                        {{ .Values.cloudLicenseEnabled | ternary "true" ((default false .Values.demoModeEnabled) | ternary "true" .Values.tap.auth.enabled) }}
-                  {{- end }}'
+    AUTH_ENABLED: '{{ include "kubeshark.authEnabled" . }}'
     AUTH_TYPE: '{{- if and .Values.cloudLicenseEnabled (not (or (eq .Values.tap.auth.type "oidc") (eq .Values.tap.auth.type "dex"))) -}}
                   default
                 {{- else -}}
                   {{ (default false .Values.demoModeEnabled) | ternary "default" .Values.tap.auth.type }}
                 {{- end }}'
     AUTH_SAML_IDP_METADATA_URL: '{{ .Values.tap.auth.saml.idpMetadataUrl }}'
-    AUTH_ROLES: '{{ .Values.tap.auth.roles | toJson }}'
+    AUTH_CLI_SERVICE_ACCOUNTS: '{{ if (((.Values.tap).auth).cli).enabled }}{{ .Release.Namespace }}:kubeshark-cli{{ end }}'
     AUTH_ROLES_CLAIM: '{{ .Values.tap.auth.rolesClaim }}'
     AUTH_DEFAULT_ROLE: '{{ default "" .Values.tap.auth.defaultRole }}'
+    AUTH_GROUP_MAPPING: '{{ default (dict) .Values.tap.auth.groupMapping | toJson }}'
+    AUTH_ROLES: '{{ default (dict) .Values.tap.auth.roles | toJson }}'
     AUTH_OIDC_ISSUER: '{{ default "not set" (((.Values.tap).auth).oidc).issuer }}'
     AUTH_OIDC_REFRESH_TOKEN_LIFETIME: '{{ default "3960h" (((.Values.tap).auth).oidc).refreshTokenLifetime }}'
     AUTH_OIDC_STATE_PARAM_EXPIRY: '{{ default "10m" (((.Values.tap).auth).oidc).oauth2StateParamExpiry }}'

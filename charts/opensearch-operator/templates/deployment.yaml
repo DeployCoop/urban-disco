@@ -29,7 +29,17 @@ spec:
         - --metrics-bind-address={{ .Values.manager.metricsBindAddress }}
         - --leader-elect
         - --enable-webhooks={{ .Values.webhook.enabled }}
+        - --enable-legacy-api={{ include "opensearch-operator.legacyAPIEnabled" . }}
         - --webhook-port={{ .Values.webhook.port }}
+        - --manage-cluster-role-bindings={{ not .Values.useRoleBindings }}
+        - --max-concurrent-reconciles={{ .Values.manager.maxConcurrentReconciles | default 1 }}
+        {{- $perControllerPairs := list }}
+        {{- range $controller, $count := .Values.manager.maxConcurrentReconcilesPerController }}
+        {{- $perControllerPairs = append $perControllerPairs (printf "%s=%v" $controller $count) }}
+        {{- end }}
+        {{- if $perControllerPairs }}
+        - --max-concurrent-reconciles-per-controller={{ $perControllerPairs | join "," }}
+        {{- end }}
         {{- if .Values.manager.watchNamespace }}
         {{- if kindIs "slice" .Values.manager.watchNamespace }}
         - --watch-namespace={{ .Values.manager.watchNamespace | join "," }}
@@ -52,8 +62,6 @@ spec:
         env:
         - name: DNS_BASE
           value: {{ .Values.manager.dnsBase }}
-        - name: PARALLEL_RECOVERY_ENABLED
-          value: "{{ .Values.manager.parallelRecoveryEnabled }}"
         - name: PPROF_ENDPOINTS_ENABLED
           value: "{{ .Values.manager.pprofEndpointsEnabled }}"
         {{- if .Values.manager.extraEnv }}

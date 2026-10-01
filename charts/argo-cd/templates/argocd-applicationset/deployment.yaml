@@ -27,7 +27,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/cmd-params: {{ include (print $.Template.BasePath "/argocd-configs/argocd-cmd-params-cm.yaml") . | sha256sum }}
+        checksum/cmd-params: {{ include "argo-cd.config.checksum" (dict "context" $ "path" "/argocd-configs/argocd-cmd-params-cm.yaml") }}
         {{- with (mergeOverwrite (deepCopy .Values.global.podAnnotations) .Values.applicationSet.podAnnotations) }}
         {{- range $key, $value := . }}
         {{ $key }}: {{ $value | quote }}
@@ -82,6 +82,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: GRPC_ENABLE_TXT_SERVICE_CONFIG
+              valueFrom:
+                configMapKeyRef:
+                  key: applicationsetcontroller.grpc.enable.txt.service.config
+                  name: argocd-cmd-params-cm
+                  optional: true
             - name: ARGOCD_APPLICATIONSET_CONTROLLER_GLOBAL_PRESERVED_ANNOTATIONS
               valueFrom:
                 configMapKeyRef:
@@ -352,6 +358,7 @@ spec:
         - name: tls-certs
           configMap:
             name: argocd-tls-certs-cm
+            optional: true
         - name: gpg-keys
           configMap:
             name: argocd-gpg-keys-cm

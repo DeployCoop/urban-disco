@@ -628,6 +628,47 @@ securityContext for the statefulset openbao container
 {{- end -}}
 
 {{/*
+securityContext for the server test pod template.
+*/}}
+{{- define "serverTest.statefulSet.securityContext.pod" -}}
+  {{- if .Values.server.statefulSet.securityContext.pod }}
+  securityContext:
+    {{- $tp := typeOf .Values.server.statefulSet.securityContext.pod }}
+    {{- if eq $tp "string" }}
+      {{- tpl .Values.server.statefulSet.securityContext.pod . | nindent 4 }}
+    {{- else }}
+      {{- toYaml .Values.server.statefulSet.securityContext.pod | nindent 4 }}
+    {{- end }}
+  {{- else if not .Values.global.openshift }}
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+    runAsNonRoot: true
+    runAsGroup: {{ .Values.server.gid | default 1000 }}
+    runAsUser: {{ .Values.server.uid | default 100 }}
+    fsGroup: {{ .Values.server.gid | default 1000 }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+securityContext for the server test pod openbao container
+*/}}
+{{- define "serverTest.statefulSet.securityContext.container" -}}
+  {{- if .Values.server.statefulSet.securityContext.container }}
+      securityContext:
+        {{- $tp := typeOf .Values.server.statefulSet.securityContext.container }}
+        {{- if eq $tp "string" }}
+          {{- tpl .Values.server.statefulSet.securityContext.container . | nindent 8 }}
+        {{- else }}
+          {{- toYaml .Values.server.statefulSet.securityContext.container | nindent 8 }}
+        {{- end }}
+  {{- else if not .Values.global.openshift }}
+      securityContext:
+        allowPrivilegeEscalation: false
+  {{- end }}
+{{- end -}}
+
+{{/*
 Sets extra injector service account annotations
 */}}
 {{- define "injector.serviceAccount.annotations" -}}
@@ -818,17 +859,6 @@ Sets extra openbao server Service (headless) annotations
     {{- if $generic }}
       {{- include "openbao.annotations.render.4" (list . $generic) -}}
     {{- end }}
-  {{- end }}
-{{- end -}}
-
-{{/*
-Sets PodSecurityPolicy annotations
-*/}}
-{{- define "openbao.psp.annotations" -}}
-  {{- $generic := .Values.global.psp.annotations -}}
-  {{- if $generic }}
-  annotations:
-    {{- include "openbao.annotations.render.4" (list . $generic) -}}
   {{- end }}
 {{- end -}}
 
@@ -1176,7 +1206,7 @@ config file from values
 {{- end -}}
 
 {{/*
-Create the name of the service account to use for the snasphot-agent
+Create the name of the service account to use for the snapshot-agent
 */}}
 {{- define "openbao.snapshotAgent.serviceAccount.name" -}}
 {{- if .Values.snapshotAgent.serviceAccount.create -}}
@@ -1202,7 +1232,7 @@ Sets extra service account annotations for the snapshot-agent
 {{- end -}}
 
 {{/*
-Sets extra snapshotAgent job annotations
+Sets extra snapshotAgent CronJob annotations
 */}}
 {{- define "openbao.snapshotAgent.annotations" -}}
   {{- if .Values.snapshotAgent.annotations }}
@@ -1213,6 +1243,36 @@ Sets extra snapshotAgent job annotations
     {{- else }}
       {{- toYaml .Values.snapshotAgent.annotations | nindent 4 }}
     {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+Sets extra snapshotAgent Job annotations
+*/}}
+{{- define "openbao.snapshotAgent.job.annotations" -}}
+  {{- if .Values.snapshotAgent.job.annotations }}
+      annotations:
+        {{- $tp := typeOf .Values.snapshotAgent.job.annotations }}
+        {{- if eq $tp "string" }}
+          {{- tpl .Values.snapshotAgent.job.annotations . | nindent 8 }}
+        {{- else }}
+          {{- toYaml .Values.snapshotAgent.job.annotations | nindent 8 }}
+        {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+Sets extra snapshotAgent Pod annotations
+*/}}
+{{- define "openbao.snapshotAgent.pod.annotations" -}}
+  {{- if .Values.snapshotAgent.pod.annotations }}
+          annotations:
+            {{- $tp := typeOf .Values.snapshotAgent.pod.annotations }}
+            {{- if eq $tp "string" }}
+              {{- tpl .Values.snapshotAgent.pod.annotations . | nindent 12 }}
+            {{- else }}
+              {{- toYaml .Values.snapshotAgent.pod.annotations | nindent 12 }}
+            {{- end }}
   {{- end }}
 {{- end -}}
 
@@ -1271,6 +1331,36 @@ tolerations for the snapshotAgent cronjob pod
             {{ tpl .Values.snapshotAgent.tolerations . | nindent 12 | trim }}
           {{- else }}
             {{- toYaml .Values.snapshotAgent.tolerations | nindent 12 }}
+          {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+nodeSelector for the snapshotAgent cronjob pod
+*/}}
+{{- define "snapshotAgent.nodeselector" -}}
+  {{- if .Values.snapshotAgent.nodeSelector }}
+          nodeSelector:
+          {{- $tp := typeOf .Values.snapshotAgent.nodeSelector }}
+          {{- if eq $tp "string" }}
+            {{ tpl .Values.snapshotAgent.nodeSelector . | nindent 12 | trim }}
+          {{- else }}
+            {{- toYaml .Values.snapshotAgent.nodeSelector | nindent 12 }}
+          {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+affinity for the snapshotAgent cronjob pod
+*/}}
+{{- define "snapshotAgent.affinity" -}}
+  {{- if .Values.snapshotAgent.affinity }}
+          affinity:
+          {{- $tp := typeOf .Values.snapshotAgent.affinity }}
+          {{- if eq $tp "string" }}
+            {{ tpl .Values.snapshotAgent.affinity . | nindent 12 | trim }}
+          {{- else }}
+            {{- toYaml .Values.snapshotAgent.affinity | nindent 12 }}
           {{- end }}
   {{- end }}
 {{- end -}}

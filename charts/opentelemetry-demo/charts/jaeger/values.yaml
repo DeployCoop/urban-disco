@@ -201,6 +201,33 @@ jaeger:
     #     hosts:
     #       - chart-example.local
     pathType:
+  httproute:
+    # Create an HTTPRoute (Gateway API) to expose the Jaeger Query UI (port 16686).
+    # Requires the Gateway API CRDs to be installed in the cluster.
+    enabled: false
+    # HTTPRoute apiVersion (defaults to "gateway.networking.k8s.io/v1" when empty)
+    apiVersion: ""
+    annotations: {}
+    # parentRefs reference the Gateway(s) this HTTPRoute is attached to
+    # parentRefs:
+    #   - name: my-gateway
+    #     namespace: gateway-system
+    #     sectionName: http
+    parentRefs: []
+    # hostnames matched against the HTTP Host header to select this route
+    # hostnames:
+    #   - chart-example.local
+    hostnames: []
+    # matches define conditions used to match incoming requests against the rule.
+    # Defaults to a PathPrefix "/" match (mirrors the Ingress behavior above).
+    matches:
+      - path:
+          type: PathPrefix
+          value: /
+    # filters applied to requests that match this rule
+    filters: []
+    # additionalRules (templated) prepends custom HTTPRoute rules
+    additionalRules: []
   # resources:
   #   limits:
   #     cpu: 500m
@@ -212,11 +239,48 @@ jaeger:
   tolerations: []
   affinity: {}
   topologySpreadContraints: []
+  podAnnotations:
+    prometheus.io/port: "8888"
+    prometheus.io/scrape: "true"
   podSecurityContext:
     runAsUser: 10001
     runAsGroup: 10001
     fsGroup: 10001
   securityContext: {}
+  extraVolumes: []
+    # - name: badger-data
+    #   persistentVolumeClaim:
+    #     claimName: jaeger-badger-data
+  extraVolumeMounts: []
+    # - name: badger-data
+    #   mountPath: /badger
+
+  # Configure an OAuth2 Proxy sidecar for Query UI authentication
+  oAuthSidecar:
+    enabled: false
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.15.4
+    pullPolicy: IfNotPresent
+    containerPort: 4180
+    args: []
+    # - --config=/etc/oauth2-proxy/oauth2-proxy.cfg
+    # - --upstream=http://127.0.0.1:16686
+    # - --http-address=0.0.0.0:4180
+    extraConfigmapMounts: []
+    # - name: oauth2-proxy-config
+    #   mountPath: /etc/oauth2-proxy/oauth2-proxy.cfg
+    #   subPath: oauth2-proxy.cfg
+    #   configMap: jaeger-oauth2-proxy-config
+    #   readOnly: true
+    extraSecretMounts: []
+    # - name: oauth2-proxy-secret
+    #   mountPath: /etc/oauth2-proxy/secret.cfg
+    #   subPath: secret.cfg
+    #   secretName: jaeger-oauth2-proxy-secret
+    #   readOnly: true
+    securityContext: {}
+    resources: {}
+    # livenessProbe: {}
+    # readinessProbe: {}
 
 # ------------------------------------------------------------------------------
 # Storage Connection Settings

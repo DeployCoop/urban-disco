@@ -9,6 +9,8 @@ global:
   analytics:
     # -- Global override for GA analytics
     enabled:
+    # -- Global override for DNS nameservers used to resolve the analytics endpoint
+    gaDnsNameservers:
 
 # -- Image registry for CSI Sidecars
 csiSideCars:
@@ -25,9 +27,6 @@ provisionerName: "rawfile.csi.openebs.io"
 logLevel: INFO
 # -- Format of the logs (json, pretty)
 logFormat: json
-
-# -- Used to reserve capacity on each node for data dir storage on each host (Supports percentage and size) [e.g. `25%` or `50GB` or `10MiB`] (Deprecated, use storagePools.reservedCapacity instead)
-reservedCapacity: ""
 
 auth:
   # -- Enables authentication for internal gRPC server
@@ -50,19 +49,20 @@ image:
 analytics:
   # -- Enable OpenEBS analytics which help track engine traction and usage.
   enabled: true
+  # -- Comma-separated DNS nameservers (each optionally `ip:port`) used to resolve the analytics endpoint. Leave empty to use the cluster's default resolver (CoreDNS).
+  gaDnsNameservers: "8.8.8.8:53"
 
 controller:
   externalResizer:
     # -- Sets compute resources for external-resizer container
-    resources:
-      {}
+    resources: {}
     image:
       # -- Image registry for `csi-resizer`
       registry: ""
       # -- Image Repository for `csi-resizer`
       repository: sig-storage/csi-resizer
       # -- Image tag for `csi-resizer`
-      tag: v1.13.2
+      tag: v2.2.1
       # -- Image pull policy for `csi-resizer`
       pullPolicy:
 
@@ -76,15 +76,28 @@ controller:
     #   cpu: 10m
     #   memory: 100Mi
 
+  apiServer:
+    # -- Sets compute resources for apiServer component
+    resources:
+      {}
+      # limits:
+      #   cpu: 1
+      #   memory: 100Mi
+      # requests:
+      #   cpu: 10m
+      #   memory: 100Mi
+
   # -- priorityClassName for controller component since this part is critical for cluster `system-cluster-critical` is default
   priorityClassName: system-cluster-critical
 
   # -- Tolerations for controller component
   tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
     - key: "node-role.kubernetes.io/master"
-      operator: Equal
-      value: "true"
-      effect: NoSchedule
+      operator: "Exists"
+      effect: "NoSchedule"
 
   # -- nodeSelector for controller component
   nodeSelector:
@@ -101,15 +114,14 @@ node:
 
   driverRegistrar:
     # -- Sets compute resources for driver-registrar container
-    resources:
-      {}
+    resources: {}
     image:
       # -- Image Registry for `csi-node-driver-registrar`
       registry: ""
       # -- Image Repository for `csi-node-driver-registrar`
       repository: sig-storage/csi-node-driver-registrar
       # -- Image Tag for `csi-node-driver-registrar`
-      tag: v2.13.0
+      tag: v2.17.0
       # -- Image pull policy for `csi-node-driver-registrar`
       pullPolicy:
 
@@ -118,15 +130,14 @@ node:
 
   externalProvisioner:
     # -- Sets compute resources for external-provisioner container
-    resources:
-      {}
+    resources: {}
     image:
       # -- Image Registry for `csi-provisioner`
       registry: ""
       # -- Image Repository for `csi-provisioner`
       repository: sig-storage/csi-provisioner
       # -- Image Tag for `csi-provisioner`
-      tag: v5.2.0
+      tag: v6.3.0
       # -- Image pull policy for `csi-provisioner`
       pullPolicy:
     # -- Sets capacity poll interval for `csi-provisioner`, determining how long the external-provisioner waits before checking for storage capacity changes.
@@ -134,44 +145,44 @@ node:
 
   externalSnapshotter:
     # -- Sets compute resources for external-snapshotter container
-    resources:
-      {}
+    resources: {}
     image:
       # -- Image Registry for `csi-snapshotter`
       registry: ""
       # -- Image Repository for `csi-snapshotter`
       repository: sig-storage/csi-snapshotter
       # -- Image Tag for `csi-snapshotter`
-      tag: v8.2.1
+      tag: v8.6.0
       # -- Image pull policy for `csi-snapshotter`
       pullPolicy:
 
   snapshotController:
+    # -- Runs the snapshot-controller container. There should only be one snapshot-controller per cluster,
+    # so disable this if the cluster already runs one. That controller must be started with
+    # `--enable-distributed-snapshotting=true`, or rawfile snapshots will never be provisioned.
+    # Requires `capabilities.snapshots.enabled`.
+    enabled: true
     # -- Sets compute resources for snapshot-controller container
-    resources:
-      {}
+    resources: {}
     image:
       # -- Image Registry for `snapshot-controller`
       registry: ""
       # -- Image Repository for `snapshot-controller`
       repository: sig-storage/snapshot-controller
       # -- Image Tag for `snapshot-controller`
-      tag: v8.2.1
+      tag: v8.6.0
       # -- Image pull policy for `snapshot-controller`
       pullPolicy:
 
   # -- Default filesystem type for rawfile volumes (Currently supports `btrfs`, `xfs` and `ext4` [which is default])
   defaultFs: ext4
 
-  # -- Path to store data dir (Deprecated, use storagePools.path instead)
-  dataDirPath: /var/csi/rawfile
-
   # -- Default storage pool name
-  # defaultPool: default
+  defaultPool: default
   # -- Storage pools configuration
-  # storagePools:
-  #   default:
-  #     path: /var/local/openebs/rawfile/default-pool/
+  storagePools:
+    default:
+      path: /var/local/openebs/rawfile/default-pool/
   # -- Reserved capacity outside of the storage pool, can be specified in bytes or percentage of the underlying device capacity
   #     reservedCapacity: ""
   # -- Reserved capacity mode. `Plain` means it's taken as-is, `subtract-from-total` means it's subtracted from underlying device capacity. Example: if reservedCapacity is 100GiB, then `plain` means the pool can grow until 100GiB is left, and `subtract-from-total` means it can grow up to 100GiB. Default: `plain`
@@ -184,8 +195,7 @@ node:
   kubeletPath: /var/lib/kubelet
 
   # -- Sets compute resources for node component
-  resources:
-    {}
+  resources: {}
   metrics:
     enabled: false
 
@@ -278,5 +288,8 @@ capabilities:
     # -- Sets whether taking volume snapshots is enabled. Required for volume cloning. Runs externalSnapshotter and snapshotController containers.
     enabled: true
   resize:
-    # -- Sets whether volume resizing is enabled. If disabled, don't deploy controller statefulset
+    # -- Sets whether volume resizing is enabled. If disabled, don't deploy controller component
+    enabled: true
+  apiServer:
+    # -- Sets whether API Server has been enabled or not
     enabled: true

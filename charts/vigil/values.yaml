@@ -1,6 +1,6 @@
 # Default values for the Vigil SOC Helm chart.
 # This is a YAML-formatted file.
-# See docs/HELM.md for a full reference of all values.
+# See https://vigilsoc.org/docs/helm/ for a full reference of all values.
 
 # -----------------------------------------------------------------------------
 # Global
@@ -105,7 +105,7 @@ daemon:
 llmWorker:
   enabled: true
   replicaCount: 2
-  # Shares the backend image — command is overridden to run services.run_llm_worker.
+  # Shares the backend image — command is overridden to run services.worker.
   image:
     repository: ""   # inherits backend.image.repository when empty
     tag: ""
@@ -134,13 +134,107 @@ llmWorker:
       cooldownPeriod: 300
       # How often KEDA polls Redis for the queue depth.
       pollingInterval: 15
-      # ARQ default queue name for the Vigil llm-worker (see services/llm_gateway.py).
+      # ARQ default queue name for the Vigil llm-worker (see core/llm/gateway/gateway.py).
       queueName: "arq:llm"
       # KEDA scales one replica per listLength items queued.
       listLength: "5"
       # Only used when redis.enabled=false AND redis.bitnami.enabled=false.
       # host:port form without scheme or password.
       redisAddress: ""
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []
+
+# -----------------------------------------------------------------------------
+# Agent worker — the TypeScript BullMQ consumer. Runs alongside llmWorker, not
+# instead of it; see agent-worker-deployment.yaml for what has to go first.
+# -----------------------------------------------------------------------------
+agentWorker:
+  enabled: true
+  replicaCount: 2
+  # Its own Node image — unlike llmWorker it cannot share the backend's.
+  image:
+    repository: ""   # defaults to <registry>/<namespace>-agent
+    tag: ""
+    pullPolicy: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  autoscaling:
+    # CPU-based HPA (classic). Mutually exclusive with keda.enabled.
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    # KEDA ScaledObject — scales on actual Redis queue depth.
+    # Requires KEDA installed in the cluster (https://keda.sh).
+    keda:
+      enabled: false
+      # Must be >= 1: nothing promotes BullMQ's delayed jobs into the waiting
+      # list except a running worker. The template clamps it.
+      minReplicas: 2
+      maxReplicas: 20
+      # Seconds of zero queue activity before scaling down. Keep high to avoid
+      # thrash when the queue is bursty.
+      cooldownPeriod: 300
+      # How often KEDA polls Redis for the queue depth.
+      pollingInterval: 15
+      # BullMQ's waiting list for RUN_QUEUE (services/agent/contracts/job.ts).
+      # Not "agent-runs": that is the queue name, not the Redis key.
+      queueName: "bull:agent-runs:wait"
+      # KEDA scales one replica per listLength items queued.
+      listLength: "5"
+      # Only used when redis.enabled=false AND redis.bitnami.enabled=false.
+      # host:port form without scheme or password.
+      redisAddress: ""
+      # Empty means the database the chart's own Redis is addressed on. Set it only
+      # alongside redis.external.url, to whatever database that URL names -- a
+      # scaler counting the wrong one reads an empty queue and never scales up.
+      databaseIndex: ""
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []
+
+# -----------------------------------------------------------------------------
+# Agent serve — the same image as agentWorker, running the other entry point:
+# chat over SSE and the run projections a supervisor reads. Separate from the
+# worker because the two scale on unrelated signals (#635).
+# -----------------------------------------------------------------------------
+agentServe:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ""   # defaults to <registry>/<namespace>-agent, same as agentWorker
+    tag: ""
+    pullPolicy: ""
+  service:
+    # The backend reaches this at AGENT_URL, computed from the Service name.
+    port: 6989
+  # An SSE stream can sit on one model call for minutes, and dropping it loses
+  # the conversation rather than retrying it. Long enough for a turn to finish.
+  terminationGracePeriodSeconds: 120
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  # No autoscaling block, and its absence is the decision. This process holds SSE
+  # streams open for minutes, so an idle-looking box may be carrying hundreds of
+  # live conversations -- CPU reads near zero and an HPA would scale it down
+  # mid-answer. Separate replica counts satisfy #635's "scale independently"
+  # honestly; concurrent connections is the signal that would work, and that is a
+  # metrics-pipeline project. Left out rather than shipped as `enabled: false`,
+  # which would render no HPA and quietly scale to one when somebody turned it on.
   podAnnotations: {}
   nodeSelector: {}
   tolerations: []
@@ -186,7 +280,8 @@ postgresql:
     # Either set .existingSecret + .existingSecretKey OR provide password via secrets.postgresPassword.
     existingSecret: ""
     existingSecretKey: POSTGRES_PASSWORD
-    # If true, append ?sslmode=require to the DATABASE_URL.
+    # Unused: Helm injects discrete POSTGRES_* vars, not a DSN. Require SSL with
+    # POSTGRES_SSL_MODE=require via extraConfig / extraEnv.
     sslRequired: false
 
   # Bitnami postgresql subchart (issue #114). When enabled, the MVP in-chart
@@ -194,7 +289,7 @@ postgresql:
   # through to the subchart (alias: bitnamiPostgresql in Chart.yaml).
   #
   # Prerequisites (ONE-TIME):
-  #   helm dependency update helm/vigil
+  #   helm dependency update infra/helm/vigil
   #
   # See https://artifacthub.io/packages/helm/bitnami/postgresql for the full
   # value schema — anything you add here flows through unchanged.
@@ -263,7 +358,7 @@ redis:
   # in-chart Redis and routes REDIS_URL at the subchart's -master service.
   #
   # Prerequisites (ONE-TIME):
-  #   helm dependency update helm/vigil
+  #   helm dependency update infra/helm/vigil
   #
   # See https://artifacthub.io/packages/helm/bitnami/redis
   bitnami:
@@ -282,7 +377,7 @@ redis:
 # -----------------------------------------------------------------------------
 # Database init Job
 # -----------------------------------------------------------------------------
-# Runs the SQL files under database/init/ in an explicit order to avoid the
+# Runs the SQL files under infra/database/init/ in an explicit order to avoid the
 # 003_* filename collision. Uses helm hooks to run on install + upgrade.
 dbInit:
   enabled: true
@@ -291,8 +386,10 @@ dbInit:
     repository: postgres
     tag: "16-alpine"
     pullPolicy: IfNotPresent
-  # Explicit ordering — files added under database/init/ will NOT auto-run.
-  # Update this list when new init SQL lands.
+  # Explicit ordering — files added under infra/database/init/ will NOT auto-run.
+  # Update this list when new init SQL lands, in filename order (the order
+  # compose applies them); tests/unit/_ratchets/test_helm_db_init_sql_files.py
+  # fails until you do.
   sqlFiles:
     - 01_init_schema.sql
     - 04_config_tables.sql
@@ -309,6 +406,29 @@ dbInit:
     - 14_threat_indicators.sql
     - 15_federation.sql
     - 16_llm_budgets.sql
+    - 17_loglm_setup.sql
+    - 18_agent_decision_ids.sql
+    - 19_agent_ledger.sql
+    - 20_agent_directives.sql
+    - 21_agent_run_leases.sql
+    - 22_workflow_run_deleted.sql
+    - 23_drop_finding_embedding.sql
+    - 24_finding_mitre_predictions.sql
+    - 25_nullable_finding_score_timestamp.sql
+    - 26_episodic_memory.sql
+    - 27_episodic_read_log.sql
+    - 28_case_closure_actor.sql
+    - 29_episodic_distil_failures.sql
+    - 30_approval_action_reversibility.sql
+    - 30_vigil_app_role.sql
+    - 31_agent_ledger_hash_chain.sql
+    - 32_drop_attack_layers.sql
+    - 33_episodic_verdict_techniques.sql
+    - 34_drop_skills.sql
+    - 34_mcp_credentials.sql
+    - 35_ip_exclusions.sql
+    - 36_workflow_runs_triggered_by_index.sql
+    - 37_workflow_runs_outcome.sql
   resources:
     requests:
       cpu: 50m
@@ -329,6 +449,8 @@ ingress:
   hosts:
     - host: vigil.local
       paths:
+        # Subdirectory deploys (e.g. /vigil) must set config.VIGIL_CONTEXT_PATH
+        # to the same string; the chart does not derive one from the other.
         - path: /
           pathType: Prefix
   tls: []
@@ -344,6 +466,60 @@ serviceAccount:
   name: ""
   annotations: {}
   automountServiceAccountToken: false
+
+# -----------------------------------------------------------------------------
+# State Directory
+# -----------------------------------------------------------------------------
+# Where Vigil keeps what the database does not: the secrets store, MCP enable
+# flags, detection sources. Exported as VIGIL_DIR to the backend, daemon and
+# llm-worker.
+#
+# The emptyDir default is per-pod and cleared on restart, deliberately: a
+# ReadWriteOnce disk cannot be shared by backend.replicaCount > 1, and
+# ReadWriteMany is not available on every cluster. So supply credentials through
+# `secrets.existingSecret` or ExternalSecrets, not the Settings UI.
+#
+# For durability on a cluster with ReadWriteMany storage:
+#   stateDirectory.volume:
+#     persistentVolumeClaim:
+#       claimName: vigil-state
+stateDirectory:
+  mountPath: /var/lib/vigil
+  volume:
+    emptyDir: {}
+
+# -----------------------------------------------------------------------------
+# Custom CA bundle (TLS-inspecting proxies)
+# -----------------------------------------------------------------------------
+# Mount an operator-supplied PEM into backend, daemon, llm-worker, agent-worker,
+# and agent-serve, and set SSL_CERT_FILE, REQUESTS_CA_BUNDLE, and
+# NODE_EXTRA_CA_CERTS to that path. Python and Node then trust the inspecting
+# CA with verification still enabled. MCP children inherit the same vars.
+# SSL_CERT_FILE replaces the default store — the PEM should include public CAs
+# as well as the inspecting one. NODE_EXTRA_CA_CERTS appends.
+#
+# This trusts the CA for every host Vigil calls. For a private CA that signs one
+# self-hosted server (a Wazuh indexer, an internal Splunk, MISP, PAN-OS or
+# VStrike), set that integration's "CA Certificate Path" in Settings, or
+# <INTEGRATION>_CA_CERT_PATH (e.g. ELASTIC_SIEM_CA_CERT_PATH) via extraEnv,
+# instead: that PEM is trusted for that integration's clients only. The file
+# must be readable in the backend and daemon pods; this block does not mount it.
+#
+# Point at an existing Secret or ConfigMap — this chart does not create one.
+# Leave both names empty (the default) to skip the mount. Prefer the Secret
+# when both are set.
+#
+#   kubectl create secret generic vigil-proxy-ca \
+#     --from-file=ca.crt=/path/to/corporate-ca.pem
+#
+#   caBundle:
+#     existingSecret: vigil-proxy-ca
+#     key: ca.crt
+caBundle:
+  existingSecret: ""
+  existingConfigMap: ""
+  key: ca.crt
+  mountPath: /etc/vigil/ca-bundle.pem
 
 # -----------------------------------------------------------------------------
 # Pod security
@@ -402,12 +578,19 @@ secrets:
   # Required (at least one of these must be set for the backend to do useful work).
   anthropicApiKey: ""
 
-  # DB. Used by dbInit and DATABASE_URL assembly.
+  # DB password. Materialized as POSTGRES_PASSWORD; db-init and app pods
+  # consume the discrete POSTGRES_* parts, not an assembled DSN.
   postgresPassword: "change-me-before-production"
 
   # Required when DEV_MODE=false (see env.example). Generate with:
   #   python -c "import secrets; print(secrets.token_urlsafe(64))"
   jwtSecretKey: ""
+
+  # Shared secret the agent worker presents on the /internal endpoints. Required
+  # to run a workflow: without it every /internal call answers 503. The worker
+  # must be given the same value. Generate with:
+  #   python -c "import secrets; print(secrets.token_urlsafe(48))"
+  agentInternalToken: ""
 
   # Optional data-source integrations.
   splunkPassword: ""
@@ -415,7 +598,6 @@ secrets:
   crowdstrikeClientSecret: ""
   elasticApiKey: ""
   elasticPassword: ""
-  timesketchPassword: ""
   criblPassword: ""
   darktraceWebhookSecret: ""
   vstrikeApiKey: ""
@@ -462,6 +644,7 @@ config:
   AUTH_MIN_PASSWORD_LENGTH: "12"
   AUTH_PASSWORD_HISTORY_LIMIT: "5"
   PASSWORD_RESET_TTL_SECONDS: "3600"
+  # Include the context path under a subdirectory (e.g. https://example.com/vigil).
   VIGIL_FRONTEND_URL: ""
 
   # Email backend
@@ -474,6 +657,10 @@ config:
 
   # HTTP security headers + CORS
   VIGIL_CORS_ORIGINS: ""
+  # Sub-directory the app is served under (e.g. "/vigil"). Empty = root.
+  # Must match ingress path; the chart does not derive one from the other.
+  # The reverse proxy must forward the prefix unchanged.
+  VIGIL_CONTEXT_PATH: ""
   VIGIL_HSTS_ENABLED: "true"
   VIGIL_HSTS_MAX_AGE: "31536000"
   VIGIL_FRAME_OPTIONS_ENABLED: "true"
@@ -485,15 +672,14 @@ config:
   # CSRF
   VIGIL_CSRF_ENABLED: "true"
   VIGIL_CSRF_REPORT_ONLY: "true"
+  # Added to the always-exempt set (webhooks, ingestion, the /mcp surface,
+  # the agent layer's /internal endpoints) rather than replacing it.
+  # App-root relative; the API prefixes each entry with VIGIL_CONTEXT_PATH.
   VIGIL_CSRF_EXEMPT_PATHS: "/api/webhooks/,/api/ingest/"
 
   # Auth cookies
   VIGIL_COOKIE_SECURE: "true"
   VIGIL_COOKIE_SAMESITE: "strict"
-
-  # MemPalace
-  MEMPALACE_PALACE_PATH: "/app/data/mempalace/palace"
-  MEMPALACE_DAEMON_ENABLED: "false"
 
   # Integrations — non-secret URLs/usernames
   SPLUNK_URL: ""
@@ -504,8 +690,6 @@ config:
   ELASTIC_USERNAME: ""
   ELASTIC_VERIFY_SSL: "true"
   ELASTIC_INDEX_PATTERN: ".alerts-security.alerts-default"
-  TIMESKETCH_URL: ""
-  TIMESKETCH_USERNAME: ""
   CRIBL_URL: ""
   CRIBL_USERNAME: ""
   CRIBL_WORKER_GROUP: "default"
@@ -544,6 +728,10 @@ config:
   DAEMON_BATCH_SIZE: "10"
   DAEMON_AUTO_RESPONSE: "true"
   DAEMON_CONFIDENCE_THRESHOLD: "0.90"
+  DAEMON_REVIEW_THRESHOLD: "0.85"
+  DAEMON_MONITOR_THRESHOLD: "0.70"
+  DAEMON_CRITICAL_ACTION_FLOOR: "0.70"
+  DAEMON_HIGH_ACTION_FLOOR: "0.80"
   DAEMON_FORCE_APPROVAL: "false"
   DAEMON_DRY_RUN: "false"
   DAEMON_ESCALATION_ENABLED: "true"
@@ -567,17 +755,9 @@ config:
   ORCHESTRATOR_MAX_COST: "5.0"
   ORCHESTRATOR_MAX_RUNTIME: "3600"
   ORCHESTRATOR_MAX_HOURLY_COST: "20.0"
-  ORCHESTRATOR_MAX_DAILY_COST: "100.0"
   ORCHESTRATOR_STALE_THRESHOLD: "300"
   ORCHESTRATOR_WORKDIR: "/app/data/investigations"
-  ORCHESTRATOR_AUTO_ASSIGN: "true"
-  ORCHESTRATOR_AUTO_SEVERITIES: "critical,high"
   ORCHESTRATOR_DRY_RUN: "false"
-  ORCHESTRATOR_DEDUP_WINDOW: "30"
-  ORCHESTRATOR_AGENT_LOOP_DELAY: "2"
-  ORCHESTRATOR_CONTEXT_MAX_CHARS: "10000"
-  ORCHESTRATOR_PLAN_MODEL: "claude-sonnet-4-5-20250929"
-  ORCHESTRATOR_REVIEW_MODEL: "claude-sonnet-4-5-20250929"
 
   # OTEL — disabled by default; turn on when an OTEL collector is reachable.
   VIGIL_OTEL_ENABLED: "false"
@@ -605,9 +785,7 @@ config:
   # per-row in llm_provider_configs after first boot).
   BIFROST_ENABLED: "false"
   BIFROST_URL: "http://bifrost:8080"
-  OLLAMA_ENABLED: "false"
   OLLAMA_URL: "http://ollama:11434"
-  OLLAMA_DEFAULT_MODEL: "llama3.1:70b"
   OPENAI_ENABLED: "false"
   OPENAI_BASE_URL: "https://api.openai.com/v1"
   OPENAI_ORGANIZATION: ""
@@ -629,7 +807,7 @@ extraConfig: {}
 #
 # Prerequisites (ONE-TIME):
 #   helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
-#   helm dependency update helm/vigil
+#   helm dependency update infra/helm/vigil
 #
 # When enabled, the chart auto-rewrites OTEL_EXPORTER_OTLP_ENDPOINT in the
 # app ConfigMap to the in-cluster Collector service. You still need to flip
@@ -706,6 +884,17 @@ networkPolicies:
     # cluster-internal only. Add your SIEM/EDR outbound IPs here to let them
     # push findings.
     webhookAllowFrom: []
+  agentServe:
+    # agent-serve answers chat and run projections, and its probes ride the same
+    # port. Ingress rules are OR'd, so allowing probes from any namespace also
+    # opens that port to every pod in the cluster — leaving the bearer token as
+    # the only gate (ADR 0014).
+    #
+    # True by default because a kubelet probe comes from the node, not a pod, and
+    # whether a CNI lets that past a pod-selector rule varies; a probe blocked by
+    # policy takes the Deployment down. Set false on Calico or Cilium, which
+    # permit node-sourced health checks — then only the backend can reach it.
+    allowProbesFromAnyNamespace: true
 
 # -----------------------------------------------------------------------------
 # Development utilities (issue #117) — off by default, not for production

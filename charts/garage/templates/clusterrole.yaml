@@ -1,3 +1,4 @@
+{{- if eq .Values.garage.noClusterRole false }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -28,3 +29,4 @@ roleRef:
   kind: ClusterRole
   name: manage-crds-{{ .Release.Namespace }}-{{ .Release.Name }}
   apiGroup: rbac.authorization.k8s.io
+{{ end }}

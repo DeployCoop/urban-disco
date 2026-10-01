@@ -171,6 +171,7 @@ For a full list of supported environment variables, see the [Spark Dependencies 
 To access the ui you can either:
 
 * enable the ingress and fill at least one host
+* enable the Gateway API HTTPRoute and attach it to an existing Gateway
 * provide your own ingress
 * or port forward ```kubectl port-forward --namespace {{ .Release.Namespace }} $POD_NAME 16686:16686 --address 0.0.0.0``` and access at http://localhost:16686/
 
@@ -182,7 +183,42 @@ jaeger:
       - <fill a host here>
 ```
 
+Alternatively, expose the Query UI through the [Gateway API](https://gateway-api.sigs.k8s.io/). This requires the Gateway API CRDs and a `Gateway` to already exist in the cluster:
+
+```yaml
+jaeger:
+  httproute:
+    enabled: true
+    parentRefs:
+      - name: <your-gateway-name>
+        namespace: <your-gateway-namespace>
+    hostnames:
+      - <fill a host here>
+```
+
 You can customize the UI by setting ```uiconfig```.  Please see the values.yaml for examples or https://github.com/jaegertracing/jaeger/tree/main/cmd/jaeger
+
+#### OAuth2 Proxy Sidecar Authentication
+
+You can secure access to the Query UI by deploying `oauth2-proxy` as a sidecar container alongside Jaeger. When `jaeger.oAuthSidecar.enabled` is `true`, query traffic sent to Service port `16686` (or through Ingress) is automatically forwarded to the OAuth2 Proxy sidecar (`containerPort: 4180`), which authenticates incoming requests before proxying them to `http://127.0.0.1:16686`.
+
+```yaml
+jaeger:
+  oAuthSidecar:
+    enabled: true
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.4.0
+    containerPort: 4180
+    args:
+      - --config=/etc/oauth2-proxy/oauth2-proxy.cfg
+      - --upstream=http://127.0.0.1:16686
+      - --http-address=0.0.0.0:4180
+    extraConfigmapMounts:
+      - name: oauth2-proxy-config
+        mountPath: /etc/oauth2-proxy/oauth2-proxy.cfg
+        subPath: oauth2-proxy.cfg
+        configMap: jaeger-oauth2-proxy-config
+        readOnly: true
+```
 
 ## Configuring the Collector
 

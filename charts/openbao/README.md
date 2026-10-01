@@ -1,6 +1,6 @@
 # openbao
 
-![Version: 0.28.6](https://img.shields.io/badge/Version-0.28.6-informational?style=flat-square) ![AppVersion: v2.6.1](https://img.shields.io/badge/AppVersion-v2.6.1-informational?style=flat-square)
+![Version: 0.30.0](https://img.shields.io/badge/Version-0.30.0-informational?style=flat-square) ![AppVersion: v2.7.0](https://img.shields.io/badge/AppVersion-v2.7.0-informational?style=flat-square)
 
 Official OpenBao Chart
 
@@ -49,7 +49,7 @@ Kubernetes: `>= 1.30.0-0`
 | csi.image.pullPolicy | string | `"IfNotPresent"` | image pull policy to use for csi image. if tag is "latest", set to "Always" |
 | csi.image.registry | string | `"quay.io"` | image registry to use for csi image |
 | csi.image.repository | string | `"openbao/openbao-csi-provider"` | image repo to use for csi image |
-| csi.image.tag | string | `"2.0.2"` | image tag to use for csi image |
+| csi.image.tag | string | `"2.0.3"` | image tag to use for csi image |
 | csi.livenessProbe.failureThreshold | int | `2` |  |
 | csi.livenessProbe.initialDelaySeconds | int | `5` |  |
 | csi.livenessProbe.periodSeconds | int | `5` |  |
@@ -78,8 +78,6 @@ Kubernetes: `>= 1.30.0-0`
 | global.imagePullSecrets | list | `[]` | Image pull secret to use for registry authentication. Alternatively, the value may be specified as an array of strings. |
 | global.namespace | string | `""` | The namespace to deploy to. Defaults to the `helm` installation namespace. |
 | global.openshift | bool | `false` | If deploying to OpenShift |
-| global.psp | object | `{"annotations":"seccomp.security.alpha.kubernetes.io/allowedProfileNames: docker/default,runtime/default\napparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default\nseccomp.security.alpha.kubernetes.io/defaultProfileName:  runtime/default\napparmor.security.beta.kubernetes.io/defaultProfileName:  runtime/default\n","enable":false}` | Create PodSecurityPolicy for pods |
-| global.psp.annotations | string | `"seccomp.security.alpha.kubernetes.io/allowedProfileNames: docker/default,runtime/default\napparmor.security.beta.kubernetes.io/allowedProfileNames: runtime/default\nseccomp.security.alpha.kubernetes.io/defaultProfileName:  runtime/default\napparmor.security.beta.kubernetes.io/defaultProfileName:  runtime/default\n"` | Annotation for PodSecurityPolicy. This is a multi-line templated string map, and can also be set as YAML. |
 | global.serverTelemetry.prometheusOperator | bool | `false` | Enable integration with the Prometheus Operator See the top level serverTelemetry section below before enabling this feature. |
 | global.tlsDisable | bool | `true` | TLS for end-to-end encrypted transport |
 | injector.affinity | string | `"podAntiAffinity:\n  requiredDuringSchedulingIgnoredDuringExecution:\n    - labelSelector:\n        matchLabels:\n          app.kubernetes.io/name: {{ template \"openbao.name\" . }}-agent-injector\n          app.kubernetes.io/instance: \"{{ .Release.Name }}\"\n          component: webhook\n      topologyKey: kubernetes.io/hostname\n"` |  |
@@ -150,6 +148,7 @@ Kubernetes: `>= 1.30.0-0`
 | injector.topologySpreadConstraints | list | `[]` |  |
 | injector.webhook.annotations | object | `{}` |  |
 | injector.webhook.failurePolicy | string | `"Ignore"` |  |
+| injector.webhook.matchConditions | list | `[]` |  |
 | injector.webhook.matchPolicy | string | `"Exact"` |  |
 | injector.webhook.namespaceSelector | object | `{}` |  |
 | injector.webhook.objectSelector | string | `"matchExpressions:\n- key: app.kubernetes.io/name\n  operator: NotIn\n  values:\n  - {{ template \"openbao.name\" . }}-agent-injector\n"` |  |
@@ -193,8 +192,8 @@ Kubernetes: `>= 1.30.0-0`
 | server.gateway.httpRoute.labels | object | `{}` |  |
 | server.gateway.httpRoute.matches.path.type | string | `"PathPrefix"` |  |
 | server.gateway.httpRoute.matches.path.value | string | `"/"` |  |
-| server.gateway.httpRoute.matches.timeouts | object | `{}` |  |
 | server.gateway.httpRoute.parentRefs | list | `[]` |  |
+| server.gateway.httpRoute.timeouts | object | `{}` |  |
 | server.gateway.tlsPolicy.activeService | bool | `true` |  |
 | server.gateway.tlsPolicy.annotations | object | `{}` |  |
 | server.gateway.tlsPolicy.apiVersion | string | `"gateway.networking.k8s.io/v1"` |  |
@@ -298,7 +297,7 @@ Kubernetes: `>= 1.30.0-0`
 | server.serviceAccount.name | string | `""` |  |
 | server.serviceAccount.serviceDiscovery.enabled | bool | `true` |  |
 | server.shareProcessNamespace | bool | `false` | shareProcessNamespace enables process namespace sharing between OpenBao and the extraContainers This is useful if OpenBao must be signaled, e.g. to send a SIGHUP for a log rotation |
-| server.standalone.config | string | `"ui = true\n\nlistener \"tcp\" {\n  tls_disable = 1\n  address = \"[::]:8200\"\n  cluster_address = \"[::]:8201\"\n  # Enable unauthenticated metrics access (necessary for Prometheus Operator)\n  #telemetry {\n  #  unauthenticated_metrics_access = \"true\"\n  #}\n}\nstorage \"file\" {\n  path = \"/openbao/data\"\n}\n\n# Example configuration for using auto-unseal, using Google Cloud KMS. The\n# GKMS keys must already exist, and the cluster must have a service account\n# that is authorized to access GCP KMS.\n#seal \"gcpckms\" {\n#   project     = \"openbao-helm-dev\"\n#   region      = \"global\"\n#   key_ring    = \"openbao-helm-unseal-kr\"\n#   crypto_key  = \"openbao-helm-unseal-key\"\n#}\n\n# Example configuration for enabling Prometheus metrics in your config.\n#telemetry {\n#  prometheus_retention_time = \"30s\"\n#  disable_hostname = true\n#}\n"` |  |
+| server.standalone.config | string | `"ui = true\n\nlistener \"tcp\" {\n  tls_disable = 1\n  address = \"[::]:8200\"\n  cluster_address = \"[::]:8201\"\n  # Enable unauthenticated metrics access (necessary for Prometheus Operator)\n  #telemetry {\n  #  unauthenticated_metrics_access = \"true\"\n  #}\n}\nstorage \"pebbledb\" {\n  path = \"/openbao/data\"\n}\n\n# Example configuration for using auto-unseal, using Google Cloud KMS. The\n# GKMS keys must already exist, and the cluster must have a service account\n# that is authorized to access GCP KMS.\n#seal \"gcpckms\" {\n#   project     = \"openbao-helm-dev\"\n#   region      = \"global\"\n#   key_ring    = \"openbao-helm-unseal-kr\"\n#   crypto_key  = \"openbao-helm-unseal-key\"\n#}\n\n# Example configuration for enabling Prometheus metrics in your config.\n#telemetry {\n#  prometheus_retention_time = \"30s\"\n#  disable_hostname = true\n#}\n"` |  |
 | server.standalone.enabled | string | `"-"` |  |
 | server.statefulSet.annotations | object | `{}` |  |
 | server.statefulSet.securityContext.container | object | `{}` |  |
@@ -318,6 +317,7 @@ Kubernetes: `>= 1.30.0-0`
 | serverTelemetry.prometheusRules.rules | list | `[]` |  |
 | serverTelemetry.prometheusRules.selectors | object | `{}` |  |
 | serverTelemetry.serviceMonitor.authorization | object | `{}` |  |
+| serverTelemetry.serviceMonitor.bearerTokenFile | string | `nil` | bearerTokenFile defines the file to read bearer token for scraping the target. Deprecated: Use 'serverTelemetry.serviceMonitor.authorization' |
 | serverTelemetry.serviceMonitor.enabled | bool | `false` |  |
 | serverTelemetry.serviceMonitor.interval | string | `"30s"` |  |
 | serverTelemetry.serviceMonitor.port | string | `""` | Port which Prometheus uses when scraping metrics. If empty will use `openbao.scheme` helper for its value |
@@ -326,24 +326,36 @@ Kubernetes: `>= 1.30.0-0`
 | serverTelemetry.serviceMonitor.scrapeTimeout | string | `"10s"` |  |
 | serverTelemetry.serviceMonitor.selectors | object | `{}` |  |
 | serverTelemetry.serviceMonitor.tlsConfig | object | `{}` |  |
+| snapshotAgent.affinity | object | `{}` |  |
 | snapshotAgent.annotations | object | `{}` |  |
+| snapshotAgent.concurrencyPolicy | string | `"Forbid"` |  |
+| snapshotAgent.config.baoAuthNamespace | string | `""` |  |
 | snapshotAgent.config.baoAuthPath | string | `"kubernetes"` |  |
+| snapshotAgent.config.baoNamespace | string | `""` |  |
 | snapshotAgent.config.baoRole | string | `"snapshot"` |  |
+| snapshotAgent.config.baoSecretPath | string | `""` |  |
 | snapshotAgent.config.s3Bucket | string | `"openbao-snapshots"` |  |
 | snapshotAgent.config.s3ExpireDays | string | `"14"` |  |
 | snapshotAgent.config.s3Host | string | `"s3.eu-east-1.amazonaws.com"` |  |
 | snapshotAgent.config.s3Uri | string | `"s3://openbao-snapshots"` |  |
 | snapshotAgent.config.s3cmdExtraFlag | string | `"-v"` |  |
+| snapshotAgent.config.tokenPath | string | `""` |  |
 | snapshotAgent.enabled | bool | `false` |  |
 | snapshotAgent.extraEnvironmentVars | object | `{}` | Map of extra environment variables to set in the snapshot-agent cronjob |
+| snapshotAgent.extraLabels | object | `{}` |  |
 | snapshotAgent.extraSecretEnvironmentVars | list | `[]` | List of extra environment variables to set in the snapshot-agent cronjob These variables take value from existing Secret objects. |
 | snapshotAgent.extraVolumeMounts | list | `[]` | List of additional volumeMounts for the snapshot cronjob container. |
 | snapshotAgent.extraVolumes | list | `[]` | List of extraVolumes made available to the snapshot cronjob container. |
 | snapshotAgent.image.repository | string | `"ghcr.io/openbao/openbao-snapshot-agent"` |  |
-| snapshotAgent.image.tag | string | `"0.3.0"` |  |
+| snapshotAgent.image.tag | string | `"0.4.5"` |  |
+| snapshotAgent.job.annotations | object | `{}` |  |
+| snapshotAgent.job.extraLabels | object | `{}` |  |
+| snapshotAgent.nodeSelector | object | `{}` |  |
+| snapshotAgent.pod.annotations | object | `{}` |  |
+| snapshotAgent.pod.extraLabels | object | `{}` |  |
 | snapshotAgent.resources | object | `{}` |  |
 | snapshotAgent.restartPolicy | string | `"OnFailure"` |  |
-| snapshotAgent.s3CredentialsSecret | string | `"my-s3-credentials"` |  |
+| snapshotAgent.s3CredentialsSecret | string | `""` | Existing Kubernetes secret with S3 Credentials. Must contain keys called AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. If not provided, you must provide `snapshotAgent.extraSecretEnvironmentVars` |
 | snapshotAgent.schedule | string | `"*/15 * * * *"` |  |
 | snapshotAgent.securityContext.container | object | `{}` |  |
 | snapshotAgent.securityContext.pod | object | `{}` |  |

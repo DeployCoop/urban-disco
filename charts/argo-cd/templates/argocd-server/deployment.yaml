@@ -29,9 +29,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/cmd-params: {{ include (print $.Template.BasePath "/argocd-configs/argocd-cmd-params-cm.yaml") . | sha256sum }}
+        checksum/cmd-params: {{ include "argo-cd.config.checksum" (dict "context" $ "path" "/argocd-configs/argocd-cmd-params-cm.yaml") }}
         {{- if .Values.configs.cm.create }}
-        checksum/cm: {{ include (print $.Template.BasePath "/argocd-configs/argocd-cm.yaml") . | sha256sum }}
+        checksum/cm: {{ include "argo-cd.config.checksum" (dict "context" $ "path" "/argocd-configs/argocd-cm.yaml") }}
         {{- end }}
         {{- with (mergeOverwrite (deepCopy .Values.global.podAnnotations) .Values.server.podAnnotations) }}
         {{- range $key, $value := . }}
@@ -84,6 +84,12 @@ spec:
           {{- end }}
           - name: ARGOCD_SERVER_NAME
             value: {{ template "argo-cd.server.fullname" . }}
+          - name: GRPC_ENABLE_TXT_SERVICE_CONFIG
+            valueFrom:
+              configMapKeyRef:
+                name: argocd-cmd-params-cm
+                key: server.grpc.enable.txt.service.config
+                optional: true
           - name: ARGOCD_SERVER_INSECURE
             valueFrom:
               configMapKeyRef:
@@ -489,7 +495,11 @@ spec:
           - name: tmp
             mountPath: /tmp
         env:
-          {{- toYaml .env | nindent 10 }}
+          - name: EXTENSIONS_DIR
+            value: /tmp/extensions
+          {{- with .env }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
       {{- end }}
       {{- end }}
       {{- end }}
@@ -549,6 +559,7 @@ spec:
       - name: tls-certs
         configMap:
           name: argocd-tls-certs-cm
+          optional: true
       - name: styles
         configMap:
           name: argocd-styles-cm

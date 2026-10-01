@@ -112,11 +112,13 @@ The following table lists the configurable parameters of the OpenEBS ZFS Localpv
 | `zfsController.resizer.name`                                          | string | `"csi-resizer"`             | Name of the CSI resizer container.                                                                     |
 | `zfsController.resources`                                             | map    | `{}`                        | Resource requests and limits for the ZFS controller pods.                                               |
 | `zfsController.securityContext`                                       | map    | `{}`                        | Security context for the ZFS controller pods.                                                          |
+| `zfsController.snapshotController.enabled`                            | bool   | `true`                      | Enables or disables the snapshot controller container. Set to false if the cluster already runs one.     |
 | `zfsController.snapshotController.extraArgs`                          | list   | `[]`                        | Additional arguments to pass to the snapshot controller.                                                |
 | `zfsController.snapshotController.image.pullPolicy`                   | string | `"IfNotPresent"`            | Image pull policy for the snapshot controller.                                                          |
 | `zfsController.snapshotController.image.registry`                     | string | `"registry.k8s.io/"`        | Image registry for the snapshot controller.                                                             |
 | `zfsController.snapshotController.image.repository`                   | string | `"sig-storage/snapshot-controller"` | Image repository for the snapshot controller.                                                           |
 | `zfsController.snapshotController.image.tag`                          | string | `"v8.2.0"`                  | Image tag for the snapshot controller. 
+| `zfsNode.defaultFormatOptions`                                        | map    | `{}`                        | Extra mkfs options per filesystem, used when the StorageClass of a volume does not set `formatOptions`. A StorageClass value replaces the default of its filesystem, the two are not merged. Keys are the formatted filesystem types (ext2, ext3, ext4, xfs, btrfs), values the space separated mkfs options of that filesystem as one string, e.g. `{"ext4": "-m 0", "xfs": "-i nrext64=0"}`. |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`.
 

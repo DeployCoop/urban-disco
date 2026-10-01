@@ -1,11 +1,11 @@
 annotations:
   artifacthub.io/images: |
     - name: jaeger
-      image: jaegertracing/jaeger:2.17.0
+      image: jaegertracing/jaeger:2.20.0
       whitelisted: true
       ignored: true
 apiVersion: v2
-appVersion: 2.17.0
+appVersion: 2.20.0
 dependencies:
 - name: common
   repository: https://charts.bitnami.com/bitnami
@@ -34,4 +34,4 @@ name: jaeger
 sources:
 - https://hub.docker.com/u/jaegertracing/
 type: application
-version: 4.7.0
+version: 4.13.1

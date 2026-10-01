@@ -55,7 +55,7 @@ manager:
     imagePullPolicy: IfNotPresent
   collectorImage:
     repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
-    tag: 0.156.0
+    tag: 0.160.0
   opampBridgeImage:
     repository: ""
     tag: ""
@@ -111,7 +111,6 @@ manager:
   featureGatesMap: {}
   # operator.clusterobservability: false
   # operator.targetallocator.fallbackstrategy: false
-  # operator.golang.flags: false
   # operand.networkpolicy: false
   # operator.networkpolicy: false
   ports:
@@ -280,6 +279,20 @@ admissionWebhooks:
   ## - Fail, the injection is fail-close. If the webhook pod is not ready, pods cannot be created.
   pods:
     failurePolicy: Ignore
+    namespaceSelector: {}
+    objectSelector: {}
+
+  ## Selectors for Instrumentation webhooks.
+  ## Empty maps use the common selectors from admissionWebhooks.namespaceSelector and admissionWebhooks.objectSelector.
+  instrumentation:
+    namespaceSelector: {}
+    objectSelector: {}
+
+  ## Selectors for OpenTelemetryCollector webhooks.
+  ## Empty maps use the common selectors from admissionWebhooks.namespaceSelector and admissionWebhooks.objectSelector.
+  opentelemetryCollector:
+    namespaceSelector: {}
+    objectSelector: {}
 
   ## Adds a prefix to the mutating webhook name.
   ## This can be used to order this mutating webhook with all your cluster's mutating webhooks.
@@ -288,7 +301,8 @@ admissionWebhooks:
   ## Customize webhook timeout duration
   timeoutSeconds: 10
 
-  ## Provide selectors for your objects
+  ## Common selectors for all admission webhooks (Pods, Instrumentation, and OpenTelemetryCollector).
+  ## Per-webhook selectors are merged with these values, with specific values taking precedence on conflicts.
   namespaceSelector: {}
   objectSelector: {}
 
@@ -349,6 +363,9 @@ admissionWebhooks:
 ## See https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-operator/UPGRADING.md#0560-to-0570 for more details.
 crds:
   create: true
+  # Annotations to add to all CRDs managed by this chart.
+  # For example, "example.com/managed-by: opentelemetry-operator-chart".
+  annotations: {}
 
 ## Create the provided Roles and RoleBindings
 ##
@@ -395,6 +412,12 @@ securityContext:
 automountServiceAccountToken: true
 
 testFramework:
+  certManager:
+    env:
+      - name: CERT_MANAGER_CLUSTERIP
+        value: "cert-manager-webhook.cert-manager"
+      - name: CERT_MANAGER_PORT
+        value: "443"
   image:
     repository: busybox
     tag: latest

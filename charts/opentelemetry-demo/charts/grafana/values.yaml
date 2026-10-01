@@ -24,6 +24,8 @@ rbac:
   pspEnabled: false
   pspUseAppArmor: false
   namespaced: false
+  # Only has an effect if namespaced: true is set
+  namespaces: []
   extraRoleRules: []
   # - apiGroups: []
   #   resources: []
@@ -81,6 +83,10 @@ deploymentStrategy:
 ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#progress-deadline-seconds
 progressDeadlineSeconds: null
 
+## Startup probe. Holds off the liveness and readiness probes until it succeeds, useful for slow starts.
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+startupProbe: {}
+
 readinessProbe:
   httpGet:
     path: /api/health
@@ -105,7 +111,7 @@ image:
   # -- Docker image repository
   repository: grafana/grafana
   # Overrides the Grafana image tag whose default is the chart appVersion
-  tag: ""
+  tag: "{{ .Chart.AppVersion }}-distroless"
   sha: ""
   pullPolicy: IfNotPresent
 
@@ -127,7 +133,7 @@ testFramework:
     # -- The Docker registry
     registry: docker.io
     repository: bats/bats
-    tag: "1.13.0"
+    tag: "1.14.0"
   imagePullPolicy: IfNotPresent
   securityContext: {}
   containerSecurityContext: {}
@@ -144,10 +150,10 @@ dnsPolicy: ~
 dnsConfig: {}
   # nameservers:
   #   - 8.8.8.8
-  #   options:
-  #   - name: ndots
-  #     value: "2"
-  #   - name: edns0
+  # options:
+  # - name: ndots
+  #   value: "2"
+  # - name: edns0
 
 hostUsers: ~
 securityContext:
@@ -164,6 +170,7 @@ containerSecurityContext:
     - ALL
   seccompProfile:
     type: RuntimeDefault
+  readOnlyRootFilesystem: true
 
 # Enable creating the grafana configmap
 createConfigmap: true
@@ -202,7 +209,7 @@ downloadDashboardsImage:
   # -- The Docker registry
   registry: docker.io
   repository: curlimages/curl
-  tag: 8.20.0
+  tag: 8.22.0
   sha: ""
   pullPolicy: IfNotPresent
 
@@ -274,10 +281,11 @@ serviceMonitor:
   path: /metrics
   #  namespace: monitoring  (defaults to use the namespace this chart is deployed to)
   labels: {}
-  interval: 30s
+  # Set these to override the Prometheus global scrape interval/timeout.
+  # interval: 30s
+  # scrapeTimeout: 30s
   scheme: http
   tlsConfig: {}
-  scrapeTimeout: 30s
   relabelings: []
   metricRelabelings: []
   basicAuth: {}
@@ -380,6 +388,43 @@ route:
     ## Ref. https://gateway-api.sigs.k8s.io/guides/http-redirect-rewrite/
     httpsRedirect: false
 
+# -- BETA: Configure Gateway API ListenerSet resources for the chart here.
+# ListenerSet allows attaching additional listeners to an existing Gateway.
+# More listener sets can be added by adding a dictionary key like the 'main' entry.
+# Being BETA this can/will change in the future without notice, do not use unless you want to take that risk
+# [[ref]](https://gateway-api.sigs.k8s.io/reference/api-spec/main/spec/#listenerset)
+listenerSet:
+  main:
+    # -- Enables or disables the listener set
+    enabled: false
+
+    # -- Set the ListenerSet apiVersion, e.g. gateway.networking.k8s.io/v1
+    apiVersion: gateway.networking.k8s.io/v1
+
+    annotations: {}
+    labels: {}
+
+    # -- Reference to the parent Gateway this ListenerSet attaches to
+    parentRef: {}
+    # name: my-gateway
+    # namespace: default
+    # group: gateway.networking.k8s.io
+    # kind: Gateway
+
+    # -- List of listeners to attach to the parent Gateway
+    listeners: []
+    # - name: https
+    #   port: 443
+    #   protocol: HTTPS
+    #   hostname: grafana.example.com
+    #   tls:
+    #     mode: Terminate
+    #     certificateRefs:
+    #       - name: grafana-tls
+    #   allowedRoutes:
+    #     namespaces:
+    #       from: Same
+
 resources: {}
 #  limits:
 #    cpu: 100m
@@ -387,6 +432,16 @@ resources: {}
 #  requests:
 #    cpu: 100m
 #    memory: 128Mi
+
+## Configure the GOMEMLIMIT environment variable.
+## When enabled and resources.limits.memory is set, GOMEMLIMIT is injected
+## as a computed value (factor × memory limit) unless the user has already
+## defined GOMEMLIMIT via env or envValueFrom.
+goMemLimit:
+  # -- Enable automatic GOMEMLIMIT injection.
+  enabled: true
+  # -- Fraction of resources.limits.memory to use as GOMEMLIMIT (e.g. 0.9 = 90 %).
+  factor: 0.9
 
 ## Node labels for pod assignment
 ## ref: https://kubernetes.io/docs/user-guide/node-selection/
@@ -462,6 +517,12 @@ persistence:
   ## Extra labels to apply to a PVC.
   extraPvcLabels: {}
   disableWarning: false
+  ## Configure StatefulSet persistent volume claim retention policy.
+  ## This is ignored when Grafana is configured to use a Deployment with a PVC.
+  ## By default, Kubernetes uses Retain for both whenDeleted and whenScaled.
+  persistentVolumeClaimRetentionPolicy: {}
+  #  whenDeleted: Retain
+  #  whenScaled: Retain
 
   ## If persistence is not enabled, this allows to mount the
   ## local storage in-memory to improve performance
@@ -490,7 +551,7 @@ initChownData:
     # -- The Docker registry
     registry: docker.io
     repository: library/busybox
-    tag: "1.37.0"
+    tag: "1.38.0"
     sha: ""
     pullPolicy: IfNotPresent
 
@@ -513,6 +574,7 @@ initChownData:
     capabilities:
       add:
         - CHOWN
+        - DAC_OVERRIDE
       drop:
         - ALL
 
@@ -529,10 +591,9 @@ admin:
 
 ## Define command to be executed at startup by grafana container
 ## Needed if using `vault-env` to manage secrets (ref: https://banzaicloud.com/blog/inject-secrets-into-pods-vault/)
-## Default is "run.sh" as defined in grafana's Dockerfile
+## The default distroless image starts Grafana directly and does not contain a shell or `/run.sh`.
 # command:
-# - "sh"
-# - "/run.sh"
+# - "/path/to/your/entrypoint"
 
 ## Optionally define args if command is used
 ## Needed if using `hashicorp/envconsul` to manage secrets
@@ -851,6 +912,11 @@ dashboardProviders: {}
 ##
 defaultCurlOptions: "-skf"
 
+## Configure shell options for downloading dashboards. The beginning dash is added automatically.
+## Add `x` to enable command tracing. This can expose sensitive values in logs.
+##
+defaultShellOptions: "eufo pipefail"
+
 ## Configure grafana dashboard to import
 ## NOTE: To use dashboards you must also enable/configure dashboardProviders
 ## ref: https://grafana.com/dashboards
@@ -913,6 +979,8 @@ grafana.ini:
     provisioning: /etc/grafana/provisioning
   analytics:
     check_for_updates: true
+  plugins:
+    preinstall_auto_update: "false"
   log:
     mode: console
   server:
@@ -991,7 +1059,7 @@ sidecar:
     # -- The Docker registry
     registry: quay.io
     repository: kiwigrid/k8s-sidecar
-    tag: 2.7.1
+    tag: 2.11.2
     sha: ""
   imagePullPolicy: IfNotPresent
   resources: {}
@@ -1008,7 +1076,7 @@ sidecar:
       - ALL
     seccompProfile:
       type: RuntimeDefault
-  # skipTlsVerify Set to true to skip tls verification for kube api calls
+  # Set to true to skip tls verification for kube api calls. Can be overridden per sidecar
   # skipTlsVerify: true
   enableUniqueFilenames: false
   readinessProbe: {}
@@ -1034,6 +1102,8 @@ sidecar:
     #      key: value_key
     # Do not reprocess already processed unchanged resources on k8s API reconnect.
     # ignoreAlreadyProcessed: true
+    # Set to true to skip tls verification for kube api calls. Overrides sidecar.skipTlsVerify
+    # skipTlsVerify: true
     # label that the configmaps with alert are marked with (can be templated)
     label: grafana_alert
     # value of label that the configmaps with alert are set to (can be templated)
@@ -1125,6 +1195,8 @@ sidecar:
     #      key: value_key
     # Do not reprocess already processed unchanged resources on k8s API reconnect.
     # ignoreAlreadyProcessed: true
+    # Set to true to skip tls verification for kube api calls. Overrides sidecar.skipTlsVerify
+    # skipTlsVerify: true
     SCProvider: true
     # label that the configmaps with dashboards are marked with (can be templated)
     label: grafana_dashboard
@@ -1242,6 +1314,8 @@ sidecar:
     #      key: value_key
     # Do not reprocess already processed unchanged resources on k8s API reconnect.
     # ignoreAlreadyProcessed: true
+    # Set to true to skip tls verification for kube api calls. Overrides sidecar.skipTlsVerify
+    # skipTlsVerify: true
     # label that the configmaps with datasources are marked with (can be templated)
     label: grafana_datasource
     # value of label that the configmaps with datasources are set to (can be templated)
@@ -1320,6 +1394,8 @@ sidecar:
     env: {}
     # Do not reprocess already processed unchanged resources on k8s API reconnect.
     # ignoreAlreadyProcessed: true
+    # Set to true to skip tls verification for kube api calls. Overrides sidecar.skipTlsVerify
+    # skipTlsVerify: true
     # label that the configmaps with plugins are marked with (can be templated)
     label: grafana_plugin
     # value of label that the configmaps with plugins are set to (can be templated)
@@ -1388,6 +1464,8 @@ sidecar:
     env: {}
     # Do not reprocess already processed unchanged resources on k8s API reconnect.
     # ignoreAlreadyProcessed: true
+    # Set to true to skip tls verification for kube api calls. Overrides sidecar.skipTlsVerify
+    # skipTlsVerify: true
     # label that the configmaps with notifiers are marked with (can be templated)
     label: grafana_notifier
     # value of label that the configmaps with notifiers are set to (can be templated)
@@ -1507,6 +1585,14 @@ imageRenderer:
     pullSecrets: []
     # image-renderer ImagePullPolicy
     pullPolicy: Always
+  dnsPolicy: ~
+  dnsConfig: {}
+    # nameservers:
+    #   - 8.8.8.8
+    # options:
+    # - name: ndots
+    #   value: "2"
+    # - name: edns0
   # extra environment variables
   env:
     HTTP_HOST: "0.0.0.0"
@@ -1572,10 +1658,11 @@ imageRenderer:
     path: /metrics
     #  namespace: monitoring  (defaults to use the namespace this chart is deployed to)
     labels: {}
-    interval: 1m
+    # Set these to override the Prometheus global scrape interval/timeout.
+    # interval: 1m
+    # scrapeTimeout: 30s
     scheme: http
     tlsConfig: {}
-    scrapeTimeout: 30s
     relabelings: []
     # See: https://doc.crds.dev/github.com/prometheus-operator/kube-prometheus/monitoring.coreos.com/ServiceMonitor/v1@v0.11.0#spec-targetLabels
     targetLabels: []

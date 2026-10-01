@@ -1,11 +1,17 @@
 replicaCount: 1
 strategyType: Recreate
-
 image:
   repository: eclipse-mosquitto
   # -- Image tag of the container. defaults to chart appVersion
-  tag: 
+  tag:
   pullPolicy: IfNotPresent
+
+
+# -- Environment variables for main container
+env: {}
+# env:
+#   - name: MOSQUITTO_UNSAFE_ALLOW_SYMLINKS
+#     value: "1"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -24,6 +30,7 @@ service:
   externalTrafficPolicy: Cluster
   # -- Ability to choose the Service IP (clusterIP)
   clusterIp: ""
+  loadBalancerIP: ""
   annotations: {}
     # metallb.universe.tf/allow-shared-ip: pi-hole
 ports:
@@ -71,6 +78,26 @@ podSecurityContext: {}
 securityContext: {}
   # runAsUser: 1001
   # fsGroup: 10000
+
+probes:
+  liveness:
+    enabled: true
+    tcpSocketPort: mqtt
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 6
+  readiness:
+    enabled: true
+    tcpSocketPort: mqtt
+    initialDelaySeconds: 3
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 3
+
+podAnnotations: {}
+
+configMountPath: /mosquitto/config/mosquitto.conf
 
 nodeSelector: {}
 
@@ -128,10 +155,18 @@ extraVolumeMounts: []
 monitoring:
   podMonitor:
     enabled: false
+    namespace: ""
+    labels: {}
+    interval: 15s
+    path: /metrics
+    bearerTokenFile: ""
+    bearerTokenSecret: {}
   sidecar:
     enabled: false
     port: 9234
     # nodePort: 32234
+    args: []
+    envs: []
     image:
       repository: nolte/mosquitto-exporter
       tag: v0.6.3
