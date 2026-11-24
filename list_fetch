@@ -1,35 +1,17 @@
 helm fetch --untar argo/argo-cd
-helm fetch --untar csi-driver-nfs/csi-driver-nfs
-helm fetch --untar fluent/fluent-bit
 helm fetch --untar fluent/fluent-operator
 helm fetch --untar grafana/grafana 
-helm fetch --untar harbor/harbor
 helm fetch --untar ingress-nginx/ingress-nginx
 helm fetch --untar jetstack/cert-manager 
-helm fetch --untar kubeshark/kubeshark 
 helm fetch --untar nats/nats
-helm fetch --untar nextcloud/nextcloud
-helm fetch --untar nfd/node-feature-discovery
-helm fetch --untar nvidia/gpu-operator 
 helm fetch --untar openbao/openbao
-helm fetch --untar openebs/openebs
 helm fetch --untar opensearch/data-prepper
-helm fetch --untar opensearch/opensearch
-helm fetch --untar opensearch/opensearch-dashboards
 helm fetch --untar opensearch-operator/opensearch-cluster
 helm fetch --untar open-telemetry/opentelemetry-collector
 helm fetch --untar open-telemetry/opentelemetry-demo
-helm fetch --untar open-telemetry/opentelemetry-operator
 helm fetch --untar prometheus-community/kube-prometheus-stack 
 helm fetch --untar --prov openproject/openproject 
-helm fetch --untar rancher-latest/rancher
 helm fetch --untar traefik/traefik 
-helm fetch --untar vmware-tanzu/velero
-helm fetch --untar k8sonlab/mosquitto
-helm fetch --untar mariadb-operator/mariadb-operator-crds
-helm fetch --untar mariadb-operator/mariadb-operator
-helm fetch --untar rook-release/rook-ceph
 helm fetch --untar seaweedfs/seaweedfs
-helm fetch --untar trino/trino --version 1.42.2
 # helm fetch --untar headscale/headscale
 helm fetch --untar antmedia/antmedia
